@@ -1,23 +1,26 @@
 from typing import Dict, List, Any
 import json
+import pandas as pd
 from models.meta_lead_generation.model import MetaLeadGenerationModel, LeadGenerationResult
 
 class MetaLeadGenerationInference:
     """
-    Inference wrapper for the Meta Lead Generation Model
+    Enhanced inference wrapper for the Meta Lead Generation Model
     """
     
     def __init__(self, model_config: Dict[str, str] = None):
         self.model = MetaLeadGenerationModel(model_config or {})
         
     def score_lead(self, lead_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Score a single lead across all insurance products"""
+        """Score a single lead across all insurance products with enhanced features"""
         result = self.model.generate_lead_score(lead_data)
         
         return {
             'lead_id': result.lead_id,
             'overall_score': result.overall_score,
             'product_scores': result.product_scores,
+            'confidence_scores': result.confidence_scores,
+            'market_adjusted_scores': result.market_adjusted_scores,
             'recommended_products': result.recommended_products,
             'priority_level': result.priority_level,
             'cross_sell_opportunities': result.cross_sell_opportunities,
@@ -25,8 +28,12 @@ class MetaLeadGenerationInference:
             'estimated_lifetime_value': result.estimated_lifetime_value,
             'next_best_action': result.next_best_action,
             'confidence_score': result.confidence_score,
+            'conversion_velocity': result.conversion_velocity,
+            'urgency_signals': result.urgency_signals,
+            'optimal_contact_time': result.optimal_contact_time,
+            'revenue_potential': result.revenue_potential,
             'timestamp': pd.Timestamp.now().isoformat(),
-            'model_version': 'meta_v1.0'
+            'model_version': 'meta_v2.0_enhanced'
         }
     
     def batch_score_leads(self, leads_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -50,47 +57,201 @@ class MetaLeadGenerationInference:
         ]
     
     def get_lead_recommendations(self, lead_data: Dict[str, Any]) -> Dict[str, Any]:
-        """Get detailed recommendations for a lead"""
-        insights = self.model.get_lead_insights(lead_data)
+        """Get enhanced recommendations with velocity and urgency insights"""
+        result = self.model.generate_lead_score(lead_data)
         
         return {
             'lead_id': lead_data.get('lead_id'),
-            'recommendations': insights,
-            'action_plan': self._create_action_plan(insights),
-            'follow_up_schedule': self._create_follow_up_schedule(insights)
+            'executive_summary': {
+                'overall_score': result.overall_score,
+                'lead_quality': result.lead_quality,
+                'priority_level': result.priority_level,
+                'revenue_potential': result.revenue_potential,
+                'confidence_score': result.confidence_score
+            },
+            'product_analysis': {
+                'raw_scores': result.product_scores,
+                'market_adjusted_scores': result.market_adjusted_scores,
+                'confidence_by_product': result.confidence_scores,
+                'conversion_velocity': result.conversion_velocity
+            },
+            'urgency_analysis': {
+                'urgency_signals': result.urgency_signals,
+                'optimal_contact_time': result.optimal_contact_time,
+                'priority_justification': self._explain_priority(result)
+            },
+            'sales_strategy': {
+                'primary_products': result.recommended_products,
+                'cross_sell_opportunities': result.cross_sell_opportunities,
+                'next_best_action': result.next_best_action,
+                'talking_points': self._generate_talking_points(result),
+                'objection_handling': self._generate_objection_handling(result)
+            },
+            'follow_up_plan': self._create_enhanced_follow_up_plan(result),
+            'competitive_analysis': self._analyze_competitive_position(result)
         }
     
-    def _create_action_plan(self, insights: Dict[str, Any]) -> List[Dict[str, str]]:
-        """Create actionable plan based on insights"""
-        priority = insights['lead_summary']['priority']
-        products = insights['recommendations']['primary_products']
+    def _explain_priority(self, result: LeadGenerationResult) -> str:
+        """Explain why lead received this priority level"""
+        explanations = []
         
-        actions = []
+        if result.overall_score >= 85:
+            explanations.append(f"High overall score ({result.overall_score:.1f})")
         
-        if priority == 'CRITICAL':
-            actions.append({
-                'action': 'immediate_call',
-                'timeline': 'within_1_hour',
-                'focus': f"Present {products[0] if products else 'insurance'} options"
-            })
-        elif priority == 'HIGH':
-            actions.append({
-                'action': 'priority_email',
-                'timeline': 'within_4_hours',
-                'focus': f"Send personalized {products[0] if products else 'insurance'} quote"
-            })
+        if result.urgency_signals:
+            explanations.append(f"Urgency signals detected: {', '.join(result.urgency_signals[:3])}")
         
-        return actions
+        if result.revenue_potential > 20000:
+            explanations.append(f"High revenue potential (${result.revenue_potential:,.0f})")
+        
+        if len(result.recommended_products) >= 2:
+            explanations.append("Multiple product opportunities")
+        
+        return "; ".join(explanations) if explanations else "Standard scoring criteria"
     
-    def _create_follow_up_schedule(self, insights: Dict[str, Any]) -> Dict[str, str]:
-        """Create follow-up schedule based on priority"""
-        priority = insights['lead_summary']['priority']
+    def _generate_talking_points(self, result: LeadGenerationResult) -> List[str]:
+        """Generate sales talking points based on lead analysis"""
+        talking_points = []
         
-        schedules = {
-            'CRITICAL': {'first_follow_up': '1_hour', 'second_follow_up': '1_day'},
-            'HIGH': {'first_follow_up': '4_hours', 'second_follow_up': '3_days'},
-            'MEDIUM': {'first_follow_up': '1_day', 'second_follow_up': '1_week'},
-            'LOW': {'first_follow_up': '1_week', 'second_follow_up': '1_month'}
+        # Primary product focus
+        if result.recommended_products:
+            primary = result.recommended_products[0]
+            talking_points.append(f"Lead shows strong fit for {primary} insurance")
+        
+        # Urgency-based points
+        if "OPEN_ENROLLMENT_PERIOD" in result.urgency_signals:
+            talking_points.append("Time-sensitive: Open enrollment deadline approaching")
+        
+        if "NEW_BABY" in result.urgency_signals:
+            talking_points.append("Congratulations on your new addition - let's protect your growing family")
+        
+        if "NO_CURRENT_COVERAGE" in result.urgency_signals:
+            talking_points.append("Currently uninsured - immediate protection needed")
+        
+        # Cross-sell opportunities
+        if result.cross_sell_opportunities:
+            talking_points.append(f"Bundle opportunity with {result.cross_sell_opportunities[0]}")
+        
+        # Value proposition
+        if result.revenue_potential > 15000:
+            talking_points.append("High-value client - premium service approach")
+        
+        return talking_points
+    
+    def _generate_objection_handling(self, result: LeadGenerationResult) -> Dict[str, str]:
+        """Generate objection handling strategies"""
+        objections = {}
+        
+        # Price objections
+        if result.revenue_potential > 10000:
+            objections["price"] = "Focus on comprehensive coverage value and long-term savings"
+        else:
+            objections["price"] = "Emphasize affordable options and payment plans"
+        
+        # Timing objections
+        if result.urgency_signals:
+            objections["timing"] = f"Highlight urgency: {result.urgency_signals[0].replace('_', ' ').lower()}"
+        else:
+            objections["timing"] = "Emphasize peace of mind and protection benefits"
+        
+        # Need objections
+        if "HIGH_HEALTH_COMPLEXITY" in result.urgency_signals:
+            objections["need"] = "Address specific health concerns and coverage gaps"
+        else:
+            objections["need"] = "Focus on life changes and future planning"
+        
+        return objections
+    
+    def _create_enhanced_follow_up_plan(self, result: LeadGenerationResult) -> Dict[str, Any]:
+        """Create detailed follow-up plan with timing and content"""
+        plan = {
+            'immediate_action': result.next_best_action,
+            'optimal_contact_time': result.optimal_contact_time,
+            'follow_up_sequence': []
         }
         
-        return schedules.get(priority, schedules['LOW'])
+        # Determine follow-up sequence based on velocity
+        primary_product = result.recommended_products[0] if result.recommended_products else 'general'
+        velocity = result.conversion_velocity.get(primary_product, 'MEDIUM')
+        
+        if velocity == 'IMMEDIATE':
+            plan['follow_up_sequence'] = [
+                {'timing': '2_hours', 'action': 'Phone call', 'content': 'Urgent quote discussion'},
+                {'timing': '1_day', 'action': 'Email quote', 'content': 'Detailed proposal'},
+                {'timing': '3_days', 'action': 'Follow-up call', 'content': 'Address questions'}
+            ]
+        elif velocity == 'FAST':
+            plan['follow_up_sequence'] = [
+                {'timing': '4_hours', 'action': 'Email introduction', 'content': 'Personalized quote'},
+                {'timing': '2_days', 'action': 'Phone call', 'content': 'Discuss options'},
+                {'timing': '1_week', 'action': 'Follow-up email', 'content': 'Additional options'}
+            ]
+        elif velocity == 'MEDIUM':
+            plan['follow_up_sequence'] = [
+                {'timing': '1_day', 'action': 'Email nurture', 'content': 'Educational content'},
+                {'timing': '1_week', 'action': 'Phone call', 'content': 'Needs assessment'},
+                {'timing': '2_weeks', 'action': 'Email quote', 'content': 'Customized proposal'}
+            ]
+        else:  # SLOW
+            plan['follow_up_sequence'] = [
+                {'timing': '3_days', 'action': 'Email series', 'content': 'Educational campaign'},
+                {'timing': '2_weeks', 'action': 'Phone call', 'content': 'Relationship building'},
+                {'timing': '1_month', 'action': 'Email check-in', 'content': 'Needs update'}
+            ]
+        
+        return plan
+    
+    def _analyze_competitive_position(self, result: LeadGenerationResult) -> Dict[str, Any]:
+        """Analyze competitive positioning for this lead"""
+        analysis = {
+            'competitive_risk': 'LOW',
+            'differentiation_strategy': [],
+            'win_probability': result.confidence_score
+        }
+        
+        # Assess competitive risk
+        if result.overall_score > 80 and result.lead_quality in ['HIGH', 'PREMIUM']:
+            analysis['competitive_risk'] = 'HIGH'
+            analysis['differentiation_strategy'].append('Emphasize superior service and expertise')
+        
+        if len(result.recommended_products) > 1:
+            analysis['differentiation_strategy'].append('Highlight comprehensive multi-product solution')
+        
+        if result.urgency_signals:
+            analysis['competitive_risk'] = 'MEDIUM'
+            analysis['differentiation_strategy'].append('Leverage timing advantage and urgency')
+        
+        # Adjust win probability based on competitive factors
+        if analysis['competitive_risk'] == 'HIGH':
+            analysis['win_probability'] *= 0.8
+        elif analysis['competitive_risk'] == 'LOW':
+            analysis['win_probability'] *= 1.1
+        
+        analysis['win_probability'] = min(1.0, analysis['win_probability'])
+        
+        return analysis
+    
+    def update_market_conditions(self, market_updates: Dict[str, float]):
+        """Update market demand multipliers"""
+        self.model.update_market_multipliers(market_updates)
+        return {"status": "success", "updated_multipliers": self.model.market_multipliers}
+    
+    def get_model_performance_metrics(self) -> Dict[str, Any]:
+        """Get current model performance and configuration"""
+        return {
+            'model_version': 'meta_v2.0_enhanced',
+            'market_multipliers': self.model.market_multipliers,
+            'quality_thresholds': self.model.quality_thresholds,
+            'priority_thresholds': self.model.priority_thresholds,
+            'velocity_thresholds': self.model.velocity_thresholds,
+            'revenue_multipliers': self.model.revenue_multipliers,
+            'features': [
+                'confidence_weighted_scoring',
+                'market_demand_adjustment',
+                'urgency_signal_detection',
+                'conversion_velocity_prediction',
+                'optimal_contact_timing',
+                'revenue_potential_calculation',
+                'enhanced_cross_sell_identification'
+            ]
+        }
