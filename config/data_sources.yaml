@@ -1,0 +1,83 @@
+# Data Source Configuration
+data_sources:
+  clearbit:
+    name: "Clearbit Enrichment API"
+    endpoint: "https://person.clearbit.com/v2/combined/find"
+    rate_limit: 600  # requests per minute
+    timeout: 30
+    cache_ttl: 300
+    enabled: true
+    
+  fullcontact:
+    name: "FullContact Person API"
+    endpoint: "https://api.fullcontact.com/v3/person.enrich"
+    rate_limit: 300
+    timeout: 30
+    cache_ttl: 300
+    enabled: true
+    
+  social_media_aggregator:
+    name: "Social Media Data Aggregator"
+    endpoint: "https://api.socialmedia-aggregator.com/v1/profile"
+    rate_limit: 1000
+    timeout: 20
+    cache_ttl: 600
+    enabled: true
+    
+  financial_data_provider:
+    name: "Financial Data Provider"
+    endpoint: "https://api.financial-provider.com/v1/consumer"
+    rate_limit: 200
+    timeout: 45
+    cache_ttl: 1800
+    enabled: true
+    
+  market_intelligence:
+    name: "Insurance Market Intelligence"
+    endpoint: "https://api.market-intel.com/v1/insurance"
+    rate_limit: 500
+    timeout: 30
+    cache_ttl: 3600
+    enabled: true
+
+# Cache Configuration
+cache:
+  redis:
+    host: "localhost"
+    port: 6379
+    db: 1
+    password: null
+    
+  memory:
+    max_size: 1000
+    default_ttl: 300
+
+# Rate Limiting
+rate_limiting:
+  enabled: true
+  strategy: "sliding_window"
+  burst_allowance: 1.2  # 20% burst above rate limit
+
+# Data Quality
+data_quality:
+  min_enrichment_score: 0.3
+  required_fields:
+    - email
+    - age
+    - location
+  validation_rules:
+    email: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$"
+    phone: "^\\+?1?[2-9]\\d{2}[2-9]\\d{2}\\d{4}$"
+    
+# Privacy & Compliance
+privacy:
+  anonymize_pii: true
+  data_retention_days: 90
+  gdpr_compliance: true
+  ccpa_compliance: true
+  
+# Monitoring
+monitoring:
+  track_api_performance: true
+  alert_on_failures: true
+  log_enrichment_stats: true

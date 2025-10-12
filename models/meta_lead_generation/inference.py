@@ -2,6 +2,7 @@ from typing import Dict, List, Any
 import json
 import pandas as pd
 from models.meta_lead_generation.model import MetaLeadGenerationModel, LeadGenerationResult
+from .data_sources import RealTimeDataIntegrator
 
 class MetaLeadGenerationInference:
     """
@@ -10,7 +11,157 @@ class MetaLeadGenerationInference:
     
     def __init__(self, model_config: Dict[str, str] = None):
         self.model = MetaLeadGenerationModel(model_config or {})
+        self.data_integrator = None
+        self._initialize_data_integration()
+    
+    def _initialize_data_integration(self):
+        """Initialize real-time data integration"""
+        try:
+            self.data_integrator = RealTimeDataIntegrator()
+            logger.info("Real-time data integration initialized")
+        except Exception as e:
+            logger.warning(f"Data integration initialization failed: {e}")
+            self.data_integrator = None
+    
+    async def score_lead_with_enrichment(self, lead_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Score lead with real-time data enrichment"""
+        try:
+            # Enrich lead data if integrator is available
+            if self.data_integrator:
+                async with self.data_integrator as integrator:
+                    enriched_data = await integrator.enrich_lead_data(lead_data)
+            else:
+                enriched_data = lead_data
+            
+            # Score the enriched lead
+            scoring_result = self.score_lead(enriched_data)
+            
+            # Add enrichment insights
+            if 'social_signals' in enriched_data:
+                scoring_result['social_insights'] = self._analyze_social_signals(
+                    enriched_data['social_signals'])
+            
+            if 'financial_indicators' in enriched_data:
+                scoring_result['financial_insights'] = self._analyze_financial_indicators(
+                    enriched_data['financial_indicators'])
+            
+            if 'market_context' in enriched_data:
+                scoring_result['market_insights'] = self._analyze_market_context(
+                    enriched_data['market_context'])
+            
+            return scoring_result
+            
+        except Exception as e:
+            logger.error(f"Error in enriched lead scoring: {e}")
+            # Fallback to regular scoring
+            return self.score_lead(lead_data)
+    
+    def _analyze_social_signals(self, social_signals: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze social media signals for insights"""
+        insights = {
+            'social_engagement_level': 'low',
+            'professional_presence': social_signals.get('professional_presence', False),
+            'influence_tier': 'standard',
+            'social_score_adjustment': 0.0
+        }
         
+        engagement_score = social_signals.get('engagement_score', 0)
+        influence_score = social_signals.get('influence_score', 0)
+        
+        # Determine engagement level
+        if engagement_score > 7:
+            insights['social_engagement_level'] = 'high'
+            insights['social_score_adjustment'] = 0.15
+        elif engagement_score > 4:
+            insights['social_engagement_level'] = 'medium'
+            insights['social_score_adjustment'] = 0.05
+        
+        # Determine influence tier
+        if influence_score > 8:
+            insights['influence_tier'] = 'influencer'
+            insights['social_score_adjustment'] += 0.10
+        elif influence_score > 5:
+            insights['influence_tier'] = 'engaged_user'
+            insights['social_score_adjustment'] += 0.05
+        
+        return insights
+    
+    def _analyze_financial_indicators(self, financial_indicators: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze financial indicators for insights"""
+        insights = {
+            'financial_stability': 'medium',
+            'affordability_tier': 'standard',
+            'risk_level': 'medium',
+            'financial_score_adjustment': 0.0
+        }
+        
+        affordability_score = financial_indicators.get('insurance_affordability_score', 5)
+        income_stability = financial_indicators.get('income_stability', 5)
+        
+        # Assess financial stability
+        if income_stability > 7 and affordability_score > 7:
+            insights['financial_stability'] = 'high'
+            insights['financial_score_adjustment'] = 0.20
+        elif income_stability > 5 and affordability_score > 5:
+            insights['financial_stability'] = 'medium'
+            insights['financial_score_adjustment'] = 0.10
+        else:
+            insights['financial_stability'] = 'low'
+            insights['financial_score_adjustment'] = -0.10
+        
+        # Determine affordability tier
+        if affordability_score > 8:
+            insights['affordability_tier'] = 'premium'
+        elif affordability_score > 6:
+            insights['affordability_tier'] = 'standard'
+        else:
+            insights['affordability_tier'] = 'budget'
+        
+        return insights
+    
+    def _analyze_market_context(self, market_context: Dict[str, Any]) -> Dict[str, Any]:
+        """Analyze market context for timing insights"""
+        insights = {
+            'market_timing': 'neutral',
+            'competitive_advantage': 'standard',
+            'urgency_multiplier': 1.0,
+            'market_score_adjustment': 0.0
+        }
+        
+        seasonal_multiplier = market_context.get('seasonal_factors', {}).get('seasonal_multiplier', 1.0)
+        competitive_landscape = market_context.get('competitive_landscape', {})
+        
+        # Assess market timing
+        if seasonal_multiplier > 1.2:
+            insights['market_timing'] = 'favorable'
+            insights['urgency_multiplier'] = 1.3
+            insights['market_score_adjustment'] = 0.10
+        elif seasonal_multiplier < 0.9:
+            insights['market_timing'] = 'challenging'
+            insights['urgency_multiplier'] = 0.8
+            insights['market_score_adjustment'] = -0.05
+        
+        # Assess competitive advantage
+        avg_advantage = 0
+        advantage_count = 0
+        
+        for product, data in competitive_landscape.items():
+            if isinstance(data, dict) and 'rate_advantage' in data:
+                avg_advantage += data['rate_advantage']
+                advantage_count += 1
+        
+        if advantage_count > 0:
+            avg_advantage /= advantage_count
+            
+            if avg_advantage > 0.10:
+                insights['competitive_advantage'] = 'strong'
+                insights['market_score_adjustment'] += 0.15
+            elif avg_advantage > 0.05:
+                insights['competitive_advantage'] = 'moderate'
+                insights['market_score_adjustment'] += 0.05
+        
+        return insights
+    
     def score_lead(self, lead_data: Dict[str, Any]) -> Dict[str, Any]:
         """Score a single lead across all insurance products with enhanced features"""
         result = self.model.generate_lead_score(lead_data)
@@ -255,3 +406,4 @@ class MetaLeadGenerationInference:
                 'enhanced_cross_sell_identification'
             ]
         }
+
