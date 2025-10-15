@@ -361,7 +361,7 @@ class PipelineOrchestrator:
     async def _check_redis_connection(self) -> bool:
         """Check Redis connection"""
         try:
-            import aioredis
+            from redis import asyncio as aioredis
             redis = aioredis.Redis(connection_pool=event_bus.redis_pool)
             await redis.ping()
             return True

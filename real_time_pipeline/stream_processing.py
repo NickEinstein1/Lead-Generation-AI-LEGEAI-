@@ -12,7 +12,7 @@ from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import json
-import aioredis
+from redis import asyncio as aioredis
 from concurrent.futures import ThreadPoolExecutor
 import uuid
 

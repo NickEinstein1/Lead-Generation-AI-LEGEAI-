@@ -16,8 +16,7 @@ from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
 import json
-import aioredis
-import aiofiles
+from redis import asyncio as aioredis
 from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import uuid

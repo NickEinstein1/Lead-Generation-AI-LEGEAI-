@@ -3,9 +3,9 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime, timedelta
 import logging
 
-from automation.workflow_engine import workflow_engine
+from automation import workflow_engine
 from automation.lead_routing import lead_router
-from automation.task_management import task_manager
+from automation import task_manager
 from automation.notification_system import notification_system
 
 router = APIRouter(prefix="/dashboard", tags=["Dashboard & Analytics"])
@@ -162,26 +162,31 @@ async def get_routing_performance():
         # Get detailed rep performance
         rep_performance = []
         for rep_id, rep in lead_router.sales_reps.items():
-            # Calculate rep-specific metrics
+            # Calculate rep-specific metrics from available fields
             rep_assignments = [
-                a for a in lead_router.assignment_history 
-                if a['rep_id'] == rep_id
+                a for a in lead_router.assignment_history
+                if a.get('rep_id') == rep_id
             ]
-            
+            last_assigned_at = rep_assignments[-1]['assigned_at'] if rep_assignments else None
+
+            current_load = getattr(rep, 'assigned', 0)
+            max_capacity = getattr(rep, 'capacity', 0)
+            utilization = (current_load / max_capacity) if max_capacity > 0 else 0
+
             rep_performance.append({
                 "rep_id": rep_id,
-                "name": rep.name,
-                "status": rep.status.value,
-                "specialties": rep.specialties,
-                "territories": rep.territories,
-                "current_load": rep.current_lead_count,
-                "max_capacity": rep.max_leads_per_day,
-                "utilization": rep.current_lead_count / rep.max_leads_per_day if rep.max_leads_per_day > 0 else 0,
+                "name": getattr(rep, 'name', rep_id),
+                "status": "available" if current_load < max_capacity else "busy",
+                "specialties": [],
+                "territories": [getattr(rep, 'region', None)] if getattr(rep, 'region', None) else [],
+                "current_load": current_load,
+                "max_capacity": max_capacity,
+                "utilization": utilization,
                 "total_assignments": len(rep_assignments),
-                "performance_score": rep.performance_score,
-                "last_assignment": rep.last_assignment.isoformat() if rep.last_assignment else None
+                "performance_score": 0,
+                "last_assignment": last_assigned_at
             })
-        
+
         return {
             "status": "success",
             "routing_analytics": analytics,
@@ -250,12 +255,12 @@ async def get_real_time_metrics():
             if t.status.value == "pending"
         ])
         
-        # Available reps
+        # Available reps (approximate: capacity not fully utilized)
         available_reps = len([
             r for r in lead_router.sales_reps.values()
-            if r.status.value == "available"
+            if getattr(r, 'assigned', 0) < getattr(r, 'capacity', 0)
         ])
-        
+
         # Recent notifications (last hour)
         recent_notifications = len([
             n for n in notification_system.notifications.values()
@@ -328,7 +333,7 @@ async def get_active_alerts():
         # Check for rep availability
         available_reps = [
             r for r in lead_router.sales_reps.values()
-            if r.status.value == "available"
+            if getattr(r, 'assigned', 0) < getattr(r, 'capacity', 0)
         ]
         if len(available_reps) < 2:  # Minimum threshold
             alerts.append({
