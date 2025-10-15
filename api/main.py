@@ -8,6 +8,7 @@ from api.real_time_pipeline_api import router as pipeline_router
 from api.dashboard_api import router as dashboard_router
 from api.leads_api import router as leads_router
 from api.routing_api import router as routing_router
+from api.auth_api import router as auth_router
 
 logger = logging.getLogger(__name__)
 
@@ -30,6 +31,7 @@ app.add_middleware(
 
 # Mount routers under /v1
 app.include_router(security_router, prefix="/v1")
+app.include_router(auth_router, prefix="/v1")
 app.include_router(pipeline_router, prefix="/v1")
 app.include_router(dashboard_router, prefix="/v1")
 app.include_router(leads_router, prefix="/v1")

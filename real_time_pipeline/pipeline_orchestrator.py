@@ -13,7 +13,7 @@ from dataclasses import dataclass, field
 from enum import Enum
 import json
 
-from .data_ingestion import data_ingestion_manager, event_bus, stream_processor
+from .data_ingestion import data_ingestion_manager, event_bus, stream_processor, EventType
 from .integration_framework import integration_hub
 from .stream_processing import redis_stream_processor, data_transformer
 
@@ -193,24 +193,24 @@ class PipelineOrchestrator:
         
         # Lead events
         event_bus.register_handler(
-            event_bus.EventType.LEAD_CREATED,
+            EventType.LEAD_CREATED,
             self._handle_lead_created
         )
-        
+
         event_bus.register_handler(
-            event_bus.EventType.LEAD_UPDATED,
+            EventType.LEAD_UPDATED,
             self._handle_lead_updated
         )
-        
+
         # Email events
         event_bus.register_handler(
-            event_bus.EventType.EMAIL_OPENED,
+            EventType.EMAIL_OPENED,
             self._handle_email_opened
         )
-        
+
         # Form events
         event_bus.register_handler(
-            event_bus.EventType.FORM_SUBMITTED,
+            EventType.FORM_SUBMITTED,
             self._handle_form_submitted
         )
         
