@@ -30,10 +30,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-neutral-50">
       <form onSubmit={onSubmit} className="w-full max-w-sm bg-white border rounded p-6 space-y-4 shadow-sm">
         <h1 className="text-xl font-semibold text-neutral-900">Sign in</h1>
-        <input name="username" placeholder="Email or username" className="w-full border px-3 py-2 rounded" />
-        <input name="password" type="password" placeholder="Password" className="w-full border px-3 py-2 rounded" />
+        <input name="username" placeholder="Email or username" className="w-full border border-border px-3 py-2 rounded" />
+        <input name="password" type="password" placeholder="Password" className="w-full border border-border px-3 py-2 rounded" />
         {error && <div className="text-sm text-red-600">{error}</div>}
-        <button disabled={loading} className="w-full bg-black text-white py-2 rounded">{loading ? "Signing in..." : "Sign in"}</button>
+        <button disabled={loading} className="w-full bg-primary text-primary-foreground py-2 rounded">{loading ? "Signing in..." : "Sign in"}</button>
         <div className="text-sm text-neutral-600">No account? <a href="/register" className="underline">Create one</a></div>
       </form>
     </div>

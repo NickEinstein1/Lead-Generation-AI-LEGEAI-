@@ -31,11 +31,11 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-neutral-50">
       <form onSubmit={onSubmit} className="w-full max-w-sm bg-white border rounded p-6 space-y-4 shadow-sm">
         <h1 className="text-xl font-semibold text-neutral-900">Create account</h1>
-        <input name="email" type="email" placeholder="Email" className="w-full border px-3 py-2 rounded" />
-        <input name="username" placeholder="Username (optional)" className="w-full border px-3 py-2 rounded" />
-        <input name="password" type="password" placeholder="Password" className="w-full border px-3 py-2 rounded" />
+        <input name="email" type="email" placeholder="Email" className="w-full border border-border px-3 py-2 rounded" />
+        <input name="username" placeholder="Username (optional)" className="w-full border border-border px-3 py-2 rounded" />
+        <input name="password" type="password" placeholder="Password" className="w-full border border-border px-3 py-2 rounded" />
         {error && <div className="text-sm text-red-600">{error}</div>}
-        <button disabled={loading} className="w-full bg-black text-white py-2 rounded">{loading ? "Creating..." : "Create account"}</button>
+        <button disabled={loading} className="w-full bg-primary text-primary-foreground py-2 rounded">{loading ? "Creating..." : "Create account"}</button>
         <div className="text-sm text-neutral-600">Have an account? <a href="/login" className="underline">Sign in</a></div>
       </form>
     </div>

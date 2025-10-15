@@ -6,30 +6,39 @@ from security.authentication import auth_manager, UserRole
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 class RegisterRequest(BaseModel):
-    username: str
-    email: str
+    username: Optional[str] = None
+    email: Optional[str] = None
     password: str
-    role: str = UserRole.AGENT.value
+    role: Optional[str] = None
 
 class LoginRequest(BaseModel):
-    username: str
+    username: Optional[str] = None  # username or email
+    email: Optional[str] = None
     password: str
 
 @router.post("/register")
-async def register(payload: RegisterRequest):
+async def register(payload: RegisterRequest, req: Request):
     try:
+        username = (payload.username or (payload.email or "").split("@")[0]).strip() if (payload.username or payload.email) else None
+        email = (payload.email or "").strip() or None
+        if not username or not email or not payload.password:
+            raise HTTPException(status_code=400, detail="username/email and password are required")
+
+        role_str = (payload.role or UserRole.AGENT.value)
         try:
-            role = UserRole(payload.role)
+            role = UserRole(role_str.upper())
         except ValueError:
             raise HTTPException(status_code=400, detail="Invalid role")
 
-        ok, result = auth_manager.create_user(payload.username, payload.email, payload.password, role)
+        ok, result = auth_manager.create_user(username, email, payload.password, role)
         if not ok:
             raise HTTPException(status_code=400, detail=result)
         # auto-login after registration for convenience
-        success, session_id, _ = auth_manager.authenticate_user(payload.username, payload.password, "127.0.0.1", "web")
+        ip = req.client.host if req and req.client else ""
+        ua = req.headers.get("user-agent", "")
+        success, session_id, _ = auth_manager.authenticate_user(username, payload.password, ip, ua)
         token = auth_manager.generate_jwt_token(result, auth_manager.role_permissions.get(role, [])) if success else None
-        return {"status": "success", "user_id": result, "session_id": session_id, "token": token}
+        return {"status": "success", "user_id": result, "session_id": session_id, "token": token, "role": role.value}
     except HTTPException:
         raise
     except Exception as e:
@@ -39,13 +48,17 @@ async def register(payload: RegisterRequest):
 async def login(payload: LoginRequest, req: Request):
     ip = req.client.host if req and req.client else ""
     ua = req.headers.get("user-agent", "")
-    success, session_id, message = auth_manager.authenticate_user(payload.username, payload.password, ip, ua)
+    identifier = (payload.username or payload.email or "").strip()
+    if not identifier or not payload.password:
+        raise HTTPException(status_code=400, detail="username/email and password are required")
+    success, session_id, message = auth_manager.authenticate_user(identifier, payload.password, ip, ua)
     if not success:
         raise HTTPException(status_code=401, detail=message)
     # find user id
     user_id = None
+    role = None
     for u in auth_manager.users.values():
-        if u.username == payload.username or u.email == payload.username:
+        if u.username == identifier or u.email == identifier:
             user_id = u.user_id
             role = u.role.value
             break
