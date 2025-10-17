@@ -237,6 +237,12 @@ async def _initialize_pipeline_background():
     except Exception as e:
         logger.error(f"Error initializing pipeline in background: {e}")
 
-# Initialize pipeline on startup
+# Initialize pipeline on startup (safe in running event loop only)
 import asyncio
-asyncio.create_task(_initialize_pipeline_background())
+try:
+    loop = asyncio.get_event_loop()
+    if loop.is_running():
+        loop.create_task(_initialize_pipeline_background())
+except Exception:
+    # When imported outside an event loop (e.g., module import or tests), skip scheduling.
+    pass

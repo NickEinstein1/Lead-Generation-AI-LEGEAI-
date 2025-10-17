@@ -34,20 +34,22 @@ class Permission(Enum):
     UPDATE_LEADS = "update_leads"
     DELETE_LEADS = "delete_leads"
     EXPORT_LEADS = "export_leads"
-    
+
     # Scoring
     VIEW_SCORES = "view_scores"
     GENERATE_SCORES = "generate_scores"
-    
+
     # Messages
     SEND_MESSAGES = "send_messages"
     VIEW_MESSAGES = "view_messages"
-    
-    # Admin
+
+    # Admin & Security
     MANAGE_USERS = "manage_users"
     VIEW_AUDIT_LOGS = "view_audit_logs"
     MANAGE_COMPLIANCE = "manage_compliance"
-    
+    VIEW_SECURITY = "view_security"
+    MANAGE_SECURITY = "manage_security"
+
     # API Access
     API_ACCESS = "api_access"
     BULK_OPERATIONS = "bulk_operations"
