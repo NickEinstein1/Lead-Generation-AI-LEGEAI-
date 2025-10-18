@@ -1,8 +1,14 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from pydantic import BaseModel, Field
 from typing import Optional, Dict, Any, List
 from uuid import uuid4
 from datetime import datetime
+import os
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+
+from database.connection import session_dep
+from models.lead import Lead
 
 # Minimal in-memory stores for MVP (replace with DB layer later)
 LEADS_DB: Dict[str, Dict[str, Any]] = {}
@@ -38,8 +44,35 @@ class LeadCreate(BaseModel):
 
 
 @router.post("", summary="Create/ingest a lead (idempotent)")
-async def create_lead(payload: LeadCreate):
-    # Idempotency check
+async def create_lead(payload: LeadCreate, session: AsyncSession = Depends(session_dep)):
+    use_db = os.getenv("USE_DB", "false").lower() == "true"
+
+    if use_db:
+        # Idempotency check in DB
+        existing = (await session.execute(select(Lead).where(Lead.idempotency_key == payload.idempotency_key))).scalar_one_or_none()
+        if existing:
+            return {"lead_id": str(existing.id), "status": "duplicate", "idempotent": True}
+
+        contact_info = payload.contact.dict() if payload.contact else {}
+        metadata = {
+            "geo": payload.geo.dict() if payload.geo else {},
+            "attributes": payload.attributes,
+        }
+        new_lead = Lead(
+            idempotency_key=payload.idempotency_key,
+            channel=payload.channel,
+            source=payload.source,
+            product_interest=payload.product_interest,
+            contact_info=contact_info,
+            consent=payload.consent,
+            metadata=metadata,
+        )
+        session.add(new_lead)
+        await session.flush()
+        await session.commit()
+        return {"lead_id": str(new_lead.id), "status": "created", "idempotent": False}
+
+    # In-memory fallback
     if payload.idempotency_key in LEADS_BY_IDEMPOTENCY:
         lead_id = LEADS_BY_IDEMPOTENCY[payload.idempotency_key]
         return {"lead_id": lead_id, "status": "duplicate", "idempotent": True}
@@ -68,7 +101,31 @@ async def create_lead(payload: LeadCreate):
 
 
 @router.get("", summary="List leads")
-async def list_leads(limit: int = 50, offset: int = 0):
+async def list_leads(limit: int = 50, offset: int = 0, session: AsyncSession = Depends(session_dep)):
+    use_db = os.getenv("USE_DB", "false").lower() == "true"
+
+    if use_db:
+        result = await session.execute(select(Lead).offset(offset).limit(limit))
+        rows = result.scalars().all()
+        # Basic total count (could optimize)
+        total = len((await session.execute(select(Lead))).scalars().all())
+        items = [
+            {
+                "id": str(r.id),
+                "source": r.source,
+                "channel": r.channel,
+                "product_interest": r.product_interest,
+                "contact": r.contact_info or {},
+                "attributes": (r.metadata or {}).get("attributes", {}),
+                "geo": (r.metadata or {}).get("geo", {}),
+                "consent": r.consent,
+                "created_at": str(r.created_at),
+                "updated_at": str(r.updated_at),
+            }
+            for r in rows
+        ]
+        return {"total": total, "limit": limit, "offset": offset, "items": items}
+
     items = list(LEADS_DB.values())
     total = len(items)
     return {
@@ -80,7 +137,26 @@ async def list_leads(limit: int = 50, offset: int = 0):
 
 
 @router.get("/{lead_id}", summary="Get lead details")
-async def get_lead(lead_id: str):
+async def get_lead(lead_id: str, session: AsyncSession = Depends(session_dep)):
+    use_db = os.getenv("USE_DB", "false").lower() == "true"
+
+    if use_db:
+        row = (await session.execute(select(Lead).where(Lead.id == int(lead_id)))).scalar_one_or_none() if lead_id.isdigit() else None
+        if not row:
+            raise HTTPException(status_code=404, detail="Lead not found")
+        return {
+            "id": str(row.id),
+            "source": row.source,
+            "channel": row.channel,
+            "product_interest": row.product_interest,
+            "contact": row.contact_info or {},
+            "attributes": (row.metadata or {}).get("attributes", {}),
+            "geo": (row.metadata or {}).get("geo", {}),
+            "consent": row.consent,
+            "created_at": str(row.created_at),
+            "updated_at": str(row.updated_at),
+        }
+
     lead = LEADS_DB.get(lead_id)
     if not lead:
         raise HTTPException(status_code=404, detail="Lead not found")

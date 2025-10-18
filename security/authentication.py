@@ -119,10 +119,21 @@ class AuthenticationManager:
             'port': 6379,
             'db': 4
         }
-        
-        self.redis_client = redis.Redis(**self.redis_config)
+
+        self.redis_client = None
+        self.redis_available = False
+        try:
+            url = os.getenv('REDIS_URL')
+            self.redis_client = redis.from_url(url) if url else redis.Redis(**self.redis_config)
+            # ping to confirm availability
+            self.redis_client.ping()
+            self.redis_available = True
+        except Exception as e:
+            logger.warning(f"Redis unavailable, using in-memory only: {e}")
+            self.redis_client = None
+
         self.fernet = Fernet(SecurityConfig.ENCRYPTION_KEY)
-        
+
         # Role-based permissions
         self.role_permissions = self._load_role_permissions()
         
@@ -302,12 +313,16 @@ class AuthenticationManager:
             'user_agent': user_agent
         }
         
-        self.redis_client.setex(
-            f"session:{session_id}",
-            int(timedelta(hours=SecurityConfig.SESSION_TIMEOUT_HOURS).total_seconds()),
-            self.fernet.encrypt(str(session_data).encode())
-        )
-        
+        if self.redis_available and self.redis_client:
+            try:
+                self.redis_client.setex(
+                    f"session:{session_id}",
+                    int(timedelta(hours=SecurityConfig.SESSION_TIMEOUT_HOURS).total_seconds()),
+                    self.fernet.encrypt(str(session_data).encode())
+                )
+            except Exception as e:
+                logger.debug(f"Redis setex failed (session cache ignored): {e}")
+
         return session_id
     
     def _cleanup_user_sessions(self, user_id: str):
@@ -329,15 +344,15 @@ class AuthenticationManager:
             # Check in-memory first
             session = self.sessions.get(session_id)
             
-            if not session:
-                # Check Redis
-                session_data = self.redis_client.get(f"session:{session_id}")
-                if not session_data:
-                    return False, None
-                
-                # Decrypt and parse session data
-                decrypted_data = self.fernet.decrypt(session_data).decode()
-                # Would parse the session data properly in production
+            if not session and self.redis_available and self.redis_client:
+                try:
+                    session_data = self.redis_client.get(f"session:{session_id}")
+                    if not session_data:
+                        return False, None
+                    # Decrypt (ignored for fallback demo)
+                    _ = self.fernet.decrypt(session_data)
+                except Exception as e:
+                    logger.debug(f"Redis get failed (session validation falls back to memory): {e}")
             
             if not session or not session.is_active:
                 return False, None
@@ -366,9 +381,13 @@ class AuthenticationManager:
                 session.is_active = False
                 self._log_security_event("logout", session.user_id, {"session_id": session_id})
             
-            # Remove from Redis
-            self.redis_client.delete(f"session:{session_id}")
-            
+            # Remove from Redis (best-effort)
+            if self.redis_available and self.redis_client:
+                try:
+                    self.redis_client.delete(f"session:{session_id}")
+                except Exception as e:
+                    logger.debug(f"Redis delete failed (logout continues): {e}")
+
             return True
             
         except Exception as e:
@@ -431,10 +450,14 @@ class AuthenticationManager:
             'metadata': metadata
         }
         
-        # Store in Redis for audit trail
-        self.redis_client.lpush('security_events', str(event))
-        self.redis_client.ltrim('security_events', 0, 10000)  # Keep last 10k events
-        
+        # Store in Redis for audit trail (best-effort)
+        if self.redis_available and self.redis_client:
+            try:
+                self.redis_client.lpush('security_events', str(event))
+                self.redis_client.ltrim('security_events', 0, 10000)  # Keep last 10k events
+            except Exception as e:
+                logger.debug(f"Redis audit log push failed (continuing): {e}")
+
         logger.info(f"Security event: {event_type} - {metadata}")
 
 # Authentication decorators
