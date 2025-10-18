@@ -28,7 +28,7 @@ class AnalyticsType(Enum):
     PREDICTIVE = "predictive"
     PRESCRIPTIVE = "prescriptive"
 
-class MetricType(Enum):
+class MetricType(Enum): # TODO: Expand this list 
     CONVERSION_RATE = "conversion_rate"
     REVENUE_PER_LEAD = "revenue_per_lead"
     LEAD_QUALITY_SCORE = "lead_quality_score"
