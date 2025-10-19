@@ -366,4 +366,258 @@ class BehavioralPredictionEngine:
                 opportunity_indicators=['recent_activity']
             )
     
+    def _extract_behavioral_features(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Extract behavioral features from raw data"""
+        
+        features = pd.DataFrame()
+        
+        # Engagement metrics
+        features['email_open_rate'] = data.get('email_opens', 0) / (data.get('emails_sent', 1) + 1e-6)
+        features['email_click_rate'] = data.get('email_clicks', 0) / (data.get('emails_sent', 1) + 1e-6)
+        features['website_visit_frequency'] = data.get('website_visits', 0) / 30  # per day
+        features['page_views_per_session'] = data.get('page_views', 0) / (data.get('sessions', 1) + 1e-6)
+        features['time_on_site'] = data.get('avg_session_duration', 0)
+        
+        # Interaction patterns
+        features['days_since_last_interaction'] = data.get('days_since_last_interaction', 999)
+        features['total_interactions'] = data.get('total_interactions', 0)
+        features['interaction_frequency'] = data.get('total_interactions', 0) / (data.get('days_in_pipeline', 1) + 1e-6)
+        features['response_rate'] = data.get('responses', 0) / (data.get('outreach_attempts', 1) + 1e-6)
+        
+        # Content engagement
+        features['content_downloads'] = data.get('content_downloads', 0)
+        features['webinar_attendance'] = data.get('webinar_attendance', 0)
+        features['social_media_engagement'] = data.get('social_engagement_score', 0)
+        
+        # Lifecycle metrics
+        features['days_in_pipeline'] = data.get('days_in_pipeline', 0)
+        features['stage_progression_rate'] = data.get('stage_changes', 0) / (data.get('days_in_pipeline', 1) + 1e-6)
+        features['stagnation_periods'] = data.get('stagnation_periods', 0)
+        
+        # Behavioral changes
+        features['engagement_trend'] = data.get('engagement_trend', 'stable').map({
+            'increasing': 1, 'stable': 0, 'decreasing': -1
+        }).fillna(0)
+        features['activity_pattern_change'] = data.get('activity_pattern_change', 0)
+        features['seasonal_behavior_factor'] = data.get('seasonal_factor', 1.0)
+        
+        return features.fillna(0)
     
+    def _extract_single_lead_features(self, lead_data: Dict[str, Any]) -> List[float]:
+        """Extract features for a single lead"""
+        
+        # Convert to DataFrame for consistency
+        df = pd.DataFrame([lead_data])
+        features_df = self._extract_behavioral_features(df)
+        return features_df.iloc[0].tolist()
+    
+    def _determine_engagement_pattern(self, engagement_score: float, lead_data: Dict[str, Any]) -> EngagementPattern:
+        """Determine engagement pattern based on score and trends"""
+        
+        trend = lead_data.get('engagement_trend', 'stable')
+        recent_activity = lead_data.get('recent_activity_score', 0.5)
+        
+        if engagement_score >= self.engagement_thresholds['highly_engaged']:
+            return EngagementPattern.HIGHLY_ENGAGED
+        elif engagement_score >= self.engagement_thresholds['moderately_engaged']:
+            if trend == 'increasing':
+                return EngagementPattern.HIGHLY_ENGAGED
+            else:
+                return EngagementPattern.MODERATELY_ENGAGED
+        elif engagement_score >= self.engagement_thresholds['declining_engagement']:
+            if trend == 'decreasing':
+                return EngagementPattern.DECLINING_ENGAGEMENT
+            else:
+                return EngagementPattern.MODERATELY_ENGAGED
+        elif engagement_score >= self.engagement_thresholds['dormant']:
+            if recent_activity > 0.3:
+                return EngagementPattern.RE_ENGAGING
+            else:
+                return EngagementPattern.DECLINING_ENGAGEMENT
+        else:
+            if recent_activity > 0.5:
+                return EngagementPattern.RE_ENGAGING
+            else:
+                return EngagementPattern.DORMANT
+    
+    def _recommend_touchpoints(self, next_action: NextBestAction, 
+                              engagement_pattern: EngagementPattern,
+                              churn_risk: ChurnRiskLevel) -> List[str]:
+        """Recommend optimal touchpoints based on predictions"""
+        
+        touchpoints = []
+        
+        # Base recommendations by action
+        action_touchpoints = {
+            NextBestAction.EMAIL_FOLLOW_UP: ['email', 'linkedin'],
+            NextBestAction.PHONE_CALL: ['phone', 'voicemail'],
+            NextBestAction.SEND_QUOTE: ['email', 'phone', 'portal'],
+            NextBestAction.SCHEDULE_MEETING: ['calendar_link', 'phone', 'email'],
+            NextBestAction.SEND_CONTENT: ['email', 'social_media', 'website'],
+            NextBestAction.NURTURE_SEQUENCE: ['email_sequence', 'content_hub'],
+            NextBestAction.DIRECT_OUTREACH: ['phone', 'linkedin', 'in_person'],
+            NextBestAction.WAIT_AND_MONITOR: ['website_tracking', 'email_monitoring']
+        }
+        
+        touchpoints.extend(action_touchpoints.get(next_action, ['email']))
+        
+        # Adjust based on engagement pattern
+        if engagement_pattern == EngagementPattern.HIGHLY_ENGAGED:
+            touchpoints.extend(['phone', 'meeting_request'])
+        elif engagement_pattern == EngagementPattern.DORMANT:
+            touchpoints.extend(['re_engagement_campaign', 'special_offer'])
+        elif engagement_pattern == EngagementPattern.RE_ENGAGING:
+            touchpoints.extend(['welcome_back_sequence', 'personalized_content'])
+        
+        # Adjust based on churn risk
+        if churn_risk == ChurnRiskLevel.CRITICAL:
+            touchpoints.extend(['urgent_phone_call', 'manager_outreach', 'retention_offer'])
+        elif churn_risk == ChurnRiskLevel.HIGH:
+            touchpoints.extend(['priority_follow_up', 'value_reinforcement'])
+        
+        return list(set(touchpoints))  # Remove duplicates
+    
+    def _identify_behavioral_triggers(self, lead_data: Dict[str, Any], 
+                                    engagement_pattern: EngagementPattern) -> List[str]:
+        """Identify behavioral triggers for the lead"""
+        
+        triggers = []
+        
+        # Website behavior triggers
+        if lead_data.get('recent_website_visits', 0) > 3:
+            triggers.append('high_website_activity')
+        
+        if lead_data.get('pricing_page_visits', 0) > 0:
+            triggers.append('pricing_interest')
+        
+        if lead_data.get('demo_page_visits', 0) > 0:
+            triggers.append('demo_interest')
+        
+        # Email behavior triggers
+        if lead_data.get('email_click_rate', 0) > 0.3:
+            triggers.append('high_email_engagement')
+        
+        if lead_data.get('email_forward_count', 0) > 0:
+            triggers.append('content_sharing')
+        
+        # Content engagement triggers
+        if lead_data.get('content_downloads', 0) > 2:
+            triggers.append('content_consumer')
+        
+        if lead_data.get('webinar_attendance', 0) > 0:
+            triggers.append('educational_interest')
+        
+        # Social media triggers
+        if lead_data.get('social_media_mentions', 0) > 0:
+            triggers.append('social_engagement')
+        
+        # Timing triggers
+        days_since_last_contact = lead_data.get('days_since_last_interaction', 999)
+        if days_since_last_contact > 14:
+            triggers.append('follow_up_due')
+        elif days_since_last_contact < 1:
+            triggers.append('recent_interaction')
+        
+        # Engagement pattern triggers
+        if engagement_pattern == EngagementPattern.RE_ENGAGING:
+            triggers.append('re_engagement_opportunity')
+        elif engagement_pattern == EngagementPattern.DECLINING_ENGAGEMENT:
+            triggers.append('engagement_decline')
+        
+        return triggers
+    
+    def _identify_risk_factors(self, lead_data: Dict[str, Any], 
+                              churn_risk: ChurnRiskLevel) -> List[str]:
+        """Identify risk factors that could lead to churn"""
+        
+        risk_factors = []
+        
+        # Engagement risks
+        if lead_data.get('email_open_rate', 0) < 0.1:
+            risk_factors.append('low_email_engagement')
+        
+        if lead_data.get('website_visits', 0) == 0:
+            risk_factors.append('no_website_activity')
+        
+        if lead_data.get('days_since_last_interaction', 0) > 30:
+            risk_factors.append('long_silence_period')
+        
+        # Response risks
+        if lead_data.get('response_rate', 0) < 0.1:
+            risk_factors.append('poor_response_rate')
+        
+        if lead_data.get('missed_calls', 0) > 3:
+            risk_factors.append('avoiding_contact')
+        
+        # Competitive risks
+        if lead_data.get('competitor_research', False):
+            risk_factors.append('competitor_evaluation')
+        
+        # Budget/timing risks
+        if lead_data.get('budget_concerns', False):
+            risk_factors.append('budget_constraints')
+        
+        if lead_data.get('timeline_delays', 0) > 2:
+            risk_factors.append('timeline_uncertainty')
+        
+        # Stakeholder risks
+        if lead_data.get('decision_maker_engagement', 0) < 0.3:
+            risk_factors.append('decision_maker_disengagement')
+        
+        # Seasonal risks
+        current_month = datetime.now().month
+        if current_month in [12, 1, 7, 8]:  # Holiday seasons
+            risk_factors.append('seasonal_slowdown')
+        
+        return risk_factors
+    
+    def _identify_opportunities(self, lead_data: Dict[str, Any], 
+                               engagement_score: float) -> List[str]:
+        """Identify opportunity indicators"""
+        
+        opportunities = []
+        
+        # High engagement opportunities
+        if engagement_score > 0.7:
+            opportunities.append('high_engagement_momentum')
+        
+        # Content engagement opportunities
+        if lead_data.get('content_downloads', 0) > 1:
+            opportunities.append('content_interest')
+        
+        if lead_data.get('case_study_views', 0) > 0:
+            opportunities.append('proof_seeking')
+        
+        # Behavioral opportunities
+        if lead_data.get('pricing_page_visits', 0) > 2:
+            opportunities.append('pricing_evaluation')
+        
+        if lead_data.get('demo_requests', 0) > 0:
+            opportunities.append('demo_interest')
+        
+        if lead_data.get('contact_form_submissions', 0) > 0:
+            opportunities.append('proactive_contact')
+        
+        # Social proof opportunities
+        if lead_data.get('referral_source', '') == 'customer_referral':
+            opportunities.append('warm_referral')
+        
+        if lead_data.get('social_media_engagement', 0) > 0.5:
+            opportunities.append('social_influence')
+        
+        # Timing opportunities
+        if lead_data.get('recent_job_change', False):
+            opportunities.append('new_role_opportunity')
+        
+        if lead_data.get('company_growth', False):
+            opportunities.append('expansion_opportunity')
+        
+        # Competitive opportunities
+        if lead_data.get('competitor_dissatisfaction', False):
+            opportunities.append('competitive_displacement')
+        
+        return opportunities
+
+# Global behavioral prediction engine
+behavioral_prediction_engine = BehavioralPredictionEngine()
+
