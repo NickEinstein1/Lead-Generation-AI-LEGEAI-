@@ -81,6 +81,17 @@ models/*/artifacts/
 data/
 *.csv
 *.json
+
+# Allow project manifests
+!package.json
+!package-lock.json
+!frontend/package.json
+!frontend/package-lock.json
+
+
+# Keep the frontend manifest tracked (some users run npm in repo root)
+!frontend/package.json
+
 *.parquet
 
 # Temporary files

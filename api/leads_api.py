@@ -9,6 +9,7 @@ from sqlalchemy import select
 
 from database.connection import session_dep
 from models.lead import Lead
+from models.score import Score
 
 # Minimal in-memory stores for MVP (replace with DB layer later)
 LEADS_DB: Dict[str, Dict[str, Any]] = {}
@@ -178,20 +179,31 @@ class ScoreInput(BaseModel):
 
 
 @router.post("/{lead_id}/score", summary="Score a lead using current model")
-async def score_lead(lead_id: str, payload: ScoreInput):
-    lead = LEADS_DB.get(lead_id)
-    if not lead:
-        raise HTTPException(status_code=404, detail="Lead not found")
+async def score_lead(lead_id: str, payload: ScoreInput, session: AsyncSession = Depends(session_dep)):
+    use_db = os.getenv("USE_DB", "false").lower() == "true"
 
     try:
         from models.insurance_lead_scoring.inference import InsuranceLeadScorer
         scorer = InsuranceLeadScorer()
-        # Merge attributes from lead with payload.features for flexibility
-        features = {
-            **(lead.get("attributes") or {}),
-            **payload.features,
-        }
-        # Map common fields if provided explicitly
+
+        if use_db:
+            row = (await session.execute(select(Lead).where(Lead.id == int(lead_id)))).scalar_one_or_none() if lead_id.isdigit() else None
+            if not row:
+                raise HTTPException(status_code=404, detail="Lead not found")
+            # Merge metadata attributes with payload features
+            features = {
+                **(((row.metadata or {}).get("attributes")) or {}),
+                **payload.features,
+            }
+        else:
+            lead = LEADS_DB.get(lead_id)
+            if not lead:
+                raise HTTPException(status_code=404, detail="Lead not found")
+            features = {
+                **(lead.get("attributes") or {}),
+                **payload.features,
+            }
+
         if payload.age is not None:
             features["age"] = payload.age
         if payload.income is not None:
@@ -208,21 +220,56 @@ async def score_lead(lead_id: str, payload: ScoreInput):
             features["past_claims_count"] = payload.past_claims_count
 
         result = scorer.score_lead(features)
-        score_entry = {
-            "lead_id": lead_id,
-            "score": result.get("score"),
-            "band": result.get("band"),
-            "explanation": result.get("explanation"),
-            "model_version": result.get("model_version"),
-            "scored_at": datetime.utcnow().isoformat(),
-        }
-        SCORES_DB.setdefault(lead_id, []).append(score_entry)
-        return score_entry
+
+        if use_db:
+            db_score = Score(
+                lead_id=row.id,
+                score=result.get("score"),
+                band=result.get("band"),
+                explanation=result.get("explanation"),
+                model_version=result.get("model_version"),
+                features=features,
+            )
+            session.add(db_score)
+            await session.commit()
+            return {
+                "lead_id": str(row.id),
+                "score": db_score.score,
+                "band": db_score.band,
+                "explanation": db_score.explanation,
+                "model_version": db_score.model_version,
+                "scored_at": datetime.utcnow().isoformat(),
+            }
+        else:
+            score_entry = {
+                "lead_id": lead_id,
+                "score": result.get("score"),
+                "band": result.get("band"),
+                "explanation": result.get("explanation"),
+                "model_version": result.get("model_version"),
+                "scored_at": datetime.utcnow().isoformat(),
+            }
+            SCORES_DB.setdefault(lead_id, []).append(score_entry)
+            return score_entry
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Scoring failed: {e}")
 
 
 @router.get("/{lead_id}/scores", summary="Get score history for a lead")
-async def get_scores(lead_id: str):
+async def get_scores(lead_id: str, session: AsyncSession = Depends(session_dep)):
+    use_db = os.getenv("USE_DB", "false").lower() == "true"
+    if use_db:
+        rows = (await session.execute(select(Score).where(Score.lead_id == int(lead_id)).order_by(Score.scored_at.desc()))).scalars().all() if lead_id.isdigit() else []
+        return [
+            {
+                "lead_id": str(r.lead_id),
+                "score": r.score,
+                "band": r.band,
+                "explanation": r.explanation,
+                "model_version": r.model_version,
+                "scored_at": str(r.scored_at),
+            }
+            for r in rows
+        ]
     return SCORES_DB.get(lead_id, [])
 
