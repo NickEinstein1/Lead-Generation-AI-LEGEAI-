@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { register, setSession } from "@/lib/auth";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function RegisterPage() {
   const [error, setError] = useState<string>("");
@@ -28,15 +29,16 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-neutral-50">
-      <form onSubmit={onSubmit} className="w-full max-w-sm bg-white border rounded p-6 space-y-4 shadow-sm">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 via-white to-blue-50 relative">
+      <Link href="/" className="absolute top-4 left-4 text-sm text-neutral-800 hover:text-primary">← Back to home</Link>
+      <form onSubmit={onSubmit} className="w-full max-w-sm bg-white/85 backdrop-blur border rounded-xl p-6 space-y-4 shadow-md">
         <h1 className="text-xl font-semibold text-neutral-900">Create account</h1>
-        <input name="email" type="email" placeholder="Email" className="w-full border border-border px-3 py-2 rounded" />
-        <input name="username" placeholder="Username (optional)" className="w-full border border-border px-3 py-2 rounded" />
-        <input name="password" type="password" placeholder="Password" className="w-full border border-border px-3 py-2 rounded" />
+        <input name="email" type="email" placeholder="Email" className="w-full border border-border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/60" />
+        <input name="username" placeholder="Username (optional)" className="w-full border border-border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/60" />
+        <input name="password" type="password" placeholder="Password" className="w-full border border-border px-3 py-2 rounded focus:outline-none focus:ring-2 focus:ring-primary/60" />
         {error && <div className="text-sm text-red-600">{error}</div>}
-        <button disabled={loading} className="w-full bg-primary text-primary-foreground py-2 rounded">{loading ? "Creating..." : "Create account"}</button>
-        <div className="text-sm text-neutral-600">Have an account? <a href="/login" className="underline">Sign in</a></div>
+        <button disabled={loading} className="w-full bg-primary text-primary-foreground py-2.5 rounded-md shadow-sm hover:shadow transition">{loading ? "Creating..." : "Create account"}</button>
+        <div className="text-sm text-neutral-700">Have an account? <a href="/login" className="underline">Sign in</a></div>
       </form>
     </div>
   );

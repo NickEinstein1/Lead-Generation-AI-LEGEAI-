@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
-import { getLead, scoreLead } from "@/lib/api";
+import { getLead, scoreLead, listDocumentsForLead, createDocumentForLead, simulateSignDocument } from "@/lib/api";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -9,6 +9,18 @@ export default function LeadDetailPage() {
   const [lead, setLead] = useState<any>(null);
   const [error, setError] = useState<string>("");
   const [scoring, setScoring] = useState(false);
+
+  const [docs, setDocs] = useState<any[]>([]);
+  const [creating, setCreating] = useState(false);
+
+  async function fetchDocs() {
+    if (!id) return;
+    try {
+      const d = await listDocumentsForLead(id);
+      const items = Array.isArray(d) ? d : (d?.items || []);
+      setDocs(items);
+    } catch (_) {}
+  }
 
   useEffect(() => {
     if (!id) return;
@@ -19,8 +31,35 @@ export default function LeadDetailPage() {
       } catch (e: any) {
         setError(e?.message || "Failed to load lead");
       }
+      await fetchDocs();
     })();
   }, [id]);
+
+  async function onCreateDoc() {
+    try {
+      setCreating(true);
+      await createDocumentForLead(id, "Insurance Agreement", { provider: 'docuseal' });
+      await fetchDocs();
+    } catch (e: any) {
+      alert(e?.message || "Create document failed");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  function onOpenSign(url?: string) {
+    if (!url) return alert("No signing URL available yet");
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  async function onSimulateSign(docId: number) {
+    try {
+      await simulateSignDocument(docId);
+      await fetchDocs();
+    } catch (e: any) {
+      alert(e?.message || "Sign failed");
+    }
+  }
 
   async function onScore() {
     try {
@@ -57,6 +96,44 @@ export default function LeadDetailPage() {
               <button disabled={scoring} onClick={onScore} className="bg-primary text-white rounded px-3 py-2">
                 {scoring ? "Scoring..." : "Score lead"}
               </button>
+            </div>
+
+            <div className="rounded border bg-white p-4 shadow-sm md:col-span-2">
+              <div className="flex items-center justify-between mb-2">
+                <div className="font-medium">Documents</div>
+                <button onClick={onCreateDoc} disabled={creating} className="text-sm bg-primary text-white px-3 py-1.5 rounded">
+                  {creating ? "Creating..." : "+ Create"}
+                </button>
+              </div>
+              {docs.length === 0 ? (
+                <div className="text-sm text-neutral-600">No documents yet.</div>
+              ) : (
+                <ul className="text-sm space-y-2">
+                  {docs.map((d: any) => (
+                    <li key={d.id} className="flex items-center justify-between rounded border p-2">
+                      <div>
+                        <div className="font-medium">{d.title}</div>
+                        <div className="text-xs text-neutral-600 flex items-center gap-2">
+                          <span className={
+                            d.status === 'signed' ? 'text-green-700' : d.status === 'declined' ? 'text-red-700' : 'text-amber-700'
+                          }>
+                            {d.status}
+                          </span>
+                          {d.signed_at && <span className="text-neutral-500">• {new Date(d.signed_at).toLocaleString()}</span>}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {d.status !== 'signed' && d.signing_url && (
+                          <button onClick={() => onOpenSign(d.signing_url)} className="text-xs border px-2 py-1 rounded">Sign Document</button>
+                        )}
+                        {d.provider === 'internal' && d.status !== 'signed' && (
+                          <button onClick={() => onSimulateSign(d.id)} className="text-xs border px-2 py-1 rounded">Simulate sign</button>
+                        )}
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
         )}

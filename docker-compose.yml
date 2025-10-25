@@ -4,7 +4,7 @@ services:
   api:
     build: .
     container_name: leadgen-api
-    command: uvicorn api.main:app --host 0.0.0.0 --port 8000
+    command: sh -c "alembic upgrade head && uvicorn api.main:app --host 0.0.0.0 --port 8000"
     ports:
       - "8000:8000"
     environment:
@@ -12,6 +12,10 @@ services:
       - DATABASE_URL=${DATABASE_URL:-postgresql+asyncpg://postgres:postgres@db:5432/leadgen}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
       - JWT_SECRET_KEY=${JWT_SECRET_KEY:-devsecret}
+      - DOCUSEAL_API_KEY=${DOCUSEAL_API_KEY}
+      - DOCUSEAL_TEMPLATE_ID=${DOCUSEAL_TEMPLATE_ID:-}
+      - DOCUSEAL_FORM_BASE=${DOCUSEAL_FORM_BASE:-https://docuseal.com}
+      - DOCUSEAL_API_BASE=${DOCUSEAL_API_BASE:-https://api.docuseal.com}
     depends_on:
       - redis
       - db

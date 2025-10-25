@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from prometheus_fastapi_instrumentator import Instrumentator
+
 
 # Routers
 from api.security_api import router as security_router
@@ -8,7 +10,11 @@ from api.real_time_pipeline_api import router as pipeline_router
 from api.dashboard_api import router as dashboard_router
 from api.leads_api import router as leads_router
 from api.routing_api import router as routing_router
+from api.webhooks_api import router as webhooks_router
 from api.auth_api import router as auth_router
+
+from api.documents_api import router as documents_router
+from api.docuseal_webhooks import router as docuseal_webhooks_router
 
 import os
 from database.connection import init_db
@@ -39,6 +45,12 @@ app.include_router(pipeline_router, prefix="/v1")
 app.include_router(dashboard_router, prefix="/v1")
 
 
+# Routers for docs are mounted earlier; ensure /v1/documents is available in OpenAPI
+
+# Prometheus metrics
+Instrumentator().instrument(app).expose(app, endpoint="/v1/metrics", include_in_schema=False)
+
+
 @app.on_event("startup")
 async def on_startup():
     # Initialize DB only when explicitly enabled
@@ -50,7 +62,11 @@ async def on_startup():
             logger.warning(f"Database init failed (continuing with in-memory): {e}")
 
 app.include_router(leads_router, prefix="/v1")
+app.include_router(documents_router, prefix="/v1")
+
 app.include_router(routing_router, prefix="/v1")
+app.include_router(webhooks_router, prefix="/v1")
+app.include_router(docuseal_webhooks_router, prefix="/v1")
 
 
 @app.get("/v1/health")
@@ -58,8 +74,4 @@ async def health():
     return {"status": "ok"}
 
 
-@app.get("/v1/metrics")
-async def metrics():
-    # Placeholder; wire Prometheus later
-    return {"status": "ok", "metrics": {"uptime": "n/a"}}
 

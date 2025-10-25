@@ -1,24 +1,48 @@
 "use client";
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
+import { getDashboardOverview, getLeadTimeseries, getScoreTimeseries } from "@/lib/api";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 
 const MiniAccent3D = dynamic(() => import("@/components/Hero3D").then(m => m.default), { ssr: false });
 
 export default function AnalyticsPage() {
-  const [data, setData] = useState<{ name: string; leads: number; score: number }[]>([]);
+  const [data, setData] = useState<{ date: string; leads: number; score: number }[]>([]);
+  const [overview, setOverview] = useState<any>(null);
 
   useEffect(() => {
-    // Demo dataset; wire up to real analytics later
-    setData([
-      { name: "Mon", leads: 12, score: 62 },
-      { name: "Tue", leads: 18, score: 68 },
-      { name: "Wed", leads: 15, score: 64 },
-      { name: "Thu", leads: 22, score: 72 },
-      { name: "Fri", leads: 30, score: 78 },
-      { name: "Sat", leads: 20, score: 69 },
-      { name: "Sun", leads: 14, score: 66 },
-    ]);
+    (async () => {
+      try {
+        const [ovr, leadsTs, scoresTs] = await Promise.all([
+          getDashboardOverview(),
+          getLeadTimeseries(14),
+          getScoreTimeseries(14),
+        ]);
+        setOverview(ovr?.overview || null);
+        // Merge by date
+        const leadsMap = new Map<string, number>(
+          (leadsTs?.series || []).map((d: any) => [d.date, d.leads])
+        );
+        const scoreMap = new Map<string, number>(
+          (scoresTs?.series || []).map((d: any) => [d.date, d.avg_score])
+        );
+        const dates = Array.from(new Set<string>([...leadsMap.keys(), ...scoreMap.keys()])).sort();
+        setData(
+          dates.map((d) => ({ date: d, leads: leadsMap.get(d) || 0, score: scoreMap.get(d) || 0 }))
+        );
+      } catch (e) {
+        // fallback demo if API not ready
+        setData([
+          { date: "Mon", leads: 12, score: 62 },
+          { date: "Tue", leads: 18, score: 68 },
+          { date: "Wed", leads: 15, score: 64 },
+          { date: "Thu", leads: 22, score: 72 },
+          { date: "Fri", leads: 30, score: 78 },
+          { date: "Sat", leads: 20, score: 69 },
+          { date: "Sun", leads: 14, score: 66 },
+        ]);
+      }
+    })();
   }, []);
 
   return (
@@ -38,16 +62,16 @@ export default function AnalyticsPage() {
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="text-neutral-500 text-sm">Leads (7d)</div>
-              <div className="text-2xl font-semibold">131</div>
+              <div className="text-neutral-500 text-sm">Assignments (total)</div>
+              <div className="text-2xl font-semibold">{overview?.routing?.total_assignments ?? 0}</div>
             </div>
             <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="text-neutral-500 text-sm">Avg Score</div>
-              <div className="text-2xl font-semibold">68</div>
+              <div className="text-neutral-500 text-sm">Avg Assignments/Rep</div>
+              <div className="text-2xl font-semibold">{overview?.routing?.average_assignments ?? 0}</div>
             </div>
             <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="text-neutral-500 text-sm">Conversion</div>
-              <div className="text-2xl font-semibold">12.4%</div>
+              <div className="text-neutral-500 text-sm">Task Completion</div>
+              <div className="text-2xl font-semibold">{overview?.tasks?.completion_rate ? `${(overview.tasks.completion_rate * 100).toFixed(1)}%` : "-"}</div>
             </div>
           </div>
 
@@ -57,7 +81,7 @@ export default function AnalyticsPage() {
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
+                  <XAxis dataKey="date" />
                   <YAxis yAxisId="left" />
                   <YAxis yAxisId="right" orientation="right" />
                   <Tooltip />
