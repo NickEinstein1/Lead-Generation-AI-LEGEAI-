@@ -8,6 +8,7 @@ const nextConfig = {
     // Allow production builds to succeed even if there are TS type errors.
     ignoreBuildErrors: true,
   },
+  outputFileTracingRoot: __dirname,
 };
 
 module.exports = nextConfig;

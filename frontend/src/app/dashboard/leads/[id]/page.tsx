@@ -1,7 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { getLead, scoreLead, listDocumentsForLead, createDocumentForLead, simulateSignDocument } from "@/lib/api";
+import LeadInfo from "@/components/LeadInfo";
+import LeadActions from "@/components/LeadActions";
+import DocumentsManager from "@/components/DocumentsManager";
+import LeadManagement from "@/components/LeadManagement";
+import DashboardLayout from "@/components/DashboardLayout";
 
 export default function LeadDetailPage() {
   const params = useParams();
@@ -74,71 +79,68 @@ export default function LeadDetailPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#eef2f7] p-6">
-      <div className="mx-auto max-w-4xl space-y-4">
-        <h1 className="text-2xl font-semibold text-neutral-900">Lead {id}</h1>
-        {error && <div className="text-red-600">{error}</div>}
-        {!lead ? (
-          <div className="text-neutral-600">Loading...</div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="font-medium mb-2">Details</div>
-              <div className="text-sm text-neutral-700 space-y-1">
-                <div><span className="text-neutral-500">Source:</span> {lead.source || "-"}</div>
-                <div><span className="text-neutral-500">Channel:</span> {lead.channel || "-"}</div>
-                <div><span className="text-neutral-500">Product:</span> {lead.product_interest || "-"}</div>
-                <div><span className="text-neutral-500">Email:</span> {lead.contact?.email || "-"}</div>
-              </div>
-            </div>
-            <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="font-medium mb-2">Actions</div>
-              <button disabled={scoring} onClick={onScore} className="bg-primary text-white rounded px-3 py-2">
-                {scoring ? "Scoring..." : "Score lead"}
-              </button>
-            </div>
+    <DashboardLayout>
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-slate-900">Lead Details</h1>
+          <button
+            onClick={() => window.history.back()}
+            className="text-slate-600 hover:text-slate-900 font-medium"
+          >
+            ← Back
+          </button>
+        </div>
 
-            <div className="rounded border bg-white p-4 shadow-sm md:col-span-2">
-              <div className="flex items-center justify-between mb-2">
-                <div className="font-medium">Documents</div>
-                <button onClick={onCreateDoc} disabled={creating} className="text-sm bg-primary text-white px-3 py-1.5 rounded">
-                  {creating ? "Creating..." : "+ Create"}
-                </button>
-              </div>
-              {docs.length === 0 ? (
-                <div className="text-sm text-neutral-600">No documents yet.</div>
-              ) : (
-                <ul className="text-sm space-y-2">
-                  {docs.map((d: any) => (
-                    <li key={d.id} className="flex items-center justify-between rounded border p-2">
-                      <div>
-                        <div className="font-medium">{d.title}</div>
-                        <div className="text-xs text-neutral-600 flex items-center gap-2">
-                          <span className={
-                            d.status === 'signed' ? 'text-green-700' : d.status === 'declined' ? 'text-red-700' : 'text-amber-700'
-                          }>
-                            {d.status}
-                          </span>
-                          {d.signed_at && <span className="text-neutral-500">• {new Date(d.signed_at).toLocaleString()}</span>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {d.status !== 'signed' && d.signing_url && (
-                          <button onClick={() => onOpenSign(d.signing_url)} className="text-xs border px-2 py-1 rounded">Sign Document</button>
-                        )}
-                        {d.provider === 'internal' && d.status !== 'signed' && (
-                          <button onClick={() => onSimulateSign(d.id)} className="text-xs border px-2 py-1 rounded">Simulate sign</button>
-                        )}
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
+        {/* Error Message */}
+        {error && (
+          <div className="bg-red-50 border-2 border-red-200 text-red-700 p-4 rounded-lg font-medium">
+            {error}
           </div>
         )}
+
+        {/* Loading State */}
+        {!lead ? (
+          <div className="bg-white border-2 border-blue-200 rounded-lg p-8 text-center">
+            <p className="text-slate-600 font-medium">Loading lead details...</p>
+          </div>
+        ) : (
+          <>
+            {/* Lead Information */}
+            <section>
+              <LeadInfo lead={lead} />
+            </section>
+
+            {/* Main Grid: Actions and Documents */}
+            <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <LeadActions
+                  leadId={id}
+                  onScore={onScore}
+                  onCreateDoc={onCreateDoc}
+                  scoring={scoring}
+                  creating={creating}
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <DocumentsManager
+                  documents={docs}
+                  onCreateDoc={onCreateDoc}
+                  onOpenSign={onOpenSign}
+                  onSimulateSign={onSimulateSign}
+                  creating={creating}
+                />
+              </div>
+            </section>
+
+            {/* Activity Timeline */}
+            <section>
+              <LeadManagement />
+            </section>
+          </>
+        )}
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

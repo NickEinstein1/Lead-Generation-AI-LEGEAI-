@@ -613,8 +613,8 @@ kubectl rollout restart deployment/insurance-scoring-api
 - **Encryption**: TLS 1.3 for all communications
 
 #### Data Security
-- **Encryption at Rest**: AES-256 database encryption
-- **Encryption in Transit**: TLS 1.3
+- **Encryption at Rest**: *****
+- **Encryption in Transit**:****
 - **Access Controls**: Role-based permissions
 - **Audit Logging**: Complete access audit trail
 

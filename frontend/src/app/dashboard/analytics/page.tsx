@@ -3,6 +3,9 @@ import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { getDashboardOverview, getLeadTimeseries, getScoreTimeseries } from "@/lib/api";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import ConversionFunnel from "@/components/ConversionFunnel";
+import KeyMetrics from "@/components/KeyMetrics";
+import DashboardLayout from "@/components/DashboardLayout";
 
 const MiniAccent3D = dynamic(() => import("@/components/Hero3D").then(m => m.default), { ssr: false });
 
@@ -46,14 +49,14 @@ export default function AnalyticsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#f8fafc] to-[#eef2f7]">
+    <DashboardLayout>
       <div className="relative overflow-hidden">
-        <div className="absolute right-0 top-0 h-40 w-40 opacity-30 blur-2xl rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-300/30 via-blue-400/10 to-transparent" />
-        <div className="mx-auto max-w-6xl px-6 py-8">
+        <div className="absolute right-0 top-0 h-40 w-40 opacity-30 blur-2xl rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-400/40 via-blue-500/20 to-transparent" />
+        <div className="mx-auto max-w-6xl">
           <div className="flex items-center justify-between gap-6">
             <div>
-              <h1 className="text-2xl font-semibold text-neutral-900">Analytics</h1>
-              <p className="text-neutral-600">Funnel, sources, and model performance at a glance.</p>
+              <h1 className="text-2xl font-bold text-slate-900">Analytics</h1>
+              <p className="text-slate-700 font-medium">Funnel, sources, and model performance at a glance.</p>
             </div>
             <div className="h-16 w-32 opacity-70">
               <MiniAccent3D />
@@ -61,39 +64,43 @@ export default function AnalyticsPage() {
           </div>
 
           <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="text-neutral-500 text-sm">Assignments (total)</div>
-              <div className="text-2xl font-semibold">{overview?.routing?.total_assignments ?? 0}</div>
+            <div className="rounded border-2 border-blue-200 bg-white p-4 shadow-md hover:shadow-lg transition">
+              <div className="text-slate-600 text-sm font-medium">Assignments (total)</div>
+              <div className="text-2xl font-bold text-blue-700">{overview?.routing?.total_assignments ?? 0}</div>
             </div>
-            <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="text-neutral-500 text-sm">Avg Assignments/Rep</div>
-              <div className="text-2xl font-semibold">{overview?.routing?.average_assignments ?? 0}</div>
+            <div className="rounded border-2 border-blue-200 bg-white p-4 shadow-md hover:shadow-lg transition">
+              <div className="text-slate-600 text-sm font-medium">Avg Assignments/Rep</div>
+              <div className="text-2xl font-bold text-blue-700">{overview?.routing?.average_assignments ?? 0}</div>
             </div>
-            <div className="rounded border bg-white p-4 shadow-sm">
-              <div className="text-neutral-500 text-sm">Task Completion</div>
-              <div className="text-2xl font-semibold">{overview?.tasks?.completion_rate ? `${(overview.tasks.completion_rate * 100).toFixed(1)}%` : "-"}</div>
+            <div className="rounded border-2 border-blue-200 bg-white p-4 shadow-md hover:shadow-lg transition">
+              <div className="text-slate-600 text-sm font-medium">Task Completion</div>
+              <div className="text-2xl font-bold text-blue-700">{overview?.tasks?.completion_rate ? `${(overview.tasks.completion_rate * 100).toFixed(1)}%` : "-"}</div>
             </div>
           </div>
 
-          <div className="mt-8 rounded border bg-white p-4 shadow-sm">
-            <div className="text-neutral-900 font-medium mb-2">Leads & Score Trend</div>
+          <div className="mt-8 rounded border-2 border-blue-200 bg-white p-4 shadow-md">
+            <div className="text-slate-900 font-bold mb-2">Leads & Score Trend</div>
             <div className="h-72">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="date" />
-                  <YAxis yAxisId="left" />
-                  <YAxis yAxisId="right" orientation="right" />
-                  <Tooltip />
-                  <Line yAxisId="left" type="monotone" dataKey="leads" stroke="#2563eb" strokeWidth={2} />
-                  <Line yAxisId="right" type="monotone" dataKey="score" stroke="#60a5fa" strokeWidth={2} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                  <XAxis dataKey="date" stroke="#64748b" />
+                  <YAxis yAxisId="left" stroke="#64748b" />
+                  <YAxis yAxisId="right" orientation="right" stroke="#64748b" />
+                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "2px solid #1e40af", borderRadius: "8px", color: "#0f172a" }} />
+                  <Line yAxisId="left" type="monotone" dataKey="leads" stroke="#1e40af" strokeWidth={3} />
+                  <Line yAxisId="right" type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
+
+          <div className="mt-8">
+            <ConversionFunnel />
+          </div>
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 }
 

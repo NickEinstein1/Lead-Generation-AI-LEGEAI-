@@ -43,38 +43,38 @@ export default function NewLeadPage() {
   }
 
   return (
-    <div className="min-h-screen p-8 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-semibold mb-4">New Lead</h1>
-      <form onSubmit={onSubmit} className="space-y-4">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white p-8 max-w-2xl mx-auto">
+      <h1 className="text-2xl font-bold text-slate-900 mb-4">New Lead</h1>
+      <form onSubmit={onSubmit} className="space-y-4 bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md">
         <div className="grid grid-cols-2 gap-4">
-          <input name="first_name" placeholder="First name" className="border px-3 py-2 rounded" />
-          <input name="last_name" placeholder="Last name" className="border px-3 py-2 rounded" />
+          <input name="first_name" placeholder="First name" className="border-2 border-blue-200 px-3 py-2 rounded text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium" />
+          <input name="last_name" placeholder="Last name" className="border-2 border-blue-200 px-3 py-2 rounded text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium" />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <input name="email" type="email" placeholder="Email" className="border px-3 py-2 rounded" />
-          <input name="phone" placeholder="Phone" className="border px-3 py-2 rounded" />
+          <input name="email" type="email" placeholder="Email" className="border-2 border-blue-200 px-3 py-2 rounded text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium" />
+          <input name="phone" placeholder="Phone" className="border-2 border-blue-200 px-3 py-2 rounded text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium" />
         </div>
         <div className="grid grid-cols-2 gap-4">
-          <select name="product_interest" className="border px-3 py-2 rounded">
+          <select name="product_interest" className="border-2 border-blue-200 px-3 py-2 rounded text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium">
             <option value="">Select product</option>
             <option value="auto">Auto</option>
             <option value="home">Home</option>
             <option value="life">Life</option>
             <option value="health">Health</option>
           </select>
-          <input name="state" placeholder="State (e.g., CA)" className="border px-3 py-2 rounded" />
+          <input name="state" placeholder="State (e.g., CA)" className="border-2 border-blue-200 px-3 py-2 rounded text-slate-900 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent font-medium" />
         </div>
-        <button type="submit" disabled={loading} className="bg-black text-white px-4 py-2 rounded">
+        <button type="submit" disabled={loading} className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800 font-medium disabled:opacity-50 w-full">
           {loading ? "Submitting..." : "Submit Lead"}
         </button>
       </form>
       {status && (
-        <div className="mt-4 text-sm space-y-2">
-          <div>Status: {status}</div>
+        <div className="mt-4 text-sm space-y-2 bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md">
+          <div className="text-slate-900 font-bold">Status: <span className="text-blue-700">{status}</span></div>
           {leadId && (
             <div className="space-y-2">
-              <div>
-                Lead ID: <code className="px-1 py-0.5 bg-gray-100 rounded">{leadId}</code>
+              <div className="text-slate-900 font-medium">
+                Lead ID: <code className="px-2 py-1 bg-blue-50 border border-blue-200 rounded text-blue-700 font-mono">{leadId}</code>
               </div>
               <div className="flex gap-2">
                 <button onClick={async () => {
@@ -85,7 +85,7 @@ export default function NewLeadPage() {
                   } catch (e: unknown) {
                     setStatus(e instanceof Error ? e.message : "Score failed");
                   } finally { setLoading(false); }
-                }} className="border px-3 py-1 rounded">Score Lead</button>
+                }} className="border-2 border-blue-700 text-blue-700 px-3 py-1 rounded hover:bg-blue-50 font-medium">Score Lead</button>
                 <button onClick={async () => {
                   setLoading(true);
                   try {
@@ -94,7 +94,7 @@ export default function NewLeadPage() {
                   } catch (e: unknown) {
                     setStatus(e instanceof Error ? e.message : "Route failed");
                   } finally { setLoading(false); }
-                }} className="border px-3 py-1 rounded">Route Lead</button>
+                }} className="border-2 border-blue-700 text-blue-700 px-3 py-1 rounded hover:bg-blue-50 font-medium">Route Lead</button>
               </div>
             </div>
           )}

@@ -1,5 +1,5 @@
-# Documentation folder
-docs/
+# Markdown folder to ignore
+Markdown/
 
 # Python
 __pycache__/
