@@ -28,9 +28,13 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-neutral-50 via-white to-blue-50 relative">
-      <Link href="/" className="absolute top-4 left-4 text-sm text-neutral-800 hover:text-blue-600">← Back to home</Link>
-      <form onSubmit={onSubmit} className="w-full max-w-sm bg-white border border-neutral-200 rounded-xl p-6 space-y-4 shadow-lg">
+    <div className="relative min-h-screen flex items-center justify-center">
+      <div className="pointer-events-none absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(0,0,0,0.03)_1px,transparent_1px),linear-gradient(to_bottom,rgba(0,0,0,0.03)_1px,transparent_1px)] bg-[size:24px_24px]" />
+        <div className="absolute -top-32 right-[-10%] h-[420px] w-[420px] opacity-40 blur-3xl rounded-full bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-300/20 via-blue-400/10 to-transparent" />
+      </div>
+      <Link href="/" className="absolute top-4 left-4 text-sm text-neutral-900 hover:text-primary">← Back to home</Link>
+      <form onSubmit={onSubmit} className="w-full max-w-sm bg-white/85 backdrop-blur border rounded-xl p-6 space-y-4 shadow-md">
         <h1 className="text-2xl font-semibold text-neutral-900">Sign in</h1>
         <div>
           <input

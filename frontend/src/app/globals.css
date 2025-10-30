@@ -37,3 +37,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
   letter-spacing: 0.01em;
 }
+
+
+/* Improve selection and add utility classes for glass/elevation */
+::selection { background: #dbeafe; color: #111827; }
+
+@layer utilities {
+  .glass {
+    background-color: rgba(255, 255, 255, 0.85);
+    -webkit-backdrop-filter: saturate(1.25) blur(8px);
+    backdrop-filter: saturate(1.25) blur(8px);
+  }
+  .elevated {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 8px 24px rgba(2, 6, 23, 0.06);
+  }
+}
