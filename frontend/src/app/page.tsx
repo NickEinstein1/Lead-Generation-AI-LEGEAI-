@@ -18,20 +18,20 @@ export default function Landing() {
       </div>
 
       {/* Header */}
-      <header className="px-6 py-4">
+      <header className="sticky top-0 z-50 bg-white/70 supports-[backdrop-filter]:bg-white/60 backdrop-blur border-b border-neutral-200/80 px-6 py-3">
         <div className="mx-auto max-w-6xl flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 rounded-md bg-primary/10 border border-primary/20 flex items-center justify-center text-primary font-bold">L</div>
             <span className="font-semibold text-neutral-900">LEGEAI</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm">
-            <Link href="#features" className="text-neutral-900 hover:text-primary">Features</Link>
-            <Link href="#how-it-works" className="text-neutral-900 hover:text-primary">How it works</Link>
-            <Link href="#pricing" className="text-neutral-900 hover:text-primary">Pricing</Link>
+            <Link href="#features" className="text-neutral-800 hover:text-primary transition-colors">Features</Link>
+            <Link href="#how-it-works" className="text-neutral-800 hover:text-primary transition-colors">How it works</Link>
+            <Link href="#pricing" className="text-neutral-800 hover:text-primary transition-colors">Pricing</Link>
           </nav>
           <div className="flex items-center gap-3 text-sm">
-            <Link href="/login" className="text-neutral-900 hover:text-primary">Login</Link>
-            <Link href="/register" className="bg-primary text-white px-3 py-2 rounded shadow-sm hover:shadow-md transition">Get started</Link>
+            <Link href="/login" className="text-neutral-800 hover:text-primary transition-colors">Login</Link>
+            <Link href="/register" className="bg-primary text-white px-3 py-2 rounded-md shadow-sm hover:shadow-md transition">Get started</Link>
           </div>
         </div>
       </header>
@@ -147,12 +147,12 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="border-t bg-white/70 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-neutral-700">
+        <div className="mx-auto max-w-6xl px-6 py-6 flex flex-col md:flex-row items-center justify-between gap-3 text-sm text-neutral-800">
           <div>© {new Date().getFullYear()} LEGEAI. All rights reserved.</div>
           <nav className="flex items-center gap-4">
-            <Link href="#pricing" className="hover:text-primary">Pricing</Link>
-            <Link href="#security" className="hover:text-primary">Security</Link>
-            <Link href="#contact" className="hover:text-primary">Contact</Link>
+            <Link href="#pricing" className="text-neutral-800 hover:text-primary transition-colors">Pricing</Link>
+            <Link href="#security" className="text-neutral-800 hover:text-primary transition-colors">Security</Link>
+            <Link href="#contact" className="text-neutral-800 hover:text-primary transition-colors">Contact</Link>
           </nav>
         </div>
       </footer>
