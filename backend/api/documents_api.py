@@ -44,7 +44,7 @@ def _doc_to_dict(d: Document | Dict[str, Any]) -> Dict[str, Any]:
         "provider": d.provider,
         "provider_request_id": d.provider_request_id,
         "signing_url": d.signing_url,
-        "metadata": d.metadata,
+        "metadata": d.doc_metadata,
         "created_at": getattr(d, "created_at", None),
         "updated_at": getattr(d, "updated_at", None),
         "signed_at": getattr(d, "signed_at", None),
@@ -114,7 +114,7 @@ async def create_document_for_lead(lead_id: int, body: CreateDocumentRequest, se
             provider=provider,
             provider_request_id=provider_request_id,
             signing_url=signing_url or f"/v1/documents/{{}}/sign",  # placeholder if internal
-            metadata={"provider": provider},
+            doc_metadata={"provider": provider},
         )
         session.add(doc)
         await session.flush()

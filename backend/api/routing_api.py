@@ -30,8 +30,8 @@ async def route_lead(lead_id: str, payload: RouteInput | None = None, session: A
                 "channel": row.channel,
                 "product_interest": row.product_interest,
                 "contact": row.contact_info or {},
-                "attributes": (row.metadata or {}).get("attributes", {}),
-                "geo": (row.metadata or {}).get("geo", {}),
+                "attributes": (row.lead_metadata or {}).get("attributes", {}),
+                "geo": (row.lead_metadata or {}).get("geo", {}),
                 "consent": row.consent,
             }
     if not lead:

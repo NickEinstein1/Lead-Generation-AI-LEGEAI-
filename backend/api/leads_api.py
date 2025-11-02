@@ -66,7 +66,7 @@ async def create_lead(payload: LeadCreate, session: AsyncSession = Depends(sessi
             product_interest=payload.product_interest,
             contact_info=contact_info,
             consent=payload.consent,
-            metadata=metadata,
+            lead_metadata=metadata,
         )
         session.add(new_lead)
         await session.flush()
@@ -117,8 +117,8 @@ async def list_leads(limit: int = 50, offset: int = 0, session: AsyncSession = D
                 "channel": r.channel,
                 "product_interest": r.product_interest,
                 "contact": r.contact_info or {},
-                "attributes": (r.metadata or {}).get("attributes", {}),
-                "geo": (r.metadata or {}).get("geo", {}),
+                "attributes": (r.lead_metadata or {}).get("attributes", {}),
+                "geo": (r.lead_metadata or {}).get("geo", {}),
                 "consent": r.consent,
                 "created_at": str(r.created_at),
                 "updated_at": str(r.updated_at),
@@ -151,8 +151,8 @@ async def get_lead(lead_id: str, session: AsyncSession = Depends(session_dep)):
             "channel": row.channel,
             "product_interest": row.product_interest,
             "contact": row.contact_info or {},
-            "attributes": (row.metadata or {}).get("attributes", {}),
-            "geo": (row.metadata or {}).get("geo", {}),
+            "attributes": (row.lead_metadata or {}).get("attributes", {}),
+            "geo": (row.lead_metadata or {}).get("geo", {}),
             "consent": row.consent,
             "created_at": str(row.created_at),
             "updated_at": str(row.updated_at),
@@ -192,7 +192,7 @@ async def score_lead(lead_id: str, payload: ScoreInput, session: AsyncSession = 
                 raise HTTPException(status_code=404, detail="Lead not found")
             # Merge metadata attributes with payload features
             features = {
-                **(((row.metadata or {}).get("attributes")) or {}),
+                **(((row.lead_metadata or {}).get("attributes")) or {}),
                 **payload.features,
             }
         else:

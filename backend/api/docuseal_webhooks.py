@@ -32,8 +32,8 @@ async def receive_docuseal_webhook(payload: Dict[str, Any], request: Request, se
                 doc = (await session.execute(select(Document).where(Document.provider == "docuseal"))).scalars().first()
                 # Note: for simplicity, we try to match any with metadata containing the slug
                 # In production, add JSON path filter using DB JSON operators
-                if doc and doc.metadata:
-                    m = doc.metadata or {}
+                if doc and doc.doc_metadata:
+                    m = doc.doc_metadata or {}
                     ds = (m.get("docuseal") or {})
                     if ds.get("submitter_slug") not in slugs:
                         doc = None
