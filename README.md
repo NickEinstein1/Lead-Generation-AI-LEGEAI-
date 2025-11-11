@@ -13,14 +13,14 @@
 
 ### Key Capabilities
 
-- 🤖 **AI-Powered Lead Scoring** - Intelligent lead qualification using deep learning models
-- 📊 **Real-Time Analytics** - Comprehensive dashboards with actionable insights
-- 🔄 **Automated Workflows** - Intelligent lead nurturing and follow-up automation
-- 💬 **Multi-Channel Communications** - Email, SMS, and call management
-- 📋 **Document Management** - E-signature integration with DocuSeal
-- 🎯 **Sales Pipeline Management** - Track leads through 5-stage conversion funnel
-- 🔐 **Enterprise Security** - JWT authentication, role-based access control
-- 📈 **Performance Monitoring** - Real-time metrics and KPI tracking
+- **AI-Powered Lead Scoring** - Intelligent lead qualification using deep learning models
+- **Real-Time Analytics** - Comprehensive dashboards with actionable insights
+- **Automated Workflows** - Intelligent lead nurturing and follow-up automation
+- **Multi-Channel Communications** - Email, SMS, and call management
+- **Document Management** - E-signature integration with DocuSeal
+- **Sales Pipeline Management** - Track leads through 5-stage conversion funnel
+- **Enterprise Security** - JWT authentication, role-based access control
+- **Performance Monitoring** - Real-time metrics and KPI tracking
 
 ---
 
@@ -149,7 +149,7 @@ Pre-configured test accounts are available:
 
 ---
 
-## 📚 API Documentation
+##API Documentation
 
 ### Interactive API Docs
 
