@@ -8,6 +8,12 @@ from datetime import datetime, date
 import sys
 sys.path.append('../../')
 from backend.models.insurance_lead_scoring.inference import InsuranceLeadScorer
+from backend.models.insurance_products import (
+    LifeInsurancePolicyType,
+    get_recommended_policy_types,
+    get_policy_display_name,
+    LIFE_INSURANCE_PRODUCTS
+)
 
 logger = logging.getLogger(__name__)
 
@@ -174,7 +180,10 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
             
             # Ensure score is within 0-100 range
             final_score = max(0, min(100, adjusted_score))
-            
+
+            # Get detailed policy recommendations
+            policy_recommendations = self._get_policy_recommendations(lead_data)
+
             return {
                 'lead_id': lead_data.get('lead_id'),
                 'score': round(float(final_score), 2),
@@ -186,6 +195,7 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
                 'coverage_adequacy': coverage_analysis['adequacy_level'],
                 'coverage_gap': coverage_analysis['coverage_gap'],
                 'recommended_policy_type': self._recommend_policy_type(lead_data),
+                'policy_recommendations': policy_recommendations,
                 'urgency_level': self._get_urgency_level(lead_data),
                 'timestamp': datetime.utcnow().isoformat(),
                 'model_version': '1.0_life_insurance',
@@ -247,30 +257,105 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
             return 'LOW'
     
     def _recommend_policy_type(self, lead_data: Dict) -> str:
-        """Recommend life insurance policy type"""
+        """
+        Recommend life insurance policy type based on comprehensive underwriting criteria
+        Returns the policy type enum value as string
+        """
         age = lead_data.get('age', 30)
         income = lead_data.get('income', 50000)
         life_stage = self.determine_life_stage(lead_data)
         coverage_amount = lead_data.get('coverage_amount_requested', 0)
-        
-        # Term life for young families and temporary needs
-        if life_stage in ['young_professional', 'family_building'] and age < 45:
-            return 'TERM_LIFE'
-        
-        # Whole life for estate planning and permanent needs
-        elif life_stage == 'estate_planning' or income > 150000:
-            return 'WHOLE_LIFE'
-        
-        # Universal life for flexible premium needs
-        elif income > 100000 and age > 40:
-            return 'UNIVERSAL_LIFE'
-        
-        # Variable life for investment-minded clients
-        elif income > 200000 and age < 55:
-            return 'VARIABLE_LIFE'
-        
-        else:
-            return 'TERM_LIFE'  # Default recommendation
+        dependents = lead_data.get('dependents_count', 0)
+        goal = lead_data.get('primary_goal', 'income_replacement')
+
+        # Determine primary goal if not specified
+        if not goal or goal == 'income_replacement':
+            if life_stage == 'estate_planning' and income > 150000:
+                goal = 'estate_planning'
+            elif age >= 50 and coverage_amount < 50000:
+                goal = 'final_expense'
+            elif age >= 45 and life_stage in ['wealth_accumulation', 'estate_planning']:
+                goal = 'retirement_income'
+            elif income > 100000 and age > 35:
+                goal = 'wealth_accumulation'
+            else:
+                goal = 'income_replacement'
+
+        # Get recommendations based on profile
+        recommendations = get_recommended_policy_types(age, income, goal)
+
+        # Additional logic for specific scenarios
+        if not recommendations:
+            # Fallback logic
+            if age < 40 and dependents > 0:
+                return LifeInsurancePolicyType.TERM_LIFE.value
+            elif income > 200000 and age < 60:
+                return LifeInsurancePolicyType.INDEXED_UNIVERSAL_LIFE.value
+            elif age >= 50 and coverage_amount < 50000:
+                return LifeInsurancePolicyType.FINAL_EXPENSE.value
+            elif age >= 45:
+                return LifeInsurancePolicyType.WHOLE_LIFE.value
+            else:
+                return LifeInsurancePolicyType.TERM_LIFE.value
+
+        # Return the first (best) recommendation
+        return recommendations[0].value
+
+    def _get_policy_recommendations(self, lead_data: Dict) -> List[Dict]:
+        """
+        Get multiple policy type recommendations with details
+        Returns a list of recommended policies with full information
+        """
+        age = lead_data.get('age', 30)
+        income = lead_data.get('income', 50000)
+        life_stage = self.determine_life_stage(lead_data)
+        coverage_amount = lead_data.get('coverage_amount_requested', 0)
+        goal = lead_data.get('primary_goal', 'income_replacement')
+
+        # Determine goal
+        if not goal or goal == 'income_replacement':
+            if life_stage == 'estate_planning' and income > 150000:
+                goal = 'estate_planning'
+            elif age >= 50 and coverage_amount < 50000:
+                goal = 'final_expense'
+            elif age >= 45:
+                goal = 'retirement_income'
+            elif income > 100000:
+                goal = 'wealth_accumulation'
+            else:
+                goal = 'income_replacement'
+
+        # Get recommendations
+        policy_types = get_recommended_policy_types(age, income, goal)
+
+        # Build detailed recommendations
+        recommendations = []
+        for policy_type in policy_types[:3]:  # Top 3 recommendations
+            if policy_type in LIFE_INSURANCE_PRODUCTS:
+                product_info = LIFE_INSURANCE_PRODUCTS[policy_type]
+
+                # Calculate estimated premium (simplified)
+                base_rate = 0.005 if product_info.category == "term" else 0.012
+                if product_info.investment_component:
+                    base_rate *= 1.5
+
+                estimated_premium = coverage_amount * base_rate * (age / 40)
+
+                recommendations.append({
+                    'policy_type': policy_type.value,
+                    'display_name': product_info.display_name,
+                    'category': product_info.category,
+                    'description': product_info.description,
+                    'estimated_monthly_premium': round(estimated_premium / 12, 2),
+                    'estimated_annual_premium': round(estimated_premium, 2),
+                    'cash_value': product_info.cash_value,
+                    'investment_component': product_info.investment_component,
+                    'best_for': product_info.best_for,
+                    'key_features': product_info.key_features,
+                    'underwriting_complexity': product_info.underwriting_complexity
+                })
+
+        return recommendations
 
 # Example usage
 if __name__ == "__main__":
