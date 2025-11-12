@@ -18,6 +18,7 @@ from backend.api.docuseal_webhooks import router as docuseal_webhooks_router
 
 import os
 from backend.database.connection import init_db
+from backend.security.authentication import auth_manager, UserRole
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +61,47 @@ async def on_startup():
             logger.info("Database initialization check completed.")
         except Exception as e:
             logger.warning(f"Database init failed (continuing with in-memory): {e}")
+    else:
+        # Initialize default users for in-memory mode
+        logger.info("Initializing default users for in-memory mode...")
+
+        # Create admin user
+        success, user_id = auth_manager.create_user(
+            "admin",
+            "admin@legeai.com",
+            "AdminPass123!",
+            UserRole.ADMIN
+        )
+        if success:
+            logger.info(f"✓ Admin user created: {user_id}")
+        else:
+            logger.warning(f"Admin user creation failed: {user_id}")
+
+        # Create manager user
+        success, user_id = auth_manager.create_user(
+            "manager",
+            "manager@legeai.com",
+            "ManagerPass123!",
+            UserRole.MANAGER
+        )
+        if success:
+            logger.info(f"✓ Manager user created: {user_id}")
+        else:
+            logger.warning(f"Manager user creation failed: {user_id}")
+
+        # Create agent user
+        success, user_id = auth_manager.create_user(
+            "agent1",
+            "agent1@legeai.com",
+            "AgentPass123!",
+            UserRole.AGENT
+        )
+        if success:
+            logger.info(f"✓ Agent user created: {user_id}")
+        else:
+            logger.warning(f"Agent user creation failed: {user_id}")
+
+        logger.info("Default users initialization complete.")
 
 app.include_router(leads_router, prefix="/v1")
 app.include_router(documents_router, prefix="/v1")
