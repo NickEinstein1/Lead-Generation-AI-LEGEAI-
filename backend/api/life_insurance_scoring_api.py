@@ -3,6 +3,12 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 import logging
 from backend.models.life_insurance_scoring.inference import LifeInsuranceLeadScorer
+from backend.models.insurance_products import (
+    LifeInsurancePolicyType,
+    get_all_life_insurance_categories,
+    get_policy_display_name,
+    LIFE_INSURANCE_PRODUCTS
+)
 import asyncio
 
 app = FastAPI(title="Life Insurance Lead Scoring API", version="1.0.0")
@@ -30,8 +36,23 @@ class LifeInsuranceLeadData(BaseModel):
     occupation_risk_level: str = Field(..., regex="^(low|medium|high|very_high)$")
     financial_dependents: int = Field(..., ge=0, le=10)
     estate_planning_needs: int = Field(..., ge=0, le=10)
+    primary_goal: Optional[str] = Field(None, regex="^(income_replacement|estate_planning|retirement_income|wealth_accumulation|final_expense)$")
     consent_given: bool
     consent_timestamp: Optional[str] = None
+
+class PolicyRecommendation(BaseModel):
+    """Detailed policy recommendation"""
+    policy_type: str
+    display_name: str
+    category: str
+    description: str
+    estimated_monthly_premium: float
+    estimated_annual_premium: float
+    cash_value: bool
+    investment_component: bool
+    best_for: List[str]
+    key_features: List[str]
+    underwriting_complexity: str
 
 class LifeInsuranceScoringResponse(BaseModel):
     lead_id: str
@@ -44,6 +65,7 @@ class LifeInsuranceScoringResponse(BaseModel):
     coverage_adequacy: Optional[str] = None
     coverage_gap: Optional[float] = None
     recommended_policy_type: Optional[str] = None
+    policy_recommendations: Optional[List[PolicyRecommendation]] = None
     urgency_level: Optional[str] = None
     timestamp: str
     model_version: str
@@ -191,6 +213,9 @@ async def health_check():
 @app.get("/life-insurance-model-info")
 async def life_insurance_model_info():
     """Get life insurance model information"""
+    # Get all policy types from the comprehensive catalog
+    all_policy_types = [policy_type.value for policy_type in LifeInsurancePolicyType]
+
     return {
         "model_type": "XGBoost Life Insurance Regressor",
         "version": "1.0_life_insurance",
@@ -199,12 +224,116 @@ async def life_insurance_model_info():
             "health_status", "smoking_status", "coverage_amount_requested", "policy_term",
             "existing_life_insurance", "beneficiary_count", "debt_obligations",
             "mortgage_balance", "education_level", "occupation_risk_level",
-            "life_stage", "financial_dependents", "estate_planning_needs"
+            "life_stage", "financial_dependents", "estate_planning_needs", "primary_goal"
         ],
         "life_stages": ["young_professional", "family_building", "wealth_accumulation", "estate_planning"],
-        "policy_types": ["TERM_LIFE", "WHOLE_LIFE", "UNIVERSAL_LIFE", "VARIABLE_LIFE"],
+        "policy_types": all_policy_types,
+        "policy_categories": get_all_life_insurance_categories(),
         "risk_factors": ["age", "health", "smoking", "occupation"],
         "compliance": ["GDPR", "CCPA", "TCPA", "State Insurance Regulations"]
+    }
+
+@app.get("/policy-types")
+async def get_policy_types():
+    """
+    Get all available life insurance policy types organized by category
+
+    Returns comprehensive list of all life insurance products including:
+    - Term Life (various types)
+    - Permanent Life (Whole Life, Universal Life, Variable Life)
+    - Annuities (Fixed, Variable, Indexed)
+    - Specialty Products (Final Expense, etc.)
+    """
+    categories = {}
+
+    for policy_type, product_info in LIFE_INSURANCE_PRODUCTS.items():
+        category = product_info.category
+
+        if category not in categories:
+            categories[category] = {
+                "category_name": category.replace("_", " ").title(),
+                "products": []
+            }
+
+        categories[category]["products"].append({
+            "policy_type": policy_type.value,
+            "display_name": product_info.display_name,
+            "description": product_info.description,
+            "age_range": {
+                "min": product_info.typical_age_range[0],
+                "max": product_info.typical_age_range[1]
+            },
+            "coverage_range": {
+                "min": product_info.typical_coverage_range[0],
+                "max": product_info.typical_coverage_range[1]
+            },
+            "features": {
+                "cash_value": product_info.cash_value,
+                "investment_component": product_info.investment_component,
+                "premium_flexibility": product_info.premium_flexibility
+            },
+            "best_for": product_info.best_for,
+            "key_features": product_info.key_features,
+            "underwriting_complexity": product_info.underwriting_complexity
+        })
+
+    return {
+        "total_products": len(LIFE_INSURANCE_PRODUCTS),
+        "categories": categories,
+        "category_summary": {
+            "term": "Temporary coverage for specific period",
+            "permanent": "Lifetime coverage with cash value",
+            "annuity": "Retirement income products",
+            "specialty": "Specialized coverage for specific needs",
+            "hybrid": "Combined benefits products"
+        }
+    }
+
+@app.get("/policy-types/{category}")
+async def get_policy_types_by_category(category: str):
+    """
+    Get policy types for a specific category
+
+    Categories:
+    - term: Term life insurance products
+    - permanent: Whole life, universal life, variable life
+    - annuity: Fixed, variable, and indexed annuities
+    - specialty: Final expense, burial, guaranteed issue
+    - hybrid: Products with combined benefits
+    """
+    products = []
+
+    for policy_type, product_info in LIFE_INSURANCE_PRODUCTS.items():
+        if product_info.category == category:
+            products.append({
+                "policy_type": policy_type.value,
+                "display_name": product_info.display_name,
+                "description": product_info.description,
+                "age_range": {
+                    "min": product_info.typical_age_range[0],
+                    "max": product_info.typical_age_range[1]
+                },
+                "coverage_range": {
+                    "min": product_info.typical_coverage_range[0],
+                    "max": product_info.typical_coverage_range[1]
+                },
+                "features": {
+                    "cash_value": product_info.cash_value,
+                    "investment_component": product_info.investment_component,
+                    "premium_flexibility": product_info.premium_flexibility
+                },
+                "best_for": product_info.best_for,
+                "key_features": product_info.key_features,
+                "underwriting_complexity": product_info.underwriting_complexity
+            })
+
+    if not products:
+        raise HTTPException(status_code=404, detail=f"Category '{category}' not found")
+
+    return {
+        "category": category,
+        "total_products": len(products),
+        "products": products
     }
 
 if __name__ == "__main__":
