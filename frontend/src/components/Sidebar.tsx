@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { API_BASE } from "@/lib/api";
 
 interface NavItem {
   id: string;
@@ -12,7 +13,14 @@ interface NavItem {
   submenu?: NavItem[];
 }
 
-const navItems: NavItem[] = [
+interface PolicyType {
+  policy_type: string;
+  display_name: string;
+  category: string;
+  description: string;
+}
+
+const getNavItems = (lifeInsuranceSubmenu: NavItem[]): NavItem[] => [
   {
     id: "dashboard",
     label: "Dashboard",
@@ -31,6 +39,14 @@ const navItems: NavItem[] = [
       { id: "leads-qualified", label: "Qualified", icon: "⭐", href: "/dashboard/leads?status=qualified" },
       { id: "leads-contacted", label: "Contacted", icon: "📞", href: "/dashboard/leads?status=contacted" },
     ],
+  },
+  {
+    id: "life-insurance",
+    label: "Life Insurance",
+    icon: "❤️",
+    href: "/dashboard/life-insurance",
+    badge: 35,
+    submenu: lifeInsuranceSubmenu,
   },
   {
     id: "customers",
@@ -121,9 +137,72 @@ const navItems: NavItem[] = [
   },
 ];
 
+// Helper function to get icon for policy category
+const getCategoryIcon = (category: string): string => {
+  const icons: Record<string, string> = {
+    term: "⏱️",
+    permanent: "♾️",
+    annuity: "💰",
+    specialty: "⭐",
+    hybrid: "🔄",
+  };
+  return icons[category] || "📋";
+};
+
 export default function Sidebar() {
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>(["dashboard"]);
+  const [lifeInsuranceSubmenu, setLifeInsuranceSubmenu] = useState<NavItem[]>([]);
+  const [loadingPolicyTypes, setLoadingPolicyTypes] = useState(true);
+
+  // Fetch life insurance policy types from backend
+  useEffect(() => {
+    const fetchPolicyTypes = async () => {
+      try {
+        const response = await fetch(`${API_BASE}/life-insurance/policy-types`);
+        const data = await response.json();
+
+        // Build submenu from categories
+        const submenu: NavItem[] = [
+          {
+            id: "life-all",
+            label: "All Life Insurance",
+            icon: "📋",
+            href: "/dashboard/life-insurance"
+          }
+        ];
+
+        // Add category-based submenus
+        if (data.categories) {
+          Object.entries(data.categories).forEach(([category, categoryData]: [string, any]) => {
+            const categoryIcon = getCategoryIcon(category);
+            submenu.push({
+              id: `life-${category}`,
+              label: categoryData.category_name || category,
+              icon: categoryIcon,
+              href: `/dashboard/life-insurance/${category}`,
+            });
+          });
+        }
+
+        setLifeInsuranceSubmenu(submenu);
+      } catch (error) {
+        console.error("Failed to fetch life insurance policy types:", error);
+        // Fallback submenu
+        setLifeInsuranceSubmenu([
+          { id: "life-all", label: "All Life Insurance", icon: "📋", href: "/dashboard/life-insurance" },
+          { id: "life-term", label: "Term Life", icon: "⏱️", href: "/dashboard/life-insurance/term" },
+          { id: "life-permanent", label: "Permanent Life", icon: "♾️", href: "/dashboard/life-insurance/permanent" },
+          { id: "life-annuity", label: "Annuities", icon: "💰", href: "/dashboard/life-insurance/annuity" },
+          { id: "life-specialty", label: "Specialty Products", icon: "⭐", href: "/dashboard/life-insurance/specialty" },
+        ]);
+      } finally {
+        setLoadingPolicyTypes(false);
+      }
+    };
+
+    fetchPolicyTypes();
+  }, []);
 
   const toggleExpand = (id: string) => {
     setExpandedItems((prev) =>
@@ -134,6 +213,9 @@ export default function Sidebar() {
   const isActive = (href: string) => {
     return pathname === href || pathname.startsWith(href + "/");
   };
+
+  // Get navigation items with dynamic life insurance submenu
+  const navItems = getNavItems(lifeInsuranceSubmenu);
 
   return (
     <aside className="w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white shadow-lg h-screen overflow-y-auto sticky top-0">
@@ -150,7 +232,10 @@ export default function Sidebar() {
 
       {/* Navigation Items */}
       <nav className="p-4 space-y-2">
-        {navItems.map((item) => (
+        {loadingPolicyTypes && navItems.length === 0 ? (
+          <div className="text-center text-blue-200 py-4">Loading...</div>
+        ) : (
+          navItems.map((item) => (
           <div key={item.id}>
             {/* Main Item */}
             <div className="flex items-center">
@@ -204,7 +289,8 @@ export default function Sidebar() {
               </div>
             )}
           </div>
-        ))}
+          ))
+        )}
       </nav>
 
       {/* Footer */}
