@@ -12,6 +12,7 @@ from backend.api.leads_api import router as leads_router
 from backend.api.routing_api import router as routing_router
 from backend.api.webhooks_api import router as webhooks_router
 from backend.api.auth_api import router as auth_router
+from backend.api.life_insurance_scoring_api import router as life_insurance_router
 
 from backend.api.documents_api import router as documents_router
 from backend.api.docuseal_webhooks import router as docuseal_webhooks_router
@@ -44,6 +45,7 @@ app.include_router(security_router, prefix="/v1")
 app.include_router(auth_router, prefix="/v1")
 app.include_router(pipeline_router, prefix="/v1")
 app.include_router(dashboard_router, prefix="/v1")
+app.include_router(life_insurance_router, prefix="/v1")
 
 
 # Routers for docs are mounted earlier; ensure /v1/documents is available in OpenAPI
