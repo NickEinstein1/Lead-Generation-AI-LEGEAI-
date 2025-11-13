@@ -9,23 +9,34 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 class InsuranceLeadScorer:
-    def __init__(self, model_path='models/insurance_lead_scoring/artifacts'):
+    """
+    Base class for insurance lead scoring.
+    Can work with or without ML models - gracefully falls back to rule-based scoring.
+    """
+    def __init__(self, model_path='models/insurance_lead_scoring/artifacts', require_model=False):
         self.model_path = model_path
         self.model = None
         self.scaler = None
         self.label_encoders = None
+        self.require_model = require_model
         self.load_model()
-        
+
     def load_model(self):
-        """Load trained model and preprocessors"""
+        """Load trained model and preprocessors - gracefully handles missing models"""
         try:
             self.model = joblib.load(f'{self.model_path}/model.pkl')
             self.scaler = joblib.load(f'{self.model_path}/scaler.pkl')
             self.label_encoders = joblib.load(f'{self.model_path}/label_encoders.pkl')
-            logger.info("Model loaded successfully")
+            logger.info("Insurance lead scoring model loaded successfully")
         except Exception as e:
-            logger.error(f"Error loading model: {e}")
-            raise
+            if self.require_model:
+                logger.error(f"Error loading required model: {e}")
+                raise
+            else:
+                logger.warning(f"Model not available: {e}. Using rule-based scoring fallback.")
+                self.model = None
+                self.scaler = None
+                self.label_encoders = {}
     
     def anonymize_pii(self, data: Dict) -> Dict:
         """Anonymize PII data for compliance"""
