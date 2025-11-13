@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 import logging
@@ -11,32 +11,43 @@ from backend.models.insurance_products import (
 )
 import asyncio
 
-app = FastAPI(title="Life Insurance Lead Scoring API", version="1.0.0")
+router = APIRouter(prefix="/life-insurance", tags=["Life Insurance"])
 logger = logging.getLogger(__name__)
 
-# Initialize life insurance scorer
-life_scorer = LifeInsuranceLeadScorer()
+# Initialize life insurance scorer (lazy loading)
+life_scorer = None
+
+def get_life_scorer():
+    """Lazy initialization of life insurance scorer"""
+    global life_scorer
+    if life_scorer is None:
+        try:
+            life_scorer = LifeInsuranceLeadScorer()
+        except Exception as e:
+            logger.warning(f"Life insurance scorer initialization failed: {e}. Using fallback mode.")
+            life_scorer = None
+    return life_scorer
 
 class LifeInsuranceLeadData(BaseModel):
     lead_id: str
     age: int = Field(..., ge=18, le=85)
     income: float = Field(..., ge=0)
-    marital_status: str = Field(..., regex="^(single|married|divorced|widowed|partnered)$")
+    marital_status: str = Field(..., pattern="^(single|married|divorced|widowed|partnered)$")
     dependents_count: int = Field(..., ge=0, le=10)
-    employment_status: str = Field(..., regex="^(employed|unemployed|self_employed|retired)$")
-    health_status: str = Field(..., regex="^(excellent|good|fair|poor)$")
-    smoking_status: str = Field(..., regex="^(smoker|non_smoker|former_smoker)$")
+    employment_status: str = Field(..., pattern="^(employed|unemployed|self_employed|retired)$")
+    health_status: str = Field(..., pattern="^(excellent|good|fair|poor)$")
+    smoking_status: str = Field(..., pattern="^(smoker|non_smoker|former_smoker)$")
     coverage_amount_requested: float = Field(..., ge=10000, le=10000000)
     policy_term: Optional[int] = Field(None, ge=5, le=40)
     existing_life_insurance: bool = False
     beneficiary_count: int = Field(..., ge=1, le=10)
     debt_obligations: float = Field(..., ge=0)
     mortgage_balance: float = Field(..., ge=0)
-    education_level: str = Field(..., regex="^(high_school|associates|bachelors|masters|doctorate)$")
-    occupation_risk_level: str = Field(..., regex="^(low|medium|high|very_high)$")
+    education_level: str = Field(..., pattern="^(high_school|associates|bachelors|masters|doctorate)$")
+    occupation_risk_level: str = Field(..., pattern="^(low|medium|high|very_high)$")
     financial_dependents: int = Field(..., ge=0, le=10)
     estate_planning_needs: int = Field(..., ge=0, le=10)
-    primary_goal: Optional[str] = Field(None, regex="^(income_replacement|estate_planning|retirement_income|wealth_accumulation|final_expense)$")
+    primary_goal: Optional[str] = Field(None, pattern="^(income_replacement|estate_planning|retirement_income|wealth_accumulation|final_expense)$")
     consent_given: bool
     consent_timestamp: Optional[str] = None
 
@@ -72,28 +83,34 @@ class LifeInsuranceScoringResponse(BaseModel):
     compliance_status: str
     error: Optional[str] = None
 
-@app.post("/score-life-insurance-lead", response_model=LifeInsuranceScoringResponse)
+@router.post("/score-lead", response_model=LifeInsuranceScoringResponse)
 async def score_life_insurance_lead(lead: LifeInsuranceLeadData):
     """Score a single life insurance lead"""
+    scorer = get_life_scorer()
+    if scorer is None:
+        raise HTTPException(status_code=503, detail="Life insurance scoring model not available")
     try:
-        result = life_scorer.score_lead(lead.dict())
+        result = scorer.score_lead(lead.dict())
         return LifeInsuranceScoringResponse(**result)
     except Exception as e:
         logger.error(f"Error scoring life insurance lead: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/score-life-insurance-leads", response_model=List[LifeInsuranceScoringResponse])
+@router.post("/score-leads", response_model=List[LifeInsuranceScoringResponse])
 async def score_life_insurance_leads(leads: List[LifeInsuranceLeadData]):
     """Score multiple life insurance leads"""
+    scorer = get_life_scorer()
+    if scorer is None:
+        raise HTTPException(status_code=503, detail="Life insurance scoring model not available")
     try:
         lead_dicts = [lead.dict() for lead in leads]
-        results = life_scorer.batch_score(lead_dicts)
+        results = scorer.batch_score(lead_dicts)
         return [LifeInsuranceScoringResponse(**result) for result in results]
     except Exception as e:
         logger.error(f"Error scoring life insurance leads: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.get("/life-insurance-coverage-calculator")
+@router.get("/coverage-calculator")
 async def calculate_coverage_needs(
     income: float,
     dependents: int = 0,
@@ -124,7 +141,7 @@ async def calculate_coverage_needs(
         }
     }
 
-@app.get("/life-insurance-policy-recommendations/{lead_id}")
+@router.get("/policy-recommendations/{lead_id}")
 async def get_policy_recommendations(lead_id: str, coverage_amount: float):
     """Get detailed policy recommendations for a lead"""
     return {
@@ -169,7 +186,7 @@ async def get_urgent_life_insurance_leads(urgency_level: str = "HIGH"):
         }
     }
 
-@app.get("/life-insurance-mortality-risk/{lead_id}")
+@router.get("/mortality-risk/{lead_id}")
 async def assess_mortality_risk(
     age: int,
     smoking_status: str,
@@ -201,16 +218,17 @@ async def assess_mortality_risk(
         }
     }
 
-@app.get("/health")
+@router.get("/health")
 async def health_check():
     """Health check for life insurance scoring service"""
+    scorer = get_life_scorer()
     return {
         "status": "healthy",
-        "life_insurance_model_loaded": life_scorer.model is not None,
+        "life_insurance_model_loaded": scorer is not None and scorer.model is not None if scorer else False,
         "compliance_status": "active"
     }
 
-@app.get("/life-insurance-model-info")
+@router.get("/model-info")
 async def life_insurance_model_info():
     """Get life insurance model information"""
     # Get all policy types from the comprehensive catalog
@@ -233,7 +251,7 @@ async def life_insurance_model_info():
         "compliance": ["GDPR", "CCPA", "TCPA", "State Insurance Regulations"]
     }
 
-@app.get("/policy-types")
+@router.get("/policy-types")
 async def get_policy_types():
     """
     Get all available life insurance policy types organized by category
@@ -289,7 +307,7 @@ async def get_policy_types():
         }
     }
 
-@app.get("/policy-types/{category}")
+@router.get("/policy-types/{category}")
 async def get_policy_types_by_category(category: str):
     """
     Get policy types for a specific category
@@ -336,6 +354,11 @@ async def get_policy_types_by_category(category: str):
         "products": products
     }
 
+# Standalone mode for testing
 if __name__ == "__main__":
     import uvicorn
+    from fastapi import FastAPI
+
+    app = FastAPI(title="Life Insurance Lead Scoring API", version="1.0.0")
+    app.include_router(router)
     uvicorn.run(app, host="0.0.0.0", port=8002)
