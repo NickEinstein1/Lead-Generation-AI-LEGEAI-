@@ -80,12 +80,17 @@ class LifeInsuranceLeadScoringModel(InsuranceLeadScoringModel):
         df['mortgage_balance'] = df['mortgage_balance'].fillna(0)
         df['debt_obligations'] = df['debt_obligations'].fillna(df['debt_obligations'].median())
         df['beneficiary_count'] = df['beneficiary_count'].fillna(1)
-        df = df.fillna(df.median())
-        
-        return df[self.feature_columns + [
+
+        # Select feature columns
+        feature_df = df[self.feature_columns + [
             'age_risk_factor', 'coverage_income_ratio', 'financial_responsibility_score',
             'mortality_risk_score', 'urgency_score', 'affordability_score', 'estate_planning_urgency'
         ]]
+
+        # Fill remaining missing values (only on numeric columns)
+        feature_df = feature_df.fillna(feature_df.median(numeric_only=True))
+
+        return feature_df
     
     def train(self, data_path):
         """Train life insurance lead scoring model"""
