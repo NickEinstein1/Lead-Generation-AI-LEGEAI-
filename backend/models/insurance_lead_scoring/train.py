@@ -38,11 +38,14 @@ class InsuranceLeadScoringModel:
         # Feature engineering
         df['age_income_ratio'] = df['age'] / (df['income'] / 1000)
         df['engagement_per_request'] = df['social_engagement_score'] / (df['quote_requests_30d'] + 1)
-        
-        # Handle missing values
-        df = df.fillna(df.median())
-        
-        return df[self.feature_columns + ['age_income_ratio', 'engagement_per_request']]
+
+        # Select feature columns
+        feature_df = df[self.feature_columns + ['age_income_ratio', 'engagement_per_request']]
+
+        # Handle missing values (only on numeric columns)
+        feature_df = feature_df.fillna(feature_df.median(numeric_only=True))
+
+        return feature_df
     
     def train(self, data_path):
         """Train the insurance lead scoring model"""
