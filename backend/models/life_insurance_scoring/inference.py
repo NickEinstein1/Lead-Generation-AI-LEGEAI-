@@ -24,7 +24,18 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
         self.scaler = None
         self.label_encoders = None
         self.load_model()
-        
+
+    def load_model(self):
+        """Load trained model and preprocessors"""
+        try:
+            self.model = joblib.load(f'{self.model_path}/model.pkl')
+            self.scaler = joblib.load(f'{self.model_path}/scaler.pkl')
+            self.label_encoders = joblib.load(f'{self.model_path}/label_encoders.pkl')
+            logger.info("Life insurance model loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading life insurance model: {e}")
+            raise
+
     def calculate_mortality_risk(self, lead_data: Dict) -> float:
         """Calculate mortality risk score for life insurance"""
         age = lead_data.get('age', 30)
@@ -82,9 +93,9 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
         """Life insurance-specific lead preprocessing"""
         # Convert to DataFrame
         df = pd.DataFrame([lead_data])
-        
+
         # Handle categorical variables
-        categorical_cols = ['marital_status', 'employment_status', 'health_status', 
+        categorical_cols = ['marital_status', 'employment_status', 'health_status',
                            'smoking_status', 'education_level', 'occupation_risk_level', 'life_stage']
         for col in categorical_cols:
             if col in df.columns and col in self.label_encoders:
@@ -162,22 +173,22 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
                     'timestamp': datetime.utcnow().isoformat(),
                     'compliance_status': 'FAILED'
                 }
-            
+
             # Anonymize PII
             anonymized_data = self.anonymize_pii(lead_data)
-            
+
             # Preprocess
             X = self.preprocess_lead(anonymized_data)
-            
+
             # Predict base score
             base_score = self.model.predict(X)[0]
-            
+
             # Life insurance-specific adjustments
             adjusted_score = self._apply_life_insurance_adjustments(base_score, lead_data)
-            
+
             # Coverage analysis
             coverage_analysis = self.calculate_coverage_adequacy(lead_data)
-            
+
             # Ensure score is within 0-100 range
             final_score = max(0, min(100, adjusted_score))
 
@@ -215,38 +226,48 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
     def _apply_life_insurance_adjustments(self, base_score: float, lead_data: Dict) -> float:
         """Apply life insurance-specific score adjustments"""
         adjusted_score = base_score
-        
+
         # Family stage boost
         if self.determine_life_stage(lead_data) == 'family_building':
             adjusted_score *= 1.2
-        
+
         # High coverage amount boost
         if lead_data.get('coverage_amount_requested', 0) > 500000:
             adjusted_score *= 1.1
-        
+
         # Health status adjustment
         health_status = lead_data.get('health_status', 'good')
         if health_status == 'excellent':
             adjusted_score *= 1.05
         elif health_status in ['fair', 'poor']:
             adjusted_score *= 0.9
-        
+
         # Smoking penalty
         if lead_data.get('smoking_status') == 'smoker':
             adjusted_score *= 0.85
-        
+
         # No existing coverage boost
         if not lead_data.get('existing_life_insurance', False):
             adjusted_score *= 1.08
-        
+
         return adjusted_score
     
+    def _calculate_confidence(self, X: np.ndarray) -> float:
+        """Calculate prediction confidence"""
+        try:
+            # For XGBoost, we can use prediction with output_margin
+            margin = self.model.predict(X, output_margin=True)[0]
+            confidence = 1 / (1 + np.exp(-abs(margin)))
+            return round(float(confidence), 3)
+        except:
+            return 0.65  # Default confidence
+
     def _get_urgency_level(self, lead_data: Dict) -> str:
         """Determine urgency level for life insurance lead"""
         life_stage = self.determine_life_stage(lead_data)
         age = lead_data.get('age', 30)
         dependents = lead_data.get('dependents_count', 0)
-        
+
         if life_stage == 'family_building' and dependents > 0:
             return 'CRITICAL'
         elif age > 55 or dependents > 2:
