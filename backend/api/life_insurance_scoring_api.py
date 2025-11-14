@@ -173,7 +173,7 @@ async def get_policy_recommendations(lead_id: str, coverage_amount: float):
         ]
     }
 
-@app.get("/life-insurance-urgency-leads")
+@router.get("/urgency-leads")
 async def get_urgent_life_insurance_leads(urgency_level: str = "HIGH"):
     """Get life insurance leads filtered by urgency level"""
     return {
