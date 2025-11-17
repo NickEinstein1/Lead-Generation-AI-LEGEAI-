@@ -105,11 +105,11 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
         df['age_risk_factor'] = np.where(df['age'] > 60, df['age'] * 1.5, 
                                 np.where(df['age'] > 45, df['age'] * 1.2, df['age']))
         
-        df['coverage_income_ratio'] = df.get('coverage_amount_requested', 0) / (df.get('income', 1) + 1)
+        df['coverage_income_ratio'] = df['coverage_amount_requested'] / (df['income'] + 1)
         df['financial_responsibility_score'] = (
-            df.get('dependents_count', 0) * 2 + 
-            df.get('mortgage_balance', 0) / 100000 + 
-            df.get('debt_obligations', 0) / 50000
+            df['dependents_count'] * 2 +
+            df.get('mortgage_balance', pd.Series([0])).fillna(0) / 100000 +
+            df.get('debt_obligations', pd.Series([0])).fillna(0) / 50000
         )
         
         df['mortality_risk_score'] = self.calculate_mortality_risk(lead_data)
@@ -119,19 +119,19 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
         df['life_stage'] = life_stage_map.get(life_stage, 1)
         
         df['urgency_score'] = np.where(
-            (df['life_stage'] == 1) & (df.get('dependents_count', 0) > 0),  # Family building
+            (df['life_stage'] == 1) & (df['dependents_count'] > 0),  # Family building
             8,
             np.where(df['age'] > 50, 6, 4)
         )
-        
+
         df['affordability_score'] = np.where(
             df['coverage_income_ratio'] < 10,
             10 - df['coverage_income_ratio'],
             1
         )
-        
+
         df['estate_planning_urgency'] = np.where(
-            (df['age'] > 45) & (df.get('income', 0) > 100000),
+            (df['age'] > 45) & (df['income'] > 100000),
             df['age'] / 10,
             2
         )
@@ -148,13 +148,23 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
         ]
         
         # Handle missing values with life insurance defaults
-        df['mortgage_balance'] = df['mortgage_balance'].fillna(0)
-        df['debt_obligations'] = df['debt_obligations'].fillna(0)
-        df['beneficiary_count'] = df['beneficiary_count'].fillna(1)
-        df['existing_life_insurance'] = df['existing_life_insurance'].fillna(0)
-        df['financial_dependents'] = df['financial_dependents'].fillna(df.get('dependents_count', 0))
-        df['estate_planning_needs'] = df['estate_planning_needs'].fillna(0)
-        df = df.fillna(df.median())
+        if 'mortgage_balance' in df.columns:
+            df['mortgage_balance'] = df['mortgage_balance'].fillna(0)
+        if 'debt_obligations' in df.columns:
+            df['debt_obligations'] = df['debt_obligations'].fillna(0)
+        if 'beneficiary_count' in df.columns:
+            df['beneficiary_count'] = df['beneficiary_count'].fillna(1)
+        if 'existing_life_insurance' in df.columns:
+            df['existing_life_insurance'] = df['existing_life_insurance'].fillna(0)
+        if 'financial_dependents' in df.columns:
+            df['financial_dependents'] = df['financial_dependents'].fillna(df['dependents_count'])
+        if 'estate_planning_needs' in df.columns:
+            df['estate_planning_needs'] = df['estate_planning_needs'].fillna(0)
+
+        # Fill any remaining missing values
+        for col in feature_columns:
+            if col in df.columns:
+                df[col] = df[col].fillna(0)
         
         # Scale features
         X = self.scaler.transform(df[feature_columns])
