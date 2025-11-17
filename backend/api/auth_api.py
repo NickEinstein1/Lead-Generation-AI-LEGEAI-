@@ -64,7 +64,7 @@ async def register(payload: RegisterRequest, req: Request):
                 await session.flush()
 
                 session_id = secrets.token_urlsafe(32)
-                expires_at = datetime.utcnow() + timedelta(hours=8)
+                expires_at = datetime.now(datetime.UTC) + timedelta(hours=8)
                 db_sess = SessionModel(
                     session_id=session_id,
                     user_id=db_user.id,
@@ -107,9 +107,9 @@ async def login(payload: LoginRequest, req: Request, session: AsyncSession = Dep
             raise HTTPException(status_code=401, detail="Invalid credentials")
         if not auth_manager.verify_password(payload.password, row.password_hash):
             raise HTTPException(status_code=401, detail="Invalid credentials")
-        row.last_login = datetime.utcnow()
+        row.last_login = datetime.now(datetime.UTC)
         session_id = secrets.token_urlsafe(32)
-        expires_at = datetime.utcnow() + timedelta(hours=8)
+        expires_at = datetime.now(datetime.UTC) + timedelta(hours=8)
         db_sess = SessionModel(
             session_id=session_id,
             user_id=row.id,
@@ -149,7 +149,7 @@ async def refresh(req: Request, session: AsyncSession = Depends(session_dep)):
         db_sess = (await session.execute(
             select(SessionModel).where(SessionModel.session_id == session_id)
         )).scalar_one_or_none()
-        if not db_sess or not db_sess.is_active or db_sess.expires_at < datetime.utcnow():
+        if not db_sess or not db_sess.is_active or db_sess.expires_at < datetime.now(datetime.UTC):
             raise HTTPException(status_code=401, detail="Invalid session")
         user = (await session.execute(select(UserModel).where(UserModel.id == db_sess.user_id))).scalar_one_or_none()
         if not user or not user.is_active:
@@ -196,7 +196,7 @@ async def me(req: Request, session: AsyncSession = Depends(session_dep)):
     use_db = os.getenv("USE_DB", "false").lower() == "true"
     if use_db:
         db_sess = (await session.execute(select(SessionModel).where(SessionModel.session_id == session_id))).scalar_one_or_none()
-        if not db_sess or not db_sess.is_active or db_sess.expires_at < datetime.utcnow():
+        if not db_sess or not db_sess.is_active or db_sess.expires_at < datetime.now(datetime.UTC):
             raise HTTPException(status_code=401, detail="Invalid session")
         user = (await session.execute(select(UserModel).where(UserModel.id == db_sess.user_id))).scalar_one_or_none()
         if not user or not user.is_active:

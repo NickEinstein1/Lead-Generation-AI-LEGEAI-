@@ -100,7 +100,7 @@ class SmartScheduler:
                                      follow_up_type: FollowUpType) -> datetime:
         """Calculate optimal timing for follow-up"""
         
-        current_time = datetime.utcnow()
+        current_time = datetime.now(datetime.UTC)
         
         # Base timing rules by follow-up type
         base_delays = {
@@ -261,7 +261,7 @@ class FollowUpAutomationEngine:
             if not tracker:
                 tracker = EngagementTracker(lead_id=lead_id)
             
-            current_time = datetime.utcnow()
+            current_time = datetime.now(datetime.UTC)
             
             # Update engagement based on event type
             if event_type == "email_open":
@@ -323,7 +323,7 @@ class FollowUpAutomationEngine:
             
             # Generate follow-up actions
             follow_up_actions = []
-            current_time = datetime.utcnow()
+            current_time = datetime.now(datetime.UTC)
             
             for i, step in enumerate(strategy.follow_up_sequence):
                 # Calculate timing
@@ -399,7 +399,7 @@ class FollowUpAutomationEngine:
     async def _calculate_engagement_level(self, tracker: EngagementTracker) -> EngagementLevel:
         """Calculate engagement level based on recent activity"""
         
-        current_time = datetime.utcnow()
+        current_time = datetime.now(datetime.UTC)
         
         # Check for recent activity (last 7 days)
         recent_activity_score = 0
@@ -460,7 +460,7 @@ class FollowUpAutomationEngine:
             
             # Mark as completed
             action.is_completed = True
-            action.completion_time = datetime.utcnow()
+            action.completion_time = datetime.now(datetime.UTC)
             action.outcome = result.get('status', 'completed')
             
             await self._store_follow_up_action(action)
@@ -482,7 +482,7 @@ class FollowUpAutomationEngine:
         """Get follow-up dashboard data"""
         
         try:
-            current_time = datetime.utcnow()
+            current_time = datetime.now(datetime.UTC)
             
             if not date_range:
                 start_date = current_time - timedelta(days=30)

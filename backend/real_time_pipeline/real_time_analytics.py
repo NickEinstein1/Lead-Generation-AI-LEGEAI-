@@ -11,11 +11,11 @@ from datetime import datetime
 class MetricsAggregator:
     def __init__(self):
         self.metrics = defaultdict(int)
-        self.last_updated = datetime.utcnow()
+        self.last_updated = datetime.now(datetime.UTC)
 
     def inc(self, key: str, value: int = 1):
         self.metrics[key] += value
-        self.last_updated = datetime.utcnow()
+        self.last_updated = datetime.now(datetime.UTC)
 
     def snapshot(self) -> Dict[str, Any]:
         return {

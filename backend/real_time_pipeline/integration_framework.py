@@ -277,7 +277,7 @@ class CRMIntegrationFramework:
         # For now, return success
         return {
             'success': True,
-            'crm_id': f"crm_{datetime.utcnow().timestamp()}",
+            'crm_id': f"crm_{datetime.now(datetime.UTC).timestamp()}",
             'message': 'Synced to CRM successfully'
         }
     

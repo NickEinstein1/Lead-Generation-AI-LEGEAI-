@@ -171,7 +171,7 @@ class ScalabilityOrchestrator:
         
         health_status = {
             'overall_status': 'healthy',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'components': {}
         }
         
@@ -239,7 +239,7 @@ class ScalabilityOrchestrator:
         """Get comprehensive performance dashboard data"""
         
         dashboard = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'system_health': await self.get_system_health(),
             'performance_metrics': performance_optimizer.get_performance_report(),
             'cache_statistics': multi_level_cache.get_cache_stats(),
@@ -255,7 +255,7 @@ class ScalabilityOrchestrator:
         """Trigger performance optimization across all components"""
         
         optimization_results = {
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'actions_taken': []
         }
         

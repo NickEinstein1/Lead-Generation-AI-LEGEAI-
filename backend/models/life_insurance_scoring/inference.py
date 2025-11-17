@@ -180,7 +180,7 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
                     'lead_id': lead_data.get('lead_id'),
                     'score': 0,
                     'error': 'Consent not provided or invalid',
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now(datetime.UTC).isoformat(),
                     'compliance_status': 'FAILED'
                 }
 
@@ -218,7 +218,7 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
                 'recommended_policy_type': self._recommend_policy_type(lead_data),
                 'policy_recommendations': policy_recommendations,
                 'urgency_level': self._get_urgency_level(lead_data),
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(datetime.UTC).isoformat(),
                 'model_version': '1.0_life_insurance',
                 'compliance_status': 'PASSED'
             }
@@ -229,7 +229,7 @@ class LifeInsuranceLeadScorer(InsuranceLeadScorer):
                 'lead_id': lead_data.get('lead_id'),
                 'score': 0,
                 'error': str(e),
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(datetime.UTC).isoformat(),
                 'compliance_status': 'ERROR'
             }
     

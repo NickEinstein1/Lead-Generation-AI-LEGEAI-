@@ -154,7 +154,7 @@ class BusinessIntelligenceDashboard:
                 
                 # Update KPI
                 kpi.current_value = new_value
-                kpi.last_updated = datetime.utcnow()
+                kpi.last_updated = datetime.now(datetime.UTC)
                 updated_kpis.append(kpi_id)
                 
                 # Check for alerts
@@ -167,7 +167,7 @@ class BusinessIntelligenceDashboard:
                 'updated_kpis': updated_kpis,
                 'new_alerts': len(new_alerts),
                 'alerts': [alert.alert_id for alert in new_alerts],
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(datetime.UTC).isoformat()
             }
             
         except Exception as e:
@@ -297,7 +297,7 @@ class BusinessIntelligenceDashboard:
                 'unacknowledged': len([a for a in self.alerts.values() if not a.acknowledged])
             },
             'trend_data': trend_data,
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(datetime.UTC).isoformat()
         }
     
     def _get_kpi_status(self, kpi: KPI) -> str:

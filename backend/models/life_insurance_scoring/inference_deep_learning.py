@@ -150,7 +150,7 @@ class LifeInsuranceDeepLearningScorer:
                 'model_type': 'deep_learning',
                 'model_architecture': 'attention_dnn',
                 'device': str(self.device),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(datetime.UTC).isoformat()
             }
             
         except Exception as e:
@@ -160,6 +160,6 @@ class LifeInsuranceDeepLearningScorer:
                 'score': 50.0,
                 'error': str(e),
                 'model_type': 'deep_learning',
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(datetime.UTC).isoformat()
             }
 

@@ -16,6 +16,7 @@ from backend.api.life_insurance_scoring_api import router as life_insurance_rout
 
 from backend.api.documents_api import router as documents_router
 from backend.api.docuseal_webhooks import router as docuseal_webhooks_router
+from backend.api.file_documents_api import router as file_documents_router
 
 import os
 from backend.database.connection import init_db
@@ -46,6 +47,7 @@ app.include_router(auth_router, prefix="/v1")
 app.include_router(pipeline_router, prefix="/v1")
 app.include_router(dashboard_router, prefix="/v1")
 app.include_router(life_insurance_router, prefix="/v1")
+app.include_router(file_documents_router, prefix="/v1/file-management")  # New file document management
 
 
 # Routers for docs are mounted earlier; ensure /v1/documents is available in OpenAPI

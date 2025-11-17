@@ -386,7 +386,7 @@ class APISecurityGateway:
         
         log_entry = {
             'request_id': request_id,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'source_ip': request_data.get('source_ip'),
             'method': request_data.get('method'),
             'path': request_data.get('path'),
@@ -408,7 +408,7 @@ class APISecurityGateway:
             'status_code': status_code,
             'message': message,
             'request_id': request_id,
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'security_headers': self.security_headers
         }
         
@@ -448,7 +448,7 @@ class APISecurityGateway:
             'top_source_ips': top_ips,
             'active_policies': len(self.security_policies),
             'rate_limited_ips': len(self.rate_limits),
-            'last_updated': datetime.utcnow().isoformat()
+            'last_updated': datetime.now(datetime.UTC).isoformat()
         }
 
 # Global API security gateway

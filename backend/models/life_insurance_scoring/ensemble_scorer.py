@@ -94,7 +94,7 @@ class EnsembleLifeInsuranceScorer:
         
         results = {
             'lead_id': lead_data.get('lead_id', 'unknown'),
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'model_type': 'ensemble',
             'models_used': []
         }

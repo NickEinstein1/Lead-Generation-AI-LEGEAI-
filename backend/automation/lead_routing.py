@@ -79,7 +79,7 @@ class LeadRouter:
             "lead_id": lead.get("id"),
             "agent_id": agent.id,
             "rep_id": agent.id,
-            "assigned_at": datetime.utcnow().isoformat(),
+            "assigned_at": datetime.now(datetime.UTC).isoformat(),
             "policy": "capacity_first",
             "band": score_band,
         }

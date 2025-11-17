@@ -117,7 +117,7 @@ class HealthcareInsuranceLeadScorer(InsuranceLeadScorer):
                     'lead_id': lead_data.get('lead_id'),
                     'score': 0,
                     'error': 'HIPAA consent not provided or invalid',
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now(datetime.UTC).isoformat(),
                     'compliance_status': 'FAILED'
                 }
             
@@ -143,7 +143,7 @@ class HealthcareInsuranceLeadScorer(InsuranceLeadScorer):
                 'confidence': self._calculate_confidence(X),
                 'urgency_level': self._get_urgency_level(lead_data),
                 'recommended_plan_type': self._recommend_plan_type(lead_data),
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(datetime.UTC).isoformat(),
                 'model_version': '1.0_healthcare',
                 'compliance_status': 'PASSED'
             }
@@ -154,7 +154,7 @@ class HealthcareInsuranceLeadScorer(InsuranceLeadScorer):
                 'lead_id': lead_data.get('lead_id'),
                 'score': 0,
                 'error': str(e),
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(datetime.UTC).isoformat(),
                 'compliance_status': 'ERROR'
             }
     

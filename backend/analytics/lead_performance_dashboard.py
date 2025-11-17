@@ -393,7 +393,7 @@ class LeadPerformanceDashboard:
         # This would typically fetch from your analytics engine
         # For now, return sample data structure
         
-        end_date = datetime.utcnow()
+        end_date = datetime.now(datetime.UTC)
         if time_range == "24h":
             start_date = end_date - timedelta(hours=24)
             freq = 'H'

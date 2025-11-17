@@ -121,7 +121,7 @@ class RealTimeDataIntegrator:
             
             # Add enrichment metadata
             enriched['enrichment_metadata'] = {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(datetime.UTC).isoformat(),
                 'sources_used': [task.__name__ for task in tasks if not isinstance(result, Exception)],
                 'enrichment_score': self._calculate_enrichment_score(enriched, lead_data)
             }

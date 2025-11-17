@@ -236,7 +236,7 @@ class ReportingFramework:
                 metadata={
                     'data_points': len(data) if isinstance(data, pd.DataFrame) else 0,
                     'filters_applied': filters,
-                    'generation_time': datetime.utcnow().isoformat()
+                    'generation_time': datetime.now(datetime.UTC).isoformat()
                 }
             )
             

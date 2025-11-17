@@ -233,7 +233,7 @@ class AdvancedThreatProtection:
                 
             if re.search(signature.pattern, full_content, re.IGNORECASE):
                 detection = ThreatDetection(
-                    detection_id=f"sig_{signature.signature_id}_{datetime.utcnow().timestamp()}",
+                    detection_id=f"sig_{signature.signature_id}_{datetime.now(datetime.UTC).timestamp()}",
                     threat_type=signature.threat_type,
                     severity=signature.severity,
                     source_ip=request_data.get('source_ip', ''),
@@ -252,7 +252,7 @@ class AdvancedThreatProtection:
     async def _analyze_rate_limiting(self, source_ip: str) -> List[ThreatDetection]:
         """Analyze request rates for potential attacks"""
         threats = []
-        current_time = datetime.utcnow()
+        current_time = datetime.now(datetime.UTC)
         
         # Track request pattern
         self.request_patterns[source_ip].append(current_time)
@@ -300,7 +300,7 @@ class AdvancedThreatProtection:
         for pattern in suspicious_ua_patterns:
             if re.search(pattern, user_agent, re.IGNORECASE):
                 detection = ThreatDetection(
-                    detection_id=f"behavior_{source_ip}_{datetime.utcnow().timestamp()}",
+                    detection_id=f"behavior_{source_ip}_{datetime.now(datetime.UTC).timestamp()}",
                     threat_type=ThreatType.SUSPICIOUS_BEHAVIOR,
                     severity=ThreatSeverity.MEDIUM,
                     source_ip=source_ip,
@@ -328,7 +328,7 @@ class AdvancedThreatProtection:
             # This is a simplified example
             if self._is_high_risk_location(source_ip):
                 detection = ThreatDetection(
-                    detection_id=f"geo_{source_ip}_{datetime.utcnow().timestamp()}",
+                    detection_id=f"geo_{source_ip}_{datetime.now(datetime.UTC).timestamp()}",
                     threat_type=ThreatType.SUSPICIOUS_BEHAVIOR,
                     severity=ThreatSeverity.MEDIUM,
                     source_ip=source_ip,
@@ -375,7 +375,7 @@ class AdvancedThreatProtection:
             for pattern in patterns:
                 if re.search(pattern, content, re.IGNORECASE):
                     detection = ThreatDetection(
-                        detection_id=f"content_{attack_type}_{datetime.utcnow().timestamp()}",
+                        detection_id=f"content_{attack_type}_{datetime.now(datetime.UTC).timestamp()}",
                         threat_type=ThreatType.SQL_INJECTION if attack_type == 'sql_injection' else ThreatType.XSS,
                         severity=ThreatSeverity.HIGH,
                         source_ip="unknown",
@@ -428,7 +428,7 @@ class AdvancedThreatProtection:
             f"blocked_ip:{ip_address}",
             duration_hours * 3600,
             json.dumps({
-                'blocked_at': datetime.utcnow().isoformat(),
+                'blocked_at': datetime.now(datetime.UTC).isoformat(),
                 'duration_hours': duration_hours,
                 'reason': 'threat_detection'
             })
@@ -445,7 +445,7 @@ class AdvancedThreatProtection:
             f"quarantine_ip:{ip_address}",
             86400,  # 24 hours
             json.dumps({
-                'quarantined_at': datetime.utcnow().isoformat(),
+                'quarantined_at': datetime.now(datetime.UTC).isoformat(),
                 'suspicion_score': 0.8
             })
         )
@@ -488,7 +488,7 @@ class AdvancedThreatProtection:
     
     def get_threat_summary(self) -> Dict[str, Any]:
         """Get summary of current threats"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(datetime.UTC)
         recent_threats = [
             threat for threat in self.active_threats.values()
             if current_time - threat.timestamp < timedelta(hours=24)

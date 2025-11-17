@@ -234,7 +234,7 @@ class RealtimeChatEngine:
         try:
             # Create chat session
             session = ChatSession(
-                session_id=f"chat_{int(datetime.utcnow().timestamp())}",
+                session_id=f"chat_{int(datetime.now(datetime.UTC).timestamp())}",
                 visitor_id=visitor_data.get('visitor_id', 'anonymous'),
                 lead_id=visitor_data.get('lead_id'),
                 trigger=ChatTrigger(trigger_data.get('trigger_type', 'manual_trigger')) if trigger_data else ChatTrigger.MANUAL_TRIGGER,
@@ -272,12 +272,12 @@ class RealtimeChatEngine:
             
             # Create message
             message = ChatMessage(
-                message_id=f"msg_{int(datetime.utcnow().timestamp())}",
+                message_id=f"msg_{int(datetime.now(datetime.UTC).timestamp())}",
                 session_id=session_id,
                 message_type=MessageType.AUTOMATED,
                 sender="visitor",
                 content=message_content,
-                timestamp=datetime.utcnow()
+                timestamp=datetime.now(datetime.UTC)
             )
             
             # Analyze message intent and sentiment

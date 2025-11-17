@@ -130,7 +130,7 @@ async def receive_webhook(source: str, payload: Dict[str, Any], request: Request
             "raw": payload,
             "webhook": {
                 "source": source,
-                "received_at": datetime.utcnow().isoformat(),
+                "received_at": datetime.now(datetime.UTC).isoformat(),
                 "ip": request.client.host if request and request.client else None,
                 "user_agent": request.headers.get("user-agent", ""),
             },

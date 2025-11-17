@@ -152,8 +152,8 @@ class SecurityMonitor:
                 threat_type="known_attacker",
                 confidence=0.9,
                 source="internal_blacklist",
-                first_seen=datetime.utcnow() - timedelta(days=30),
-                last_seen=datetime.utcnow() - timedelta(days=1)
+                first_seen=datetime.now(datetime.UTC) - timedelta(days=30),
+                last_seen=datetime.now(datetime.UTC) - timedelta(days=1)
             ),
             ThreatIntelligence(
                 indicator="malicious-domain.com",
@@ -161,8 +161,8 @@ class SecurityMonitor:
                 threat_type="phishing",
                 confidence=0.8,
                 source="threat_feed",
-                first_seen=datetime.utcnow() - timedelta(days=7),
-                last_seen=datetime.utcnow()
+                first_seen=datetime.now(datetime.UTC) - timedelta(days=7),
+                last_seen=datetime.now(datetime.UTC)
             )
         ]
         
@@ -203,7 +203,7 @@ class SecurityMonitor:
         event = SecurityEvent(
             event_id=event_id,
             event_type=event_type,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(datetime.UTC),
             source_ip=source_ip,
             user_id=user_id,
             description=description,
@@ -276,7 +276,7 @@ class SecurityMonitor:
                 e for e in self.security_events.values()
                 if e.source_ip == event.source_ip 
                 and e.event_type == SecurityEventType.AUTHENTICATION_FAILURE
-                and e.timestamp > datetime.utcnow() - timedelta(minutes=15)
+                and e.timestamp > datetime.now(datetime.UTC) - timedelta(minutes=15)
             ]
             return len(recent_failures) >= 5
         
@@ -306,14 +306,14 @@ class SecurityMonitor:
             description=f"Incident created from security event: {event.description}",
             severity=incident_severity,
             status=IncidentStatus.OPEN,
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(datetime.UTC),
+            updated_at=datetime.now(datetime.UTC),
             events=[event.event_id]
         )
         
         # Add initial timeline entry
         incident.timeline.append({
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'action': 'incident_created',
             'description': f"Incident created from event {event.event_id}",
             'user': 'system'
@@ -396,7 +396,7 @@ Raw Data: {json.dumps(event.raw_data, indent=2)}
     
     async def _detect_anomalies(self):
         """Detect security anomalies"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(datetime.UTC)
         
         # Detect unusual login patterns
         await self._detect_unusual_login_patterns()
@@ -416,7 +416,7 @@ Raw Data: {json.dumps(event.raw_data, indent=2)}
         recent_logins = [
             event for event in self.security_events.values()
             if event.event_type == SecurityEventType.AUTHENTICATION_FAILURE
-            and event.timestamp > datetime.utcnow() - timedelta(hours=1)
+            and event.timestamp > datetime.now(datetime.UTC) - timedelta(hours=1)
         ]
         
         # Group by IP
@@ -494,7 +494,7 @@ Raw Data: {json.dumps(event.raw_data, indent=2)}
     
     async def _manage_incidents(self):
         """Manage open incidents"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(datetime.UTC)
         
         for incident in self.incidents.values():
             if incident.status == IncidentStatus.OPEN:
@@ -511,11 +511,11 @@ Raw Data: {json.dumps(event.raw_data, indent=2)}
             return
         
         incident.status = IncidentStatus.INVESTIGATING
-        incident.updated_at = datetime.utcnow()
+        incident.updated_at = datetime.now(datetime.UTC)
         
         # Add timeline entry
         incident.timeline.append({
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(datetime.UTC).isoformat(),
             'action': 'escalated',
             'description': 'Incident auto-escalated due to age',
             'user': 'system'
@@ -558,11 +558,11 @@ This incident requires immediate attention.
             if assigned_to:
                 incident.assigned_to = assigned_to
             
-            incident.updated_at = datetime.utcnow()
+            incident.updated_at = datetime.now(datetime.UTC)
             
             # Add timeline entry
             timeline_entry = {
-                'timestamp': datetime.utcnow().isoformat(),
+                'timestamp': datetime.now(datetime.UTC).isoformat(),
                 'action': 'updated',
                 'description': notes or 'Incident updated',
                 'user': assigned_to or 'system'
@@ -597,7 +597,7 @@ This incident requires immediate attention.
     
     def get_security_dashboard(self) -> Dict[str, Any]:
         """Get security dashboard data"""
-        current_time = datetime.utcnow()
+        current_time = datetime.now(datetime.UTC)
         last_24h = current_time - timedelta(hours=24)
         last_7d = current_time - timedelta(days=7)
         
@@ -687,7 +687,7 @@ This incident requires immediate attention.
         # Check for common issues
         recent_events = [
             event for event in self.security_events.values()
-            if event.timestamp > datetime.utcnow() - timedelta(hours=24)
+            if event.timestamp > datetime.now(datetime.UTC) - timedelta(hours=24)
         ]
         
         failed_logins = [e for e in recent_events if e.event_type == SecurityEventType.AUTHENTICATION_FAILURE]

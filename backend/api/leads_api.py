@@ -79,7 +79,7 @@ async def create_lead(payload: LeadCreate, session: AsyncSession = Depends(sessi
         return {"lead_id": lead_id, "status": "duplicate", "idempotent": True}
 
     lead_id = str(uuid4())
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(datetime.UTC).isoformat()
 
     lead_record = {
         "id": lead_id,
@@ -238,7 +238,7 @@ async def score_lead(lead_id: str, payload: ScoreInput, session: AsyncSession = 
                 "band": db_score.band,
                 "explanation": db_score.explanation,
                 "model_version": db_score.model_version,
-                "scored_at": datetime.utcnow().isoformat(),
+                "scored_at": datetime.now(datetime.UTC).isoformat(),
             }
         else:
             score_entry = {
@@ -247,7 +247,7 @@ async def score_lead(lead_id: str, payload: ScoreInput, session: AsyncSession = 
                 "band": result.get("band"),
                 "explanation": result.get("explanation"),
                 "model_version": result.get("model_version"),
-                "scored_at": datetime.utcnow().isoformat(),
+                "scored_at": datetime.now(datetime.UTC).isoformat(),
             }
             SCORES_DB.setdefault(lead_id, []).append(score_entry)
             return score_entry

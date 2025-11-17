@@ -173,7 +173,7 @@ class MultiLevelCache:
             return None
         
         # Update access info
-        entry.last_accessed = datetime.utcnow()
+        entry.last_accessed = datetime.now(datetime.UTC)
         entry.access_count += 1
         
         return entry.value
@@ -191,8 +191,8 @@ class MultiLevelCache:
             key=key,
             value=value,
             ttl=ttl,
-            created_at=datetime.utcnow(),
-            last_accessed=datetime.utcnow(),
+            created_at=datetime.now(datetime.UTC),
+            last_accessed=datetime.now(datetime.UTC),
             size_bytes=size_bytes
         )
         
@@ -241,7 +241,7 @@ class MultiLevelCache:
     def _is_expired(self, entry: CacheEntry) -> bool:
         """Check if cache entry is expired"""
         
-        age = (datetime.utcnow() - entry.created_at).total_seconds()
+        age = (datetime.now(datetime.UTC) - entry.created_at).total_seconds()
         return age > entry.ttl
     
     async def _evict_if_needed_l1(self):

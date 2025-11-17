@@ -164,8 +164,8 @@ async def create_document_for_lead(lead_id: int, body: CreateDocumentRequest, se
         "provider_request_id": provider_request_id,
         "signing_url": signing_url or f"/v1/documents/{new_id}/sign",
         "metadata": {"provider": provider},
-        "created_at": datetime.utcnow().isoformat(),
-        "updated_at": datetime.utcnow().isoformat(),
+        "created_at": datetime.now(datetime.UTC).isoformat(),
+        "updated_at": datetime.now(datetime.UTC).isoformat(),
         "signed_at": None,
     }
     INMEM_DOCS.append(doc)
@@ -187,7 +187,7 @@ async def get_document(doc_id: int, session: AsyncSession = Depends(session_dep)
 
 @router.post("/documents/{doc_id}/simulate-sign")
 async def simulate_sign(doc_id: int, session: AsyncSession = Depends(session_dep)):
-    now = datetime.utcnow()
+    now = datetime.now(datetime.UTC)
     if USE_DB:
         doc = (await session.execute(select(Document).where(Document.id == doc_id))).scalars().first()
         if not doc:

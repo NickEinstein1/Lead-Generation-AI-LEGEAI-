@@ -129,7 +129,7 @@ class AdvancedAnalyticsEngine:
         
         try:
             event_type = event_data.get('event_type')
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(datetime.UTC)
             hour_key = timestamp.strftime('%Y-%m-%d:%H')
             
             # Track different event types
@@ -212,11 +212,11 @@ class AdvancedAnalyticsEngine:
         # Check cache first
         if cache_key in self.metrics_cache:
             cached_time, cached_data = self.metrics_cache[cache_key]
-            if (datetime.utcnow() - cached_time).seconds < self.cache_ttl:
+            if (datetime.now(datetime.UTC) - cached_time).seconds < self.cache_ttl:
                 return cached_data
         
         # Calculate metrics
-        end_time = datetime.utcnow()
+        end_time = datetime.now(datetime.UTC)
         if time_range == "24h":
             start_time = end_time - timedelta(hours=24)
         elif time_range == "7d":
@@ -250,11 +250,11 @@ class AdvancedAnalyticsEngine:
             total_revenue=total_revenue,
             revenue_per_lead=revenue_per_lead,
             lead_velocity=lead_velocity,
-            timestamp=datetime.utcnow()
+            timestamp=datetime.now(datetime.UTC)
         )
         
         # Cache the result
-        self.metrics_cache[cache_key] = (datetime.utcnow(), metrics)
+        self.metrics_cache[cache_key] = (datetime.now(datetime.UTC), metrics)
         
         return metrics
     
@@ -341,7 +341,7 @@ class AdvancedAnalyticsEngine:
             await self._train_predictive_models()
         
         # Get historical data for prediction
-        end_time = datetime.utcnow()
+        end_time = datetime.now(datetime.UTC)
         start_time = end_time - timedelta(days=90)  # Use 90 days of history
         
         historical_data = await self._prepare_prediction_data(start_time, end_time)
@@ -366,7 +366,7 @@ class AdvancedAnalyticsEngine:
                 "conversions": {"lower": conversion_forecast * 0.8, "upper": conversion_forecast * 1.2},
                 "revenue": {"lower": revenue_forecast * 0.75, "upper": revenue_forecast * 1.25}
             },
-            "generated_at": datetime.utcnow().isoformat()
+            "generated_at": datetime.now(datetime.UTC).isoformat()
         }
     
     async def _train_predictive_models(self):
@@ -374,7 +374,7 @@ class AdvancedAnalyticsEngine:
         
         try:
             # Get training data (last 6 months)
-            end_time = datetime.utcnow()
+            end_time = datetime.now(datetime.UTC)
             start_time = end_time - timedelta(days=180)
             
             training_data = await self._prepare_prediction_data(start_time, end_time)
@@ -406,7 +406,7 @@ class AdvancedAnalyticsEngine:
                 self.ltv_model.fit(X, df['revenue'])
             
             self.models_trained = True
-            self.last_model_update = datetime.utcnow()
+            self.last_model_update = datetime.now(datetime.UTC)
             
             logger.info("Predictive models trained successfully")
             

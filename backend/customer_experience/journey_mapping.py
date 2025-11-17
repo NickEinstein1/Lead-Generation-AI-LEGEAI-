@@ -146,10 +146,10 @@ class JourneyMappingEngine:
         try:
             # Create touchpoint
             touchpoint = Touchpoint(
-                touchpoint_id=f"tp_{lead_id}_{int(datetime.utcnow().timestamp())}",
+                touchpoint_id=f"tp_{lead_id}_{int(datetime.now(datetime.UTC).timestamp())}",
                 lead_id=lead_id,
                 touchpoint_type=TouchpointType(touchpoint_data.get('type', 'website_visit')),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(datetime.UTC),
                 channel=touchpoint_data.get('channel', 'direct'),
                 source=touchpoint_data.get('source', 'unknown'),
                 medium=touchpoint_data.get('medium', 'organic'),

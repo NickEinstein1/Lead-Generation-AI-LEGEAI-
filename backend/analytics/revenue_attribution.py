@@ -102,7 +102,7 @@ class RevenueAttributionEngine:
                 medium=touchpoint_data.get('medium', 'unknown'),
                 campaign=touchpoint_data.get('campaign', 'unknown'),
                 content=touchpoint_data.get('content', ''),
-                timestamp=datetime.fromisoformat(touchpoint_data.get('timestamp', datetime.utcnow().isoformat())),
+                timestamp=datetime.fromisoformat(touchpoint_data.get('timestamp', datetime.now(datetime.UTC).isoformat())),
                 value=touchpoint_data.get('value', 0.0)
             )
             
@@ -127,7 +127,7 @@ class RevenueAttributionEngine:
             customer_id = conversion_data['customer_id']
             revenue = conversion_data.get('revenue', 0.0)
             conversion_date = datetime.fromisoformat(
-                conversion_data.get('conversion_date', datetime.utcnow().isoformat())
+                conversion_data.get('conversion_date', datetime.now(datetime.UTC).isoformat())
             )
             
             # Get customer journey
@@ -175,7 +175,7 @@ class RevenueAttributionEngine:
         
         try:
             # Get conversions in time range
-            end_date = datetime.utcnow()
+            end_date = datetime.now(datetime.UTC)
             start_date = end_date - timedelta(days=time_range_days)
             
             conversions = await self._get_conversions_in_range(start_date, end_date)
@@ -341,7 +341,7 @@ class RevenueAttributionEngine:
             
             report = {
                 'report_period_days': days,
-                'generated_at': datetime.utcnow().isoformat(),
+                'generated_at': datetime.now(datetime.UTC).isoformat(),
                 'attribution_models': attribution_comparison,
                 'journey_insights': journey_insights,
                 'channel_performance': channel_performance,

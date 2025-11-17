@@ -258,7 +258,7 @@ class DatabaseConnectionManager:
             return {}
         
         # Calculate statistics
-        recent_metrics = [m for m in self.query_metrics if m.timestamp > datetime.utcnow() - timedelta(hours=1)]
+        recent_metrics = [m for m in self.query_metrics if m.timestamp > datetime.now(datetime.UTC) - timedelta(hours=1)]
         
         stats = {
             'total_queries': len(self.query_metrics),

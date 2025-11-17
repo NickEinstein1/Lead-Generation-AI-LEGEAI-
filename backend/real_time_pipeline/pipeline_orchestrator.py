@@ -136,7 +136,7 @@ class PipelineOrchestrator:
         """Process a real-time event through the pipeline"""
         
         try:
-            start_time = datetime.utcnow()
+            start_time = datetime.now(datetime.UTC)
             
             # Determine event source and create event
             if event_type == "form_submission":
@@ -162,7 +162,7 @@ class PipelineOrchestrator:
                 )
             
             # Calculate processing time
-            processing_time = (datetime.utcnow() - start_time).total_seconds()
+            processing_time = (datetime.now(datetime.UTC) - start_time).total_seconds()
             
             # Update metrics
             self.metrics.events_processed += 1
@@ -175,7 +175,7 @@ class PipelineOrchestrator:
                 'success': True,
                 'event_id': event_id,
                 'processing_time': processing_time,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(datetime.UTC).isoformat()
             }
             
         except Exception as e:
@@ -185,7 +185,7 @@ class PipelineOrchestrator:
             return {
                 'success': False,
                 'error': str(e),
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(datetime.UTC).isoformat()
             }
     
     async def _register_event_handlers(self):
@@ -223,7 +223,7 @@ class PipelineOrchestrator:
             # Queue CRM sync
             await integration_hub.queue_sync_operation({
                 'type': 'crm_sync',
-                'operation_id': f"crm_sync_{datetime.utcnow().timestamp()}",
+                'operation_id': f"crm_sync_{datetime.now(datetime.UTC).timestamp()}",
                 'data': event_data,
                 'direction': 'outbound'
             })
@@ -240,7 +240,7 @@ class PipelineOrchestrator:
             # Queue CRM sync for update
             await integration_hub.queue_sync_operation({
                 'type': 'crm_sync',
-                'operation_id': f"crm_update_{datetime.utcnow().timestamp()}",
+                'operation_id': f"crm_update_{datetime.now(datetime.UTC).timestamp()}",
                 'data': event_data,
                 'direction': 'outbound'
             })
@@ -307,7 +307,7 @@ class PipelineOrchestrator:
         while self.status == PipelineStatus.RUNNING:
             try:
                 # Update processing rate
-                current_time = datetime.utcnow()
+                current_time = datetime.now(datetime.UTC)
                 time_diff = (current_time - self.metrics.last_updated).total_seconds()
                 
                 if time_diff > 0:
@@ -373,7 +373,7 @@ class PipelineOrchestrator:
         
         health_report = {
             'status': self.status.value,
-            'uptime': (datetime.utcnow() - self.metrics.last_updated).total_seconds(),
+            'uptime': (datetime.now(datetime.UTC) - self.metrics.last_updated).total_seconds(),
             'metrics': {
                 'events_processed': self.metrics.events_processed,
                 'events_failed': self.metrics.events_failed,
@@ -390,13 +390,13 @@ class PipelineOrchestrator:
                 is_healthy = await health_check()
                 health_report['components'][component] = {
                     'status': 'healthy' if is_healthy else 'unhealthy',
-                    'last_checked': datetime.utcnow().isoformat()
+                    'last_checked': datetime.now(datetime.UTC).isoformat()
                 }
             except Exception as e:
                 health_report['components'][component] = {
                     'status': 'error',
                     'error': str(e),
-                    'last_checked': datetime.utcnow().isoformat()
+                    'last_checked': datetime.now(datetime.UTC).isoformat()
                 }
         
         return health_report

@@ -41,7 +41,7 @@ async def receive_docuseal_webhook(payload: Dict[str, Any], request: Request, se
         if not doc:
             return {"status": "not_found"}
 
-        now = datetime.utcnow()
+        now = datetime.now(datetime.UTC)
         if event_type == "submission.completed":
             doc.status = "signed"
             doc.signed_at = now

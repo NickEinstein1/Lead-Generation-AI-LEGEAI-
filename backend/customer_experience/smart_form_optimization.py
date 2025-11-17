@@ -238,7 +238,7 @@ class SmartFormOptimizationEngine:
             
             # Generate form session
             session = FormSession(
-                session_id=f"session_{int(datetime.utcnow().timestamp())}",
+                session_id=f"session_{int(datetime.now(datetime.UTC).timestamp())}",
                 form_id=optimized_config.form_id,
                 lead_id=lead_data.get('lead_id') if lead_data else None,
                 device_type=device_info.get('device_type', 'desktop') if device_info else 'desktop',
@@ -319,14 +319,14 @@ class SmartFormOptimizationEngine:
             field_data = session.field_interactions[field_id]
             
             if interaction_type == 'focus':
-                field_data['focus_time'] = datetime.utcnow().isoformat()
+                field_data['focus_time'] = datetime.now(datetime.UTC).isoformat()
             elif interaction_type == 'blur':
-                field_data['blur_time'] = datetime.utcnow().isoformat()
+                field_data['blur_time'] = datetime.now(datetime.UTC).isoformat()
             elif interaction_type == 'change':
                 field_data['value_changes'] += 1
             elif interaction_type == 'error':
                 field_data['errors'].append({
-                    'timestamp': datetime.utcnow().isoformat(),
+                    'timestamp': datetime.now(datetime.UTC).isoformat(),
                     'error_type': interaction_data.get('error_type'),
                     'error_message': interaction_data.get('error_message')
                 })
@@ -348,7 +348,7 @@ class SmartFormOptimizationEngine:
             
             # Mark session as completed
             session.completed = True
-            session.end_time = datetime.utcnow()
+            session.end_time = datetime.now(datetime.UTC)
             
             # Calculate session metrics
             session_duration = (session.end_time - session.start_time).total_seconds()

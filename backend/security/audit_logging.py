@@ -312,7 +312,7 @@ class AuditLogger:
                 'top_users': sorted(user_activity.items(), key=lambda x: x[1], reverse=True)[:10]
             },
             'compliance_issues': compliance_issues,
-            'generated_at': datetime.utcnow().isoformat()
+            'generated_at': datetime.now(datetime.UTC).isoformat()
         }
     
     def _generate_event_id(self, event: AuditEvent) -> str:
@@ -382,7 +382,7 @@ class AuditLogger:
         
         storage_data = {
             'event': event,
-            'storage_date': datetime.utcnow().isoformat()
+            'storage_date': datetime.now(datetime.UTC).isoformat()
         }
         
         self.redis_client.lpush('audit_storage_queue', json.dumps(storage_data, default=str))

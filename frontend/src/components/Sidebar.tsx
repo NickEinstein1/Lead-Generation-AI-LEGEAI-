@@ -89,14 +89,27 @@ const getNavItems = (lifeInsuranceSubmenu: NavItem[]): NavItem[] => [
   },
   {
     id: "documents",
-    label: "Documents",
-    icon: "📑",
+    label: "E-Signatures",
+    icon: "✍️",
     href: "/dashboard/documents",
     submenu: [
       { id: "docs-all", label: "All Documents", icon: "📋", href: "/dashboard/documents" },
-      { id: "docs-pending", label: "Pending Signature", icon: "✍️", href: "/dashboard/documents?status=pending" },
+      { id: "docs-pending", label: "Pending Signature", icon: "⏳", href: "/dashboard/documents?status=pending" },
       { id: "docs-signed", label: "Signed", icon: "✅", href: "/dashboard/documents?status=signed" },
       { id: "docs-templates", label: "Templates", icon: "📝", href: "/dashboard/documents/templates" },
+    ],
+  },
+  {
+    id: "file-library",
+    label: "File Library",
+    icon: "📁",
+    href: "/dashboard/file-library",
+    submenu: [
+      { id: "files-all", label: "All Files", icon: "📋", href: "/dashboard/file-library" },
+      { id: "files-policies", label: "Policies", icon: "📄", href: "/dashboard/file-library?category=policies" },
+      { id: "files-claims", label: "Claims", icon: "📝", href: "/dashboard/file-library?category=claims" },
+      { id: "files-customer-data", label: "Customer Data", icon: "👥", href: "/dashboard/file-library?category=customer_data" },
+      { id: "files-reports", label: "Reports", icon: "📊", href: "/dashboard/file-library?category=reports" },
     ],
   },
   {

@@ -280,7 +280,7 @@ class SecurityTestingFramework:
         
         suite = self.test_suites[suite_id]
         suite.status = TestStatus.RUNNING
-        suite.start_time = datetime.utcnow()
+        suite.start_time = datetime.now(datetime.UTC)
         suite.passed_count = 0
         suite.failed_count = 0
         suite.vulnerabilities = []
@@ -306,7 +306,7 @@ class SecurityTestingFramework:
                 test.error_message = str(e)
                 logger.error(f"Error running test {test.test_id}: {e}")
         
-        suite.end_time = datetime.utcnow()
+        suite.end_time = datetime.now(datetime.UTC)
         suite.status = TestStatus.PASSED if suite.failed_count == 0 else TestStatus.FAILED
         
         logger.info(f"Test suite completed: {suite.name} - {suite.passed_count} passed, {suite.failed_count} failed")
@@ -577,8 +577,8 @@ class SecurityTestingFramework:
         security_score = self._calculate_security_score(vuln_by_severity, total_tests)
         
         return {
-            'report_id': hashlib.md5(str(datetime.utcnow()).encode()).hexdigest()[:12],
-            'generated_at': datetime.utcnow().isoformat(),
+            'report_id': hashlib.md5(str(datetime.now(datetime.UTC)).encode()).hexdigest()[:12],
+            'generated_at': datetime.now(datetime.UTC).isoformat(),
             'summary': {
                 'total_tests': total_tests,
                 'tests_passed': total_passed,

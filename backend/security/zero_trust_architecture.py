@@ -579,7 +579,7 @@ class ZeroTrustEngine:
                 'access_days': [],
                 'locations': [],
                 'hourly_access_rate': 0,
-                'last_updated': datetime.utcnow().isoformat()
+                'last_updated': datetime.now(datetime.UTC).isoformat()
             }
         
         baseline = self.user_behavior_baselines[user.user_id]
@@ -598,7 +598,7 @@ class ZeroTrustEngine:
         if context.location and context.location not in baseline['locations']:
             baseline['locations'].append(context.location)
         
-        baseline['last_updated'] = datetime.utcnow().isoformat()
+        baseline['last_updated'] = datetime.now(datetime.UTC).isoformat()
 
 # Global zero trust engine
 zero_trust_engine = ZeroTrustEngine()
