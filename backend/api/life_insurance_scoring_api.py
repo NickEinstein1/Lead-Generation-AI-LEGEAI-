@@ -3,6 +3,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional, Dict
 import logging
 from backend.models.life_insurance_scoring.inference import LifeInsuranceLeadScorer
+from backend.models.life_insurance_scoring.ensemble_scorer import EnsembleLifeInsuranceScorer
 from backend.models.insurance_products import (
     LifeInsurancePolicyType,
     get_all_life_insurance_categories,
@@ -14,19 +15,34 @@ import asyncio
 router = APIRouter(prefix="/life-insurance", tags=["Life Insurance"])
 logger = logging.getLogger(__name__)
 
-# Initialize life insurance scorer (lazy loading)
-life_scorer = None
+# Initialize scorers
+try:
+    ensemble_scorer = EnsembleLifeInsuranceScorer(
+        xgboost_weight=0.4,
+        deep_learning_weight=0.6,
+        use_adaptive_weighting=True
+    )
+    logger.info("Ensemble scorer initialized successfully")
+except Exception as e:
+    logger.warning(f"Ensemble scorer failed to initialize: {e}. Falling back to XGBoost only.")
+    ensemble_scorer = None
+
+# Fallback to XGBoost only
+try:
+    xgboost_scorer = LifeInsuranceLeadScorer()
+    logger.info("XGBoost scorer initialized successfully")
+except Exception as e:
+    logger.error(f"XGBoost scorer failed to initialize: {e}")
+    xgboost_scorer = None
 
 def get_life_scorer():
-    """Lazy initialization of life insurance scorer"""
-    global life_scorer
-    if life_scorer is None:
-        try:
-            life_scorer = LifeInsuranceLeadScorer()
-        except Exception as e:
-            logger.warning(f"Life insurance scorer initialization failed: {e}. Using fallback mode.")
-            life_scorer = None
-    return life_scorer
+    """Get the best available life insurance scorer (ensemble preferred)"""
+    if ensemble_scorer is not None:
+        return ensemble_scorer
+    elif xgboost_scorer is not None:
+        return xgboost_scorer
+    else:
+        return None
 
 class LifeInsuranceLeadData(BaseModel):
     lead_id: str
@@ -79,9 +95,17 @@ class LifeInsuranceScoringResponse(BaseModel):
     policy_recommendations: Optional[List[PolicyRecommendation]] = None
     urgency_level: Optional[str] = None
     timestamp: str
-    model_version: str
-    compliance_status: str
+    model_version: Optional[str] = None
+    model_type: Optional[str] = None  # 'xgboost', 'deep_learning', or 'ensemble'
+    compliance_status: Optional[str] = None
     error: Optional[str] = None
+    # Ensemble-specific fields
+    models_used: Optional[List[str]] = None
+    xgboost_score: Optional[float] = None
+    xgboost_confidence: Optional[float] = None
+    deep_learning_score: Optional[float] = None
+    deep_learning_confidence: Optional[float] = None
+    ensemble_weights: Optional[Dict] = None
 
 @router.post("/score-lead", response_model=LifeInsuranceScoringResponse)
 async def score_life_insurance_lead(lead: LifeInsuranceLeadData):
@@ -109,6 +133,87 @@ async def score_life_insurance_leads(leads: List[LifeInsuranceLeadData]):
     except Exception as e:
         logger.error(f"Error scoring life insurance leads: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/compare-models")
+async def compare_scoring_models(lead: LifeInsuranceLeadData):
+    """
+    Compare scores from XGBoost, Deep Learning, and Ensemble models
+
+    This endpoint is useful for:
+    - Model performance analysis
+    - Understanding model agreement/disagreement
+    - Debugging and validation
+    """
+    lead_dict = lead.dict()
+    results = {
+        'lead_id': lead.lead_id,
+        'models': {}
+    }
+
+    # Try XGBoost
+    if xgboost_scorer:
+        try:
+            xgb_result = xgboost_scorer.score_lead(lead_dict)
+            results['models']['xgboost'] = {
+                'score': xgb_result.get('score', 0),
+                'confidence': xgb_result.get('confidence', 0),
+                'available': True
+            }
+        except Exception as e:
+            results['models']['xgboost'] = {
+                'available': False,
+                'error': str(e)
+            }
+    else:
+        results['models']['xgboost'] = {'available': False}
+
+    # Try Deep Learning (if ensemble is available, it has DL)
+    if ensemble_scorer and hasattr(ensemble_scorer, 'deep_learning_scorer'):
+        try:
+            dl_result = ensemble_scorer.deep_learning_scorer.score_lead(lead_dict)
+            results['models']['deep_learning'] = {
+                'score': dl_result.get('score', 0),
+                'confidence': dl_result.get('confidence', 0),
+                'available': True
+            }
+        except Exception as e:
+            results['models']['deep_learning'] = {
+                'available': False,
+                'error': str(e)
+            }
+    else:
+        results['models']['deep_learning'] = {'available': False}
+
+    # Try Ensemble
+    if ensemble_scorer:
+        try:
+            ensemble_result = ensemble_scorer.score_lead(lead_dict)
+            results['models']['ensemble'] = {
+                'score': ensemble_result.get('score', 0),
+                'confidence': ensemble_result.get('confidence', 0),
+                'ensemble_weights': ensemble_result.get('ensemble_weights', {}),
+                'available': True
+            }
+            results['recommended_score'] = ensemble_result.get('score', 0)
+            results['recommended_model'] = 'ensemble'
+        except Exception as e:
+            results['models']['ensemble'] = {
+                'available': False,
+                'error': str(e)
+            }
+    else:
+        results['models']['ensemble'] = {'available': False}
+
+    # Set recommended score if ensemble not available
+    if 'recommended_score' not in results:
+        if results['models']['xgboost'].get('available'):
+            results['recommended_score'] = results['models']['xgboost']['score']
+            results['recommended_model'] = 'xgboost'
+        else:
+            results['recommended_score'] = 50.0
+            results['recommended_model'] = 'none'
+
+    return results
 
 @router.get("/coverage-calculator")
 async def calculate_coverage_needs(
