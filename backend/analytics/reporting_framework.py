@@ -7,7 +7,7 @@ reporting with customizable templates and delivery mechanisms.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
@@ -236,7 +236,7 @@ class ReportingFramework:
                 metadata={
                     'data_points': len(data) if isinstance(data, pd.DataFrame) else 0,
                     'filters_applied': filters,
-                    'generation_time': datetime.now(datetime.UTC).isoformat()
+                    'generation_time': datetime.now(timezone.utc).isoformat()
                 }
             )
             

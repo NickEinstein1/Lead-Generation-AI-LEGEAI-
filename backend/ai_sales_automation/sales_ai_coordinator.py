@@ -7,7 +7,7 @@ components and provides unified insights and recommendations.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -164,7 +164,7 @@ class PerformanceOptimizer:
             description = f"Low engagement alert: Only {engagement_rate:.1%} of leads are highly engaged"
         
         return SalesInsight(
-            insight_id=f"engagement_trend_{int(datetime.now(datetime.UTC).timestamp())}",
+            insight_id=f"engagement_trend_{int(datetime.now(timezone.utc).timestamp())}",
             insight_type=InsightType.ENGAGEMENT_TREND,
             title="Lead Engagement Analysis",
             description=description,
@@ -308,7 +308,7 @@ class SalesAICoordinator:
         # Nurturing recommendations
         if lead_profile.engagement_level in ["low", "medium"]:
             nurturing_rec = ActionRecommendation(
-                action_id=f"nurture_{lead_profile.lead_id}_{int(datetime.now(datetime.UTC).timestamp())}",
+                action_id=f"nurture_{lead_profile.lead_id}_{int(datetime.now(timezone.utc).timestamp())}",
                 action_type=ActionType.UPDATE_NURTURING,
                 priority=7,
                 confidence=0.85,
@@ -326,7 +326,7 @@ class SalesAICoordinator:
         # Call recommendations
         if lead_profile.engagement_level in ["high", "very_high"] or lead_profile.conversion_probability > 0.7:
             call_rec = ActionRecommendation(
-                action_id=f"call_{lead_profile.lead_id}_{int(datetime.now(datetime.UTC).timestamp())}",
+                action_id=f"call_{lead_profile.lead_id}_{int(datetime.now(timezone.utc).timestamp())}",
                 action_type=ActionType.SCHEDULE_CALL,
                 priority=9,
                 confidence=0.90,
@@ -344,7 +344,7 @@ class SalesAICoordinator:
         # Cross-sell recommendations
         if lead_profile.revenue_potential > 2000:
             cross_sell_rec = ActionRecommendation(
-                action_id=f"cross_sell_{lead_profile.lead_id}_{int(datetime.now(datetime.UTC).timestamp())}",
+                action_id=f"cross_sell_{lead_profile.lead_id}_{int(datetime.now(timezone.utc).timestamp())}",
                 action_type=ActionType.GENERATE_QUOTE,
                 priority=6,
                 confidence=0.70,
@@ -361,7 +361,7 @@ class SalesAICoordinator:
         
         # Follow-up recommendations
         follow_up_rec = ActionRecommendation(
-            action_id=f"followup_{lead_profile.lead_id}_{int(datetime.now(datetime.UTC).timestamp())}",
+            action_id=f"followup_{lead_profile.lead_id}_{int(datetime.now(timezone.utc).timestamp())}",
             action_type=ActionType.SCHEDULE_FOLLOWUP,
             priority=5,
             confidence=0.80,

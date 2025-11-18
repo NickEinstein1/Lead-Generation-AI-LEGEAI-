@@ -3,7 +3,7 @@ import bcrypt
 import secrets
 import hashlib
 import hmac
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -248,7 +248,7 @@ class AuthenticationManager:
                 return False, None, "Invalid credentials"
             
             # Check if account is locked
-            if user.locked_until and user.locked_until > datetime.now(datetime.UTC):
+            if user.locked_until and user.locked_until > datetime.now(timezone.utc):
                 self._log_security_event("login_blocked", user.user_id, {"reason": "account_locked", "ip": ip_address})
                 return False, None, "Account is locked"
             
@@ -263,7 +263,7 @@ class AuthenticationManager:
                 
                 # Lock account if too many failed attempts
                 if user.failed_login_attempts >= SecurityConfig.MAX_LOGIN_ATTEMPTS:
-                    user.locked_until = datetime.now(datetime.UTC) + timedelta(minutes=SecurityConfig.LOCKOUT_DURATION_MINUTES)
+                    user.locked_until = datetime.now(timezone.utc) + timedelta(minutes=SecurityConfig.LOCKOUT_DURATION_MINUTES)
                     self._log_security_event("account_locked", user.user_id, {"ip": ip_address})
                 
                 self._log_security_event("login_failed", user.user_id, {"reason": "invalid_password", "ip": ip_address})
@@ -272,7 +272,7 @@ class AuthenticationManager:
             # Reset failed attempts on successful login
             user.failed_login_attempts = 0
             user.locked_until = None
-            user.last_login = datetime.now(datetime.UTC)
+            user.last_login = datetime.now(timezone.utc)
             
             # Create session
             session_id = self._create_session(user.user_id, ip_address, user_agent)
@@ -291,12 +291,12 @@ class AuthenticationManager:
         self._cleanup_user_sessions(user_id)
         
         session_id = secrets.token_urlsafe(32)
-        expires_at = datetime.now(datetime.UTC) + timedelta(hours=SecurityConfig.SESSION_TIMEOUT_HOURS)
+        expires_at = datetime.now(timezone.utc) + timedelta(hours=SecurityConfig.SESSION_TIMEOUT_HOURS)
         
         session = Session(
             session_id=session_id,
             user_id=user_id,
-            created_at=datetime.now(datetime.UTC),
+            created_at=datetime.now(timezone.utc),
             expires_at=expires_at,
             ip_address=ip_address,
             user_agent=user_agent
@@ -358,7 +358,7 @@ class AuthenticationManager:
                 return False, None
             
             # Check expiration
-            if session.expires_at < datetime.now(datetime.UTC):
+            if session.expires_at < datetime.now(timezone.utc):
                 session.is_active = False
                 return False, None
             
@@ -403,8 +403,8 @@ class AuthenticationManager:
         payload = {
             'user_id': user_id,
             'permissions': [p.value for p in permissions],
-            'iat': datetime.now(datetime.UTC),
-            'exp': datetime.now(datetime.UTC) + timedelta(hours=SecurityConfig.JWT_EXPIRATION_HOURS)
+            'iat': datetime.now(timezone.utc),
+            'exp': datetime.now(timezone.utc) + timedelta(hours=SecurityConfig.JWT_EXPIRATION_HOURS)
         }
         
         return jwt.encode(payload, SecurityConfig.JWT_SECRET_KEY, algorithm=SecurityConfig.JWT_ALGORITHM)
@@ -444,7 +444,7 @@ class AuthenticationManager:
     def _log_security_event(self, event_type: str, user_id: Optional[str], metadata: Dict[str, Any]):
         """Log security events"""
         event = {
-            'timestamp': datetime.now(datetime.UTC).isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'event_type': event_type,
             'user_id': user_id,
             'metadata': metadata

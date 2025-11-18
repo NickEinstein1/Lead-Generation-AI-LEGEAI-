@@ -4,7 +4,7 @@ import joblib
 import logging
 from typing import Dict, List, Union
 import hashlib
-from datetime import datetime
+from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class InsuranceLeadScorer:
                     'lead_id': lead_data.get('lead_id'),
                     'score': 0,
                     'error': 'Consent not provided or invalid',
-                    'timestamp': datetime.now(datetime.UTC).isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
             
             # Anonymize PII
@@ -116,7 +116,7 @@ class InsuranceLeadScorer:
                 'lead_id': lead_data.get('lead_id'),
                 'score': round(float(score), 2),
                 'confidence': self._calculate_confidence(X),
-                'timestamp': datetime.now(datetime.UTC).isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'model_version': '1.0'
             }
             
@@ -126,7 +126,7 @@ class InsuranceLeadScorer:
                 'lead_id': lead_data.get('lead_id'),
                 'score': 0,
                 'error': str(e),
-                'timestamp': datetime.now(datetime.UTC).isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
     
     def _calculate_confidence(self, X: np.ndarray) -> float:

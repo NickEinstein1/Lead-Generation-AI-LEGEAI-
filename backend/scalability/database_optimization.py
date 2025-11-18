@@ -7,7 +7,7 @@ sharding strategies, and database performance monitoring.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -258,7 +258,7 @@ class DatabaseConnectionManager:
             return {}
         
         # Calculate statistics
-        recent_metrics = [m for m in self.query_metrics if m.timestamp > datetime.now(datetime.UTC) - timedelta(hours=1)]
+        recent_metrics = [m for m in self.query_metrics if m.timestamp > datetime.now(timezone.utc) - timedelta(hours=1)]
         
         stats = {
             'total_queries': len(self.query_metrics),

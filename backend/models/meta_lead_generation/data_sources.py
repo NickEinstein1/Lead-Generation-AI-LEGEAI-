@@ -3,7 +3,7 @@ import asyncio
 import aiohttp
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dataclasses import dataclass
 import hashlib
 import os
@@ -121,7 +121,7 @@ class RealTimeDataIntegrator:
             
             # Add enrichment metadata
             enriched['enrichment_metadata'] = {
-                'timestamp': datetime.now(datetime.UTC).isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'sources_used': [task.__name__ for task in tasks if not isinstance(result, Exception)],
                 'enrichment_score': self._calculate_enrichment_score(enriched, lead_data)
             }

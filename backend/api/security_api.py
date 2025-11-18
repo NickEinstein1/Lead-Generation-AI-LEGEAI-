@@ -3,7 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from backend.security.authentication import auth_manager, require_auth, require_api_key, Permission, UserRole
 from backend.security.data_protection import data_protection, DataClassification
@@ -366,7 +366,7 @@ async def generate_compliance_report(frameworks: List[str] = None, days: int = 3
                     raise HTTPException(status_code=400, detail=f"Invalid framework: {framework}")
         
         # Calculate date range
-        end_date = datetime.now(datetime.UTC)
+        end_date = datetime.now(timezone.utc)
         start_date = end_date - timedelta(days=days)
         
         report = compliance_manager.generate_compliance_report(
@@ -588,7 +588,7 @@ async def get_security_events(event_type: str = None, severity: str = None,
     """Get security events"""
     try:
         # Get events from the specified time window
-        cutoff_time = datetime.now(datetime.UTC) - timedelta(hours=hours)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(hours=hours)
         events = [
             event for event in security_monitor.security_events.values()
             if event.timestamp > cutoff_time
@@ -650,7 +650,7 @@ async def security_health_check():
     try:
         health_status = {
             "status": "healthy",
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "components": {
                 "authentication": "healthy",
                 "data_protection": "healthy",
@@ -661,7 +661,7 @@ async def security_health_check():
                 "active_sessions": len(auth_manager.active_sessions),
                 "recent_events_24h": len([
                     e for e in security_monitor.security_events.values()
-                    if e.timestamp > datetime.now(datetime.UTC) - timedelta(hours=24)
+                    if e.timestamp > datetime.now(timezone.utc) - timedelta(hours=24)
                 ]),
                 "open_incidents": len([
                     i for i in security_monitor.incidents.values()
@@ -676,7 +676,7 @@ async def security_health_check():
         logging.error(f"Security health check error: {str(e)}")
         return {
             "status": "unhealthy",
-            "timestamp": datetime.now(datetime.UTC).isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "error": str(e)
         }
 
@@ -685,7 +685,7 @@ async def security_health_check():
 async def get_security_status(current_user=None):
     """Get comprehensive security status"""
     try:
-        current_time = datetime.now(datetime.UTC)
+        current_time = datetime.now(timezone.utc)
         
         # Calculate various metrics
         recent_events = [

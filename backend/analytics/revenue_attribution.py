@@ -7,7 +7,7 @@ customer lifetime value, and attribution across multiple touchpoints.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -102,7 +102,7 @@ class RevenueAttributionEngine:
                 medium=touchpoint_data.get('medium', 'unknown'),
                 campaign=touchpoint_data.get('campaign', 'unknown'),
                 content=touchpoint_data.get('content', ''),
-                timestamp=datetime.fromisoformat(touchpoint_data.get('timestamp', datetime.now(datetime.UTC).isoformat())),
+                timestamp=datetime.fromisoformat(touchpoint_data.get('timestamp', datetime.now(timezone.utc).isoformat())),
                 value=touchpoint_data.get('value', 0.0)
             )
             
@@ -127,7 +127,7 @@ class RevenueAttributionEngine:
             customer_id = conversion_data['customer_id']
             revenue = conversion_data.get('revenue', 0.0)
             conversion_date = datetime.fromisoformat(
-                conversion_data.get('conversion_date', datetime.now(datetime.UTC).isoformat())
+                conversion_data.get('conversion_date', datetime.now(timezone.utc).isoformat())
             )
             
             # Get customer journey
@@ -175,7 +175,7 @@ class RevenueAttributionEngine:
         
         try:
             # Get conversions in time range
-            end_date = datetime.now(datetime.UTC)
+            end_date = datetime.now(timezone.utc)
             start_date = end_date - timedelta(days=time_range_days)
             
             conversions = await self._get_conversions_in_range(start_date, end_date)
@@ -341,7 +341,7 @@ class RevenueAttributionEngine:
             
             report = {
                 'report_period_days': days,
-                'generated_at': datetime.now(datetime.UTC).isoformat(),
+                'generated_at': datetime.now(timezone.utc).isoformat(),
                 'attribution_models': attribution_comparison,
                 'journey_insights': journey_insights,
                 'channel_performance': channel_performance,

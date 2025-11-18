@@ -11,7 +11,7 @@ Handles real-time data ingestion from multiple sources including:
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -220,7 +220,7 @@ class StreamProcessor:
     async def _process_single_event(self, event_type: EventType, msg_id: str, fields: Dict[str, Any]):
         """Process a single event"""
         
-        start_time = datetime.now(datetime.UTC)
+        start_time = datetime.now(timezone.utc)
         
         try:
             # Reconstruct event
@@ -241,7 +241,7 @@ class StreamProcessor:
             
             # Update metrics
             self.metrics['events_processed'] += 1
-            processing_time = (datetime.now(datetime.UTC) - start_time).total_seconds()
+            processing_time = (datetime.now(timezone.utc) - start_time).total_seconds()
             self.metrics['processing_time_total'] += processing_time
             
             logger.debug(f"Processed event {event.event_id} in {processing_time:.3f}s")
@@ -294,7 +294,7 @@ class DataIngestionManager:
             source_type=DataSourceType.WEB_FORM,
             source_id=source_id,
             data=form_data,
-            timestamp=datetime.now(datetime.UTC),
+            timestamp=datetime.now(timezone.utc),
             metadata={
                 'user_agent': form_data.get('user_agent'),
                 'ip_address': form_data.get('ip_address'),
@@ -314,7 +314,7 @@ class DataIngestionManager:
             source_type=DataSourceType.API_ENDPOINT,
             source_id=source_id,
             data=api_data,
-            timestamp=datetime.now(datetime.UTC)
+            timestamp=datetime.now(timezone.utc)
         )
         
         await self.event_bus.publish_event(event)
@@ -332,7 +332,7 @@ class DataIngestionManager:
             source_type=DataSourceType.WEBHOOK,
             source_id=source_id,
             data=webhook_data,
-            timestamp=datetime.now(datetime.UTC)
+            timestamp=datetime.now(timezone.utc)
         )
         
         await self.event_bus.publish_event(event)
@@ -348,7 +348,7 @@ class DataIngestionManager:
                 await asyncio.sleep(source.config.get('poll_interval', 300))  # 5 minutes default
                 
                 # Update last sync time
-                source.last_sync = datetime.now(datetime.UTC)
+                source.last_sync = datetime.now(timezone.utc)
                 
             except Exception as e:
                 source.error_count += 1

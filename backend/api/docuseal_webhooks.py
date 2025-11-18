@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict
 
 from backend.database.connection import session_dep
@@ -41,7 +41,7 @@ async def receive_docuseal_webhook(payload: Dict[str, Any], request: Request, se
         if not doc:
             return {"status": "not_found"}
 
-        now = datetime.now(datetime.UTC)
+        now = datetime.now(timezone.utc)
         if event_type == "submission.completed":
             doc.status = "signed"
             doc.signed_at = now

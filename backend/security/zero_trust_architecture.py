@@ -6,7 +6,7 @@ Implements "never trust, always verify" security model
 import json
 import logging
 import hashlib
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -579,7 +579,7 @@ class ZeroTrustEngine:
                 'access_days': [],
                 'locations': [],
                 'hourly_access_rate': 0,
-                'last_updated': datetime.now(datetime.UTC).isoformat()
+                'last_updated': datetime.now(timezone.utc).isoformat()
             }
         
         baseline = self.user_behavior_baselines[user.user_id]
@@ -598,7 +598,7 @@ class ZeroTrustEngine:
         if context.location and context.location not in baseline['locations']:
             baseline['locations'].append(context.location)
         
-        baseline['last_updated'] = datetime.now(datetime.UTC).isoformat()
+        baseline['last_updated'] = datetime.now(timezone.utc).isoformat()
 
 # Global zero trust engine
 zero_trust_engine = ZeroTrustEngine()

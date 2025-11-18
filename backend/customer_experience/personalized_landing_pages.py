@@ -7,7 +7,7 @@ journey stage, and behavioral data.
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import json
 import logging
@@ -266,13 +266,13 @@ class PersonalizedLandingPagesEngine:
             
             # Generate page
             page = PersonalizedPage(
-                page_id=f"page_{lead_data.get('lead_id', 'unknown')}_{int(datetime.now(datetime.UTC).timestamp())}",
+                page_id=f"page_{lead_data.get('lead_id', 'unknown')}_{int(datetime.now(timezone.utc).timestamp())}",
                 lead_id=lead_data.get('lead_id', 'unknown'),
                 template_id=template_id,
                 generated_content=personalized_content,
                 personalization_applied=lead_profile.get('applied_rules', []),
                 predicted_conversion_rate=await self._predict_conversion_rate(template, lead_profile),
-                generation_timestamp=datetime.now(datetime.UTC)
+                generation_timestamp=datetime.now(timezone.utc)
             )
             
             # Store page for tracking
@@ -350,14 +350,14 @@ class PersonalizedLandingPagesEngine:
             
             page.performance_tracking['events'].append({
                 'event_type': event_type,
-                'timestamp': datetime.now(datetime.UTC).isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'data': event_data or {}
             })
             
             # Update conversion tracking
             if event_type in ['form_submission', 'quote_request', 'phone_call']:
                 page.performance_tracking['converted'] = True
-                page.performance_tracking['conversion_time'] = datetime.now(datetime.UTC).isoformat()
+                page.performance_tracking['conversion_time'] = datetime.now(timezone.utc).isoformat()
             
             # Store updated page
             await self._store_personalized_page(page)

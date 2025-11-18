@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_, or_, desc
 from backend.database.connection import session_dep
 from backend.models.file_document import FileDocument, DocumentCategory, DocumentShare, DocumentActivity
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 import uuid
 import secrets
@@ -243,8 +243,8 @@ async def upload_document(
             "version": 1,
             "is_public": False,
             "access_level": access_level,
-            "created_at": datetime.now(datetime.UTC),
-            "updated_at": datetime.now(datetime.UTC),
+            "created_at": datetime.now(timezone.utc),
+            "updated_at": datetime.now(timezone.utc),
             "last_accessed_at": None
         }
 
@@ -369,7 +369,7 @@ async def get_document(
         raise HTTPException(status_code=404, detail="Document not found")
 
     # Update last accessed time
-    doc.last_accessed_at = datetime.now(datetime.UTC)
+    doc.last_accessed_at = datetime.now(timezone.utc)
     await session.commit()
 
     # Log activity
@@ -403,7 +403,7 @@ async def download_document(
         raise HTTPException(status_code=404, detail="File not found on disk")
 
     # Update last accessed time
-    doc.last_accessed_at = datetime.now(datetime.UTC)
+    doc.last_accessed_at = datetime.now(timezone.utc)
     await session.commit()
 
     # Log activity
@@ -448,7 +448,7 @@ async def delete_document(
     else:
         # Soft delete
         doc.status = "deleted"
-        doc.deleted_at = datetime.now(datetime.UTC)
+        doc.deleted_at = datetime.now(timezone.utc)
         await log_activity(session, doc.id, user_id, "delete", None, request)
 
     await session.commit()
@@ -500,8 +500,8 @@ async def get_document_stats(
     by_type = {ftype: count for ftype, count in type_stats}
 
     # Recent uploads (last 7 days)
-    from datetime import timedelta
-    seven_days_ago = datetime.now(datetime.UTC) - timedelta(days=7)
+    from datetime import timedelta, timezone
+    seven_days_ago = datetime.now(timezone.utc) - timedelta(days=7)
     recent = (await session.execute(
         select(func.count()).select_from(FileDocument)
         .where(and_(FileDocument.status == "active", FileDocument.created_at >= seven_days_ago))

@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException, BackgroundTasks, Depends
 from pydantic import BaseModel, Field
 from typing import Dict, List, Any, Optional
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.real_time_pipeline import (
     pipeline_orchestrator, data_ingestion_manager, integration_hub,
@@ -95,7 +95,7 @@ async def sync_with_crm(sync_request: CRMSyncRequest, background_tasks: Backgrou
         # Queue CRM sync operation
         await integration_hub.queue_sync_operation({
             'type': 'crm_sync',
-            'operation_id': f"manual_sync_{datetime.now(datetime.UTC).timestamp()}",
+            'operation_id': f"manual_sync_{datetime.now(timezone.utc).timestamp()}",
             'data': sync_request.lead_data,
             'direction': sync_request.sync_direction,
             'force_sync': sync_request.force_sync
@@ -134,7 +134,7 @@ async def get_pipeline_metrics():
             "status": health_report['status'],
             "metrics": health_report['metrics'],
             "uptime_seconds": health_report['uptime'],
-            "timestamp": datetime.now(datetime.UTC).isoformat()
+            "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
     except Exception as e:

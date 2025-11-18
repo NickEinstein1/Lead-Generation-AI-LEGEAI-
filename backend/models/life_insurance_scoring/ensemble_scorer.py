@@ -17,7 +17,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '../../..'))
 import numpy as np
 import logging
 from typing import Dict, Any, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 # Import both scorers
 from backend.models.life_insurance_scoring.inference import LifeInsuranceLeadScorer
@@ -94,7 +94,7 @@ class EnsembleLifeInsuranceScorer:
         
         results = {
             'lead_id': lead_data.get('lead_id', 'unknown'),
-            'timestamp': datetime.now(datetime.UTC).isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'model_type': 'ensemble',
             'models_used': []
         }

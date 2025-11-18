@@ -16,7 +16,7 @@ import joblib
 import logging
 import json
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.models.life_insurance_scoring.train_deep_learning import LifeInsuranceDeepNetwork
 
@@ -150,7 +150,7 @@ class LifeInsuranceDeepLearningScorer:
                 'model_type': 'deep_learning',
                 'model_architecture': 'attention_dnn',
                 'device': str(self.device),
-                'timestamp': datetime.now(datetime.UTC).isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -160,6 +160,6 @@ class LifeInsuranceDeepLearningScorer:
                 'score': 50.0,
                 'error': str(e),
                 'model_type': 'deep_learning',
-                'timestamp': datetime.now(datetime.UTC).isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
 

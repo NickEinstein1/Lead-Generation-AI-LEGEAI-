@@ -7,7 +7,7 @@ resource management, bottleneck detection, and automated performance tuning.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass, field
 from enum import Enum
@@ -114,7 +114,7 @@ class PerformanceOptimizer:
                     metric_name="cpu_usage",
                     value=cpu_percent,
                     unit="%",
-                    timestamp=datetime.now(datetime.UTC),
+                    timestamp=datetime.now(timezone.utc),
                     threshold_warning=self.cpu_threshold_warning,
                     threshold_critical=self.cpu_threshold_critical
                 )
@@ -126,7 +126,7 @@ class PerformanceOptimizer:
                     metric_name="memory_usage",
                     value=memory.percent,
                     unit="%",
-                    timestamp=datetime.now(datetime.UTC),
+                    timestamp=datetime.now(timezone.utc),
                     threshold_warning=self.memory_threshold_warning,
                     threshold_critical=self.memory_threshold_critical
                 )
@@ -139,7 +139,7 @@ class PerformanceOptimizer:
                         metric_name="disk_io_utilization",
                         value=disk_io.read_bytes + disk_io.write_bytes,
                         unit="bytes",
-                        timestamp=datetime.now(datetime.UTC),
+                        timestamp=datetime.now(timezone.utc),
                         threshold_warning=1000000000,  # 1GB
                         threshold_critical=5000000000  # 5GB
                     )
@@ -152,7 +152,7 @@ class PerformanceOptimizer:
                         metric_name="network_io_utilization",
                         value=network_io.bytes_sent + network_io.bytes_recv,
                         unit="bytes",
-                        timestamp=datetime.now(datetime.UTC),
+                        timestamp=datetime.now(timezone.utc),
                         threshold_warning=1000000000,  # 1GB
                         threshold_critical=5000000000  # 5GB
                     )
@@ -381,7 +381,7 @@ class PerformanceOptimizer:
                     'std': np.std(values),
                     'p95': np.percentile(values, 95),
                     'p99': np.percentile(values, 99),
-                    'updated_at': datetime.now(datetime.UTC)
+                    'updated_at': datetime.now(timezone.utc)
                 }
         
         logger.debug("Updated performance baselines")
@@ -390,7 +390,7 @@ class PerformanceOptimizer:
         """Generate comprehensive performance report"""
         
         report = {
-            'timestamp': datetime.now(datetime.UTC).isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'current_metrics': {},
             'bottlenecks': [],
             'baselines': self.performance_baselines,

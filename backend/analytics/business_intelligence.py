@@ -7,7 +7,7 @@ with interactive dashboards and automated alerting.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from enum import Enum
@@ -154,7 +154,7 @@ class BusinessIntelligenceDashboard:
                 
                 # Update KPI
                 kpi.current_value = new_value
-                kpi.last_updated = datetime.now(datetime.UTC)
+                kpi.last_updated = datetime.now(timezone.utc)
                 updated_kpis.append(kpi_id)
                 
                 # Check for alerts
@@ -167,7 +167,7 @@ class BusinessIntelligenceDashboard:
                 'updated_kpis': updated_kpis,
                 'new_alerts': len(new_alerts),
                 'alerts': [alert.alert_id for alert in new_alerts],
-                'timestamp': datetime.now(datetime.UTC).isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             }
             
         except Exception as e:
@@ -297,7 +297,7 @@ class BusinessIntelligenceDashboard:
                 'unacknowledged': len([a for a in self.alerts.values() if not a.acknowledged])
             },
             'trend_data': trend_data,
-            'last_updated': datetime.now(datetime.UTC).isoformat()
+            'last_updated': datetime.now(timezone.utc).isoformat()
         }
     
     def _get_kpi_status(self, kpi: KPI) -> str:

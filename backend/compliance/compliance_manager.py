@@ -1,6 +1,6 @@
 import json
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -292,7 +292,7 @@ class ComplianceManager:
         frameworks = frameworks or [f for f in ComplianceFramework]
         
         validation_results = {
-            'timestamp': datetime.now(datetime.UTC).isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'overall_status': ComplianceStatus.COMPLIANT.value,
             'framework_results': {},
             'violations': [],
@@ -363,7 +363,7 @@ class ComplianceManager:
             severity=rule.severity,
             description=f"{rule.title}: {details}",
             data_context=self._sanitize_data_context(data),
-            detected_at=datetime.now(datetime.UTC)
+            detected_at=datetime.now(timezone.utc)
         )
         
         self.violations[violation_id] = violation
@@ -490,7 +490,7 @@ class ComplianceManager:
         
         # Check if data is older than retention period (7 years for insurance)
         retention_days = self.retention_policies['lead_data']['retention_period_days']
-        if (datetime.now(datetime.UTC) - created_date).days > retention_days:
+        if (datetime.now(timezone.utc) - created_date).days > retention_days:
             return False, f"Data exceeds retention period of {retention_days} days"
         
         return True, None
@@ -617,7 +617,7 @@ class ComplianceManager:
             consent_type=consent_type,
             consent_given=consent_given,
             consent_method=consent_method,
-            consent_timestamp=datetime.now(datetime.UTC),
+            consent_timestamp=datetime.now(timezone.utc),
             consent_text=consent_text,
             ip_address=ip_address,
             user_agent=user_agent
@@ -671,7 +671,7 @@ class ComplianceManager:
             ]
             
             for consent in user_consents:
-                consent.withdrawal_timestamp = datetime.now(datetime.UTC)
+                consent.withdrawal_timestamp = datetime.now(timezone.utc)
                 consent.is_active = False
                 
                 # Update in Redis
@@ -741,7 +741,7 @@ class ComplianceManager:
         
         audit_log = AuditLog(
             log_id=log_id,
-            timestamp=datetime.now(datetime.UTC),
+            timestamp=datetime.now(timezone.utc),
             user_id=user_id,
             action=action,
             resource_type=resource_type,
@@ -774,12 +774,12 @@ class ComplianceManager:
                                  start_date: datetime = None, end_date: datetime = None) -> Dict[str, Any]:
         """Generate comprehensive compliance report"""
         frameworks = frameworks or [f for f in ComplianceFramework]
-        end_date = end_date or datetime.now(datetime.UTC)
+        end_date = end_date or datetime.now(timezone.utc)
         start_date = start_date or (end_date - timedelta(days=30))
         
         report = {
             'report_id': str(uuid.uuid4()),
-            'generated_at': datetime.now(datetime.UTC).isoformat(),
+            'generated_at': datetime.now(timezone.utc).isoformat(),
             'period': {
                 'start_date': start_date.isoformat(),
                 'end_date': end_date.isoformat()
@@ -887,7 +887,7 @@ class ComplianceManager:
             'request_id': request_id,
             'request_type': request_type,
             'user_id': user_id,
-            'processed_at': datetime.now(datetime.UTC).isoformat(),
+            'processed_at': datetime.now(timezone.utc).isoformat(),
             'status': 'completed',
             'data': {}
         }
@@ -933,7 +933,7 @@ class ComplianceManager:
             opt_out_result = self._opt_out_of_sale(user_id)
             response['data'] = {
                 'opt_out_applied': opt_out_result['success'],
-                'effective_date': datetime.now(datetime.UTC).isoformat()
+                'effective_date': datetime.now(timezone.utc).isoformat()
             }
         
         # Log the request
@@ -999,7 +999,7 @@ class ComplianceManager:
         return {
             'user_data': 'Exported data would be here',
             'format': 'JSON',
-            'exported_at': datetime.now(datetime.UTC).isoformat()
+            'exported_at': datetime.now(timezone.utc).isoformat()
         }
     
     def _update_user_data(self, user_id: str, updates: Dict[str, Any]) -> Dict[str, Any]:
@@ -1015,7 +1015,7 @@ class ComplianceManager:
         # This would implement opt-out of sale
         return {
             'success': True,
-            'effective_date': datetime.now(datetime.UTC).isoformat()
+            'effective_date': datetime.now(timezone.utc).isoformat()
         }
 
 # Global compliance manager
@@ -1034,7 +1034,7 @@ async def example_usage():
         'income': 75000,
         'consent_given': True,
         'consent_method': 'web_form',
-        'consent_timestamp': datetime.now(datetime.UTC).isoformat(),
+        'consent_timestamp': datetime.now(timezone.utc).isoformat(),
         'privacy_notice_shown': True,
         'tcpa_consent_given': True,
         'tcpa_consent_method': 'written',
@@ -1042,7 +1042,7 @@ async def example_usage():
         'message_content': 'Get your free insurance quote today! Click here to unsubscribe.',
         'subject_line': 'Free Insurance Quote Available',
         'sender_physical_address': '123 Insurance St, City, ST 12345',
-        'created_at': datetime.now(datetime.UTC).isoformat()
+        'created_at': datetime.now(timezone.utc).isoformat()
     }
     
     # Validate compliance

@@ -7,7 +7,7 @@ from first touch to conversion and beyond.
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 import logging
@@ -146,10 +146,10 @@ class JourneyMappingEngine:
         try:
             # Create touchpoint
             touchpoint = Touchpoint(
-                touchpoint_id=f"tp_{lead_id}_{int(datetime.now(datetime.UTC).timestamp())}",
+                touchpoint_id=f"tp_{lead_id}_{int(datetime.now(timezone.utc).timestamp())}",
                 lead_id=lead_id,
                 touchpoint_type=TouchpointType(touchpoint_data.get('type', 'website_visit')),
-                timestamp=datetime.now(datetime.UTC),
+                timestamp=datetime.now(timezone.utc),
                 channel=touchpoint_data.get('channel', 'direct'),
                 source=touchpoint_data.get('source', 'unknown'),
                 medium=touchpoint_data.get('medium', 'organic'),

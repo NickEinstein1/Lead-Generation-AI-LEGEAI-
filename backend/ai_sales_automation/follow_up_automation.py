@@ -7,7 +7,7 @@ behavior patterns, and optimal timing predictions.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -100,7 +100,7 @@ class SmartScheduler:
                                      follow_up_type: FollowUpType) -> datetime:
         """Calculate optimal timing for follow-up"""
         
-        current_time = datetime.now(datetime.UTC)
+        current_time = datetime.now(timezone.utc)
         
         # Base timing rules by follow-up type
         base_delays = {
@@ -261,7 +261,7 @@ class FollowUpAutomationEngine:
             if not tracker:
                 tracker = EngagementTracker(lead_id=lead_id)
             
-            current_time = datetime.now(datetime.UTC)
+            current_time = datetime.now(timezone.utc)
             
             # Update engagement based on event type
             if event_type == "email_open":
@@ -323,7 +323,7 @@ class FollowUpAutomationEngine:
             
             # Generate follow-up actions
             follow_up_actions = []
-            current_time = datetime.now(datetime.UTC)
+            current_time = datetime.now(timezone.utc)
             
             for i, step in enumerate(strategy.follow_up_sequence):
                 # Calculate timing
@@ -399,7 +399,7 @@ class FollowUpAutomationEngine:
     async def _calculate_engagement_level(self, tracker: EngagementTracker) -> EngagementLevel:
         """Calculate engagement level based on recent activity"""
         
-        current_time = datetime.now(datetime.UTC)
+        current_time = datetime.now(timezone.utc)
         
         # Check for recent activity (last 7 days)
         recent_activity_score = 0
@@ -460,7 +460,7 @@ class FollowUpAutomationEngine:
             
             # Mark as completed
             action.is_completed = True
-            action.completion_time = datetime.now(datetime.UTC)
+            action.completion_time = datetime.now(timezone.utc)
             action.outcome = result.get('status', 'completed')
             
             await self._store_follow_up_action(action)
@@ -482,7 +482,7 @@ class FollowUpAutomationEngine:
         """Get follow-up dashboard data"""
         
         try:
-            current_time = datetime.now(datetime.UTC)
+            current_time = datetime.now(timezone.utc)
             
             if not date_range:
                 start_date = current_time - timedelta(days=30)

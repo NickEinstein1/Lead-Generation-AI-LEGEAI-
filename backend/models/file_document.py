@@ -44,9 +44,9 @@ class FileDocument(Base, TimestampMixin):
     # Access Control
     is_public: Mapped[bool] = mapped_column(default=False)
     access_level: Mapped[str] = mapped_column(String(32), default="private")  # private, team, public
-    
+
     # Additional Metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    extra_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     
     # Timestamps for document lifecycle
     last_accessed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
@@ -75,7 +75,7 @@ class DocumentCategory(Base, TimestampMixin):
     parent_category_id: Mapped[Optional[int]] = mapped_column(Integer, ForeignKey("document_categories.id", ondelete="SET NULL"), nullable=True)
     sort_order: Mapped[int] = mapped_column(Integer, default=0)
     is_active: Mapped[bool] = mapped_column(default=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    extra_metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
 
 
 class DocumentShare(Base, TimestampMixin):

@@ -6,7 +6,7 @@ from sqlalchemy import select
 from backend.database.connection import session_dep
 from backend.models.document import Document
 from backend.models.lead import Lead
-from datetime import datetime
+from datetime import datetime, timezone
 import os
 
 from backend.api.docuseal_client import (
@@ -164,8 +164,8 @@ async def create_document_for_lead(lead_id: int, body: CreateDocumentRequest, se
         "provider_request_id": provider_request_id,
         "signing_url": signing_url or f"/v1/documents/{new_id}/sign",
         "metadata": {"provider": provider},
-        "created_at": datetime.now(datetime.UTC).isoformat(),
-        "updated_at": datetime.now(datetime.UTC).isoformat(),
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "updated_at": datetime.now(timezone.utc).isoformat(),
         "signed_at": None,
     }
     INMEM_DOCS.append(doc)
@@ -187,7 +187,7 @@ async def get_document(doc_id: int, session: AsyncSession = Depends(session_dep)
 
 @router.post("/documents/{doc_id}/simulate-sign")
 async def simulate_sign(doc_id: int, session: AsyncSession = Depends(session_dep)):
-    now = datetime.now(datetime.UTC)
+    now = datetime.now(timezone.utc)
     if USE_DB:
         doc = (await session.execute(select(Document).where(Document.id == doc_id))).scalars().first()
         if not doc:

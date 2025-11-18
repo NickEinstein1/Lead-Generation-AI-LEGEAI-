@@ -5,7 +5,7 @@ import base64
 import json
 from typing import Dict, List, Any, Optional, Union
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import logging
 from cryptography.fernet import Fernet
@@ -92,7 +92,7 @@ class DataProtectionManager:
             key_id="default",
             key_data=default_key if isinstance(default_key, bytes) else default_key.encode(),
             algorithm="Fernet",
-            created_at=datetime.now(datetime.UTC)
+            created_at=datetime.now(timezone.utc)
         )
         
         # Generate RSA key pair for asymmetric encryption
@@ -355,7 +355,7 @@ class DataProtectionManager:
         
         # Add anonymization metadata
         anonymized_data['_anonymization'] = {
-            'timestamp': datetime.now(datetime.UTC).isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'classification': classification.value,
             'method': 'automated_pii_protection'
         }
@@ -382,7 +382,7 @@ class DataProtectionManager:
     def generate_privacy_report(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate privacy compliance report for data"""
         report = {
-            'timestamp': datetime.now(datetime.UTC).isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'data_classification': DataClassification.CONFIDENTIAL.value,
             'pii_detected': {},
             'protection_applied': {},

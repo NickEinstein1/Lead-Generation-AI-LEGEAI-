@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from typing import Dict, Any
 import hashlib, hmac, os
-from datetime import datetime
+from datetime import datetime, timezone
 
 from backend.database.connection import session_dep
 from backend.models.lead import Lead
@@ -130,7 +130,7 @@ async def receive_webhook(source: str, payload: Dict[str, Any], request: Request
             "raw": payload,
             "webhook": {
                 "source": source,
-                "received_at": datetime.now(datetime.UTC).isoformat(),
+                "received_at": datetime.now(timezone.utc).isoformat(),
                 "ip": request.client.host if request and request.client else None,
                 "user_agent": request.headers.get("user-agent", ""),
             },

@@ -5,17 +5,17 @@ real_time_pipeline.__init__ and API endpoints.
 """
 from typing import Dict, Any
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class MetricsAggregator:
     def __init__(self):
         self.metrics = defaultdict(int)
-        self.last_updated = datetime.now(datetime.UTC)
+        self.last_updated = datetime.now(timezone.utc)
 
     def inc(self, key: str, value: int = 1):
         self.metrics[key] += value
-        self.last_updated = datetime.now(datetime.UTC)
+        self.last_updated = datetime.now(timezone.utc)
 
     def snapshot(self) -> Dict[str, Any]:
         return {

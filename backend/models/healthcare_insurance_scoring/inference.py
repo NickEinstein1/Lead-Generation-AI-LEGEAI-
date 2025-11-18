@@ -4,7 +4,7 @@ import joblib
 import logging
 from typing import Dict, List, Union
 import hashlib
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 import sys
 sys.path.append('../../')
 from backend.models.insurance_lead_scoring.inference import InsuranceLeadScorer
@@ -117,7 +117,7 @@ class HealthcareInsuranceLeadScorer(InsuranceLeadScorer):
                     'lead_id': lead_data.get('lead_id'),
                     'score': 0,
                     'error': 'HIPAA consent not provided or invalid',
-                    'timestamp': datetime.now(datetime.UTC).isoformat(),
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
                     'compliance_status': 'FAILED'
                 }
             
@@ -143,7 +143,7 @@ class HealthcareInsuranceLeadScorer(InsuranceLeadScorer):
                 'confidence': self._calculate_confidence(X),
                 'urgency_level': self._get_urgency_level(lead_data),
                 'recommended_plan_type': self._recommend_plan_type(lead_data),
-                'timestamp': datetime.now(datetime.UTC).isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'model_version': '1.0_healthcare',
                 'compliance_status': 'PASSED'
             }
@@ -154,7 +154,7 @@ class HealthcareInsuranceLeadScorer(InsuranceLeadScorer):
                 'lead_id': lead_data.get('lead_id'),
                 'score': 0,
                 'error': str(e),
-                'timestamp': datetime.now(datetime.UTC).isoformat(),
+                'timestamp': datetime.now(timezone.utc).isoformat(),
                 'compliance_status': 'ERROR'
             }
     

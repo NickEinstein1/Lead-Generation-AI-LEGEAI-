@@ -7,7 +7,7 @@ talking points generation, and call outcome forecasting.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -303,7 +303,7 @@ class CallOptimizationEngine:
         """Predict optimal time to call the lead"""
         
         # Get current time and lead timezone
-        current_time = datetime.now(datetime.UTC)
+        current_time = datetime.now(timezone.utc)
         lead_timezone = lead_data.get('timezone', 'UTC')
         
         # Analyze lead behavior patterns
@@ -472,9 +472,9 @@ class CallOptimizationEngine:
         
         try:
             call_history = CallHistory(
-                call_id=call_data.get('call_id', f"call_{int(datetime.now(datetime.UTC).timestamp())}"),
+                call_id=call_data.get('call_id', f"call_{int(datetime.now(timezone.utc).timestamp())}"),
                 lead_id=call_data['lead_id'],
-                call_time=datetime.fromisoformat(call_data.get('call_time', datetime.now(datetime.UTC).isoformat())),
+                call_time=datetime.fromisoformat(call_data.get('call_time', datetime.now(timezone.utc).isoformat())),
                 duration_minutes=call_data.get('duration_minutes', 0),
                 outcome=CallOutcome(call_data.get('outcome', 'no_answer')),
                 talking_points_used=call_data.get('talking_points_used', []),

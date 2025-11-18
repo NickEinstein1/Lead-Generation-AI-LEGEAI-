@@ -7,7 +7,7 @@ lead behavior, engagement patterns, and predictive analytics.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -327,11 +327,11 @@ class IntelligentNurturingEngine:
             
             # Calculate timing
             timing_days = strategy_config["timing_days"]
-            next_send_time = datetime.now(datetime.UTC) + timedelta(days=timing_days[0])
+            next_send_time = datetime.now(timezone.utc) + timedelta(days=timing_days[0])
             
             # Create sequence
             sequence = NurturingSequence(
-                sequence_id=f"seq_{lead_data['lead_id']}_{int(datetime.now(datetime.UTC).timestamp())}",
+                sequence_id=f"seq_{lead_data['lead_id']}_{int(datetime.now(timezone.utc).timestamp())}",
                 lead_id=lead_data['lead_id'],
                 strategy=strategy,
                 total_steps=len(emails),
@@ -455,7 +455,7 @@ class IntelligentNurturingEngine:
                 behavior.form_submissions += 1
                 behavior.engagement_score += 10
             
-            behavior.last_engagement = datetime.now(datetime.UTC)
+            behavior.last_engagement = datetime.now(timezone.utc)
             
             # Store updated behavior
             await self._store_lead_behavior(behavior)
@@ -483,7 +483,7 @@ class IntelligentNurturingEngine:
             
             if action == "accelerate":
                 # Send next email sooner
-                sequence.next_send_time = datetime.now(datetime.UTC) + timedelta(hours=2)
+                sequence.next_send_time = datetime.now(timezone.utc) + timedelta(hours=2)
                 await self._store_sequence(sequence)
                 
             elif action == "change_strategy":

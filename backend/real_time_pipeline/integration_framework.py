@@ -10,7 +10,7 @@ Provides a flexible framework for integrating with:
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional, Callable, Union
 from dataclasses import dataclass, field
 from enum import Enum
@@ -277,7 +277,7 @@ class CRMIntegrationFramework:
         # For now, return success
         return {
             'success': True,
-            'crm_id': f"crm_{datetime.now(datetime.UTC).timestamp()}",
+            'crm_id': f"crm_{datetime.now(timezone.utc).timestamp()}",
             'message': 'Synced to CRM successfully'
         }
     

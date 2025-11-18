@@ -7,7 +7,7 @@ automated responses, and seamless handoff to human agents.
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 import logging
@@ -234,7 +234,7 @@ class RealtimeChatEngine:
         try:
             # Create chat session
             session = ChatSession(
-                session_id=f"chat_{int(datetime.now(datetime.UTC).timestamp())}",
+                session_id=f"chat_{int(datetime.now(timezone.utc).timestamp())}",
                 visitor_id=visitor_data.get('visitor_id', 'anonymous'),
                 lead_id=visitor_data.get('lead_id'),
                 trigger=ChatTrigger(trigger_data.get('trigger_type', 'manual_trigger')) if trigger_data else ChatTrigger.MANUAL_TRIGGER,
@@ -272,12 +272,12 @@ class RealtimeChatEngine:
             
             # Create message
             message = ChatMessage(
-                message_id=f"msg_{int(datetime.now(datetime.UTC).timestamp())}",
+                message_id=f"msg_{int(datetime.now(timezone.utc).timestamp())}",
                 session_id=session_id,
                 message_type=MessageType.AUTOMATED,
                 sender="visitor",
                 content=message_content,
-                timestamp=datetime.now(datetime.UTC)
+                timestamp=datetime.now(timezone.utc)
             )
             
             # Analyze message intent and sentiment

@@ -5,7 +5,7 @@ Replace with capacity-, skills-, and region-aware routing in later sprints.
 """
 from dataclasses import dataclass
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 @dataclass
 class Agent:
@@ -79,7 +79,7 @@ class LeadRouter:
             "lead_id": lead.get("id"),
             "agent_id": agent.id,
             "rep_id": agent.id,
-            "assigned_at": datetime.now(datetime.UTC).isoformat(),
+            "assigned_at": datetime.now(timezone.utc).isoformat(),
             "policy": "capacity_first",
             "band": score_band,
         }

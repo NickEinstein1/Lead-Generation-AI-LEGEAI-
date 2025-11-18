@@ -7,7 +7,7 @@ Provides interactive visualizations and key performance indicators.
 
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Any, Optional
 import pandas as pd
 import numpy as np
@@ -393,7 +393,7 @@ class LeadPerformanceDashboard:
         # This would typically fetch from your analytics engine
         # For now, return sample data structure
         
-        end_date = datetime.now(datetime.UTC)
+        end_date = datetime.now(timezone.utc)
         if time_range == "24h":
             start_date = end_date - timedelta(hours=24)
             freq = 'H'
