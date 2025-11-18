@@ -18,6 +18,7 @@ export default function SettingsPage() {
         <div className="flex gap-2 border-b-2 border-blue-200">
           {[
             { id: "profile", label: "👤 Profile", icon: "👤" },
+            { id: "system", label: "⚙️ System", icon: "⚙️" },
             { id: "team", label: "👥 Team", icon: "👥" },
             { id: "integrations", label: "🔗 Integrations", icon: "🔗" },
             { id: "notifications", label: "🔔 Notifications", icon: "🔔" },
@@ -67,6 +68,98 @@ export default function SettingsPage() {
 
             <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
               Save Changes
+            </button>
+          </div>
+        )}
+
+        {/* System Tab */}
+        {activeTab === "system" && (
+          <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md space-y-6">
+            <h2 className="text-xl font-bold text-slate-900">System Preferences</h2>
+
+            <div className="space-y-6">
+              {/* Time & Date Settings */}
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">🕐 Time & Date</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Time Format</label>
+                    <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                      <option value="12">12-hour (AM/PM)</option>
+                      <option value="24">24-hour</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Timezone</label>
+                    <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                      <option value="auto">Auto-detect (System Time)</option>
+                      <option value="America/New_York">Eastern Time (ET)</option>
+                      <option value="America/Chicago">Central Time (CT)</option>
+                      <option value="America/Denver">Mountain Time (MT)</option>
+                      <option value="America/Los_Angeles">Pacific Time (PT)</option>
+                      <option value="UTC">UTC</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center gap-3">
+                  <input type="checkbox" id="showSeconds" defaultChecked className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  <label htmlFor="showSeconds" className="text-sm font-medium text-slate-700">Show seconds in clock</label>
+                </div>
+
+                <div className="mt-3 flex items-center gap-3">
+                  <input type="checkbox" id="showDate" defaultChecked className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                  <label htmlFor="showDate" className="text-sm font-medium text-slate-700">Show date in clock</label>
+                </div>
+              </div>
+
+              {/* Language & Region */}
+              <div className="border-b border-gray-200 pb-6">
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">🌍 Language & Region</h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Language</label>
+                    <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                      <option value="en">English (US)</option>
+                      <option value="es">Español</option>
+                      <option value="fr">Français</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Date Format</label>
+                    <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                      <option value="mdy">MM/DD/YYYY</option>
+                      <option value="dmy">DD/MM/YYYY</option>
+                      <option value="ymd">YYYY-MM-DD</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* Display Settings */}
+              <div>
+                <h3 className="text-lg font-semibold text-slate-900 mb-4">🎨 Display</h3>
+
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="darkMode" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                    <label htmlFor="darkMode" className="text-sm font-medium text-slate-700">Enable dark mode</label>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <input type="checkbox" id="compactView" className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
+                    <label htmlFor="compactView" className="text-sm font-medium text-slate-700">Compact view</label>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+              Save System Preferences
             </button>
           </div>
         )}
