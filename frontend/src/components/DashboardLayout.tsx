@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { getSession, logout } from "@/lib/auth";
 import Link from "next/link";
@@ -13,10 +13,15 @@ interface DashboardLayoutProps {
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
   const session = getSession();
+  const [showNotifications, setShowNotifications] = useState(false);
 
   const handleLogout = () => {
     logout();
     router.push("/login");
+  };
+
+  const handleNotificationClick = () => {
+    setShowNotifications(!showNotifications);
   };
 
   return (
@@ -40,10 +45,53 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               <DigitalClock showDate={true} showSeconds={true} use24Hour={false} />
 
               {/* Notifications */}
-              <button className="relative p-2 text-slate-600 hover:text-blue-700 transition-colors">
-                <span className="text-xl">🔔</span>
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              </button>
+              <div className="relative">
+                <button
+                  onClick={handleNotificationClick}
+                  className="relative p-2 text-slate-600 hover:text-blue-700 transition-colors"
+                  title="Notifications"
+                >
+                  <span className="text-xl">🔔</span>
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                </button>
+
+                {/* Notifications Dropdown */}
+                {showNotifications && (
+                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border-2 border-blue-200 z-50">
+                    <div className="p-4 border-b border-gray-200">
+                      <h3 className="font-bold text-slate-900">Notifications</h3>
+                    </div>
+                    <div className="max-h-96 overflow-y-auto">
+                      <div className="p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer">
+                        <p className="text-sm font-semibold text-slate-900">New lead assigned</p>
+                        <p className="text-xs text-slate-600 mt-1">John Doe has been assigned to you</p>
+                        <p className="text-xs text-blue-600 mt-1">2 minutes ago</p>
+                      </div>
+                      <div className="p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer">
+                        <p className="text-sm font-semibold text-slate-900">Document signed</p>
+                        <p className="text-xs text-slate-600 mt-1">Policy #12345 has been signed</p>
+                        <p className="text-xs text-blue-600 mt-1">1 hour ago</p>
+                      </div>
+                      <div className="p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer">
+                        <p className="text-sm font-semibold text-slate-900">Campaign completed</p>
+                        <p className="text-xs text-slate-600 mt-1">Email campaign "Summer Promo" finished</p>
+                        <p className="text-xs text-blue-600 mt-1">3 hours ago</p>
+                      </div>
+                    </div>
+                    <div className="p-3 border-t border-gray-200 text-center">
+                      <button
+                        onClick={() => {
+                          setShowNotifications(false);
+                          router.push("/dashboard/notifications");
+                        }}
+                        className="text-sm text-blue-700 hover:text-blue-800 font-semibold"
+                      >
+                        View all notifications
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* User Profile */}
               <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
