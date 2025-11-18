@@ -4,10 +4,28 @@ import DashboardLayout from "@/components/DashboardLayout";
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState("profile");
+  const [showSaveNotification, setShowSaveNotification] = useState(false);
+  const [saveMessage, setSaveMessage] = useState("");
+
+  const handleSave = (section: string) => {
+    setSaveMessage(`${section} settings saved successfully!`);
+    setShowSaveNotification(true);
+    setTimeout(() => setShowSaveNotification(false), 3000);
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Save Notification */}
+        {showSaveNotification && (
+          <div className="fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✅</span>
+              <span className="font-semibold">{saveMessage}</span>
+            </div>
+          </div>
+        )}
+
         {/* Header */}
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Settings</h1>
@@ -66,7 +84,10 @@ export default function SettingsPage() {
               <input type="text" defaultValue="LEAGAI Insurance" className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600" />
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+            <button
+              onClick={() => handleSave("Profile")}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all active:scale-95"
+            >
               Save Changes
             </button>
           </div>
@@ -158,7 +179,10 @@ export default function SettingsPage() {
               </div>
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+            <button
+              onClick={() => handleSave("System")}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all active:scale-95"
+            >
               Save System Preferences
             </button>
           </div>
@@ -169,7 +193,14 @@ export default function SettingsPage() {
           <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-xl font-bold text-slate-900">Team Members</h2>
-              <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">
+              <button
+                onClick={() => {
+                  setSaveMessage("Add team member functionality coming soon!");
+                  setShowSaveNotification(true);
+                  setTimeout(() => setShowSaveNotification(false), 3000);
+                }}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm active:scale-95"
+              >
                 + Add Member
               </button>
             </div>
@@ -212,11 +243,18 @@ export default function SettingsPage() {
                     <span className="text-2xl">{integration.icon}</span>
                     <p className="font-medium text-slate-900">{integration.name}</p>
                   </div>
-                  <button className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
-                    integration.status === "connected"
-                      ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                      : "bg-slate-100 text-slate-700 hover:bg-slate-200"
-                  }`}>
+                  <button
+                    onClick={() => {
+                      setSaveMessage(`${integration.name} integration ${integration.status === "connected" ? "disconnected" : "connected"}!`);
+                      setShowSaveNotification(true);
+                      setTimeout(() => setShowSaveNotification(false), 3000);
+                    }}
+                    className={`px-4 py-2 rounded-lg font-medium text-sm transition-all active:scale-95 ${
+                      integration.status === "connected"
+                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                    }`}
+                  >
                     {integration.status === "connected" ? "✓ Connected" : "Connect"}
                   </button>
                 </div>
@@ -250,7 +288,10 @@ export default function SettingsPage() {
               ))}
             </div>
 
-            <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all">
+            <button
+              onClick={() => handleSave("Notification")}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all active:scale-95"
+            >
               Save Preferences
             </button>
           </div>
