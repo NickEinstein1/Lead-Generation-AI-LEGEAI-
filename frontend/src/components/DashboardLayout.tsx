@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { getSession, logout } from "@/lib/auth";
 import Link from "next/link";
 import Sidebar from "./Sidebar";
+import DigitalClock from "./DigitalClock";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -35,6 +36,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
             {/* Right: User Menu */}
             <div className="flex items-center gap-4">
+              {/* Digital Clock */}
+              <DigitalClock showDate={true} showSeconds={true} use24Hour={false} />
+
               {/* Notifications */}
               <button className="relative p-2 text-slate-600 hover:text-blue-700 transition-colors">
                 <span className="text-xl">🔔</span>
