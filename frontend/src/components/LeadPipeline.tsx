@@ -14,11 +14,11 @@ interface LeadPipelineProps {
 
 export default function LeadPipeline({ stages }: LeadPipelineProps) {
   const defaultStages: PipelineStage[] = [
-    { name: "New", count: 24, percentage: 15, color: "bg-blue-500" },
-    { name: "Contacted", count: 38, percentage: 24, color: "bg-cyan-500" },
-    { name: "Qualified", count: 31, percentage: 19, color: "bg-emerald-500" },
-    { name: "Proposal", count: 42, percentage: 26, color: "bg-amber-500" },
-    { name: "Closed", count: 25, percentage: 16, color: "bg-green-600" },
+    { name: "New", count: 89, percentage: 18, color: "bg-blue-500" },
+    { name: "Contacted", count: 127, percentage: 26, color: "bg-cyan-500" },
+    { name: "Qualified", count: 98, percentage: 20, color: "bg-emerald-500" },
+    { name: "Proposal", count: 112, percentage: 23, color: "bg-amber-500" },
+    { name: "Closed", count: 64, percentage: 13, color: "bg-green-600" },
   ];
 
   const pipelineStages = stages || defaultStages;

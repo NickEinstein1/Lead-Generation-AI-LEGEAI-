@@ -3,6 +3,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function NewLeadsPage() {
+  const [showAddLeadModal, setShowAddLeadModal] = useState(false);
   const [leads] = useState([
     { id: "LD-001", name: "Alice Johnson", email: "alice@example.com", phone: "+1 (555) 123-4567", source: "Website", date: "2024-10-22", value: "$5,000" },
     { id: "LD-002", name: "Bob Smith", email: "bob@example.com", phone: "+1 (555) 234-5678", source: "Referral", date: "2024-10-21", value: "$7,500" },
@@ -20,7 +21,10 @@ export default function NewLeadsPage() {
             <h1 className="text-3xl font-bold text-slate-900">New Leads</h1>
             <p className="text-slate-600 font-medium mt-1">Recently added leads waiting for follow-up</p>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => setShowAddLeadModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
             + Add Lead
           </button>
         </div>
@@ -93,6 +97,105 @@ export default function NewLeadsPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Lead Modal */}
+      {showAddLeadModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowAddLeadModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-2xl font-bold text-slate-900 mb-4">➕ Add New Lead</h3>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Full Name *</label>
+                  <input
+                    type="text"
+                    placeholder="John Smith"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Email *</label>
+                  <input
+                    type="email"
+                    placeholder="john@example.com"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Phone</label>
+                  <input
+                    type="tel"
+                    placeholder="+1 (555) 123-4567"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Lead Source</label>
+                  <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                    <option value="">Select source...</option>
+                    <option value="website">🌐 Website</option>
+                    <option value="referral">👥 Referral</option>
+                    <option value="phone">📞 Phone</option>
+                    <option value="email">📧 Email</option>
+                    <option value="social">📱 Social Media</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Insurance Interest</label>
+                <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                  <option value="">Select insurance type...</option>
+                  <option value="auto">🚗 Auto Insurance</option>
+                  <option value="home">🏠 Home Insurance</option>
+                  <option value="life">❤️ Life Insurance</option>
+                  <option value="health">⚕️ Health Insurance</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Estimated Value</label>
+                <input
+                  type="text"
+                  placeholder="$5,000"
+                  className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Notes</label>
+                <textarea
+                  className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  rows={3}
+                  placeholder="Additional information about the lead..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowAddLeadModal(false)}
+                className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowAddLeadModal(false);
+                  // In a real app, this would create the lead
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+              >
+                Add Lead
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

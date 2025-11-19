@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 interface Product {
   id: string;
@@ -16,41 +17,48 @@ interface InsuranceProductsProps {
 }
 
 export default function InsuranceProducts({ products }: InsuranceProductsProps) {
+  const router = useRouter();
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const handleViewDetails = (product: Product) => {
+    // Navigate to the product-specific page
+    router.push(`/dashboard/life-insurance/${product.id}`);
+  };
   const defaultProducts: Product[] = [
     {
       id: "auto",
       name: "Auto Insurance",
       icon: "🚗",
-      leads: 156,
-      revenue: "$45,200",
-      conversionRate: 18.5,
+      leads: 387,
+      revenue: "$142,850",
+      conversionRate: 26.4,
       color: "from-blue-500 to-blue-600",
     },
     {
       id: "home",
       name: "Home Insurance",
       icon: "🏠",
-      leads: 98,
-      revenue: "$32,100",
-      conversionRate: 22.3,
+      leads: 256,
+      revenue: "$98,750",
+      conversionRate: 28.9,
       color: "from-amber-500 to-amber-600",
     },
     {
       id: "life",
       name: "Life Insurance",
       icon: "❤️",
-      leads: 67,
-      revenue: "$28,500",
-      conversionRate: 19.8,
+      leads: 198,
+      revenue: "$87,320",
+      conversionRate: 22.6,
       color: "from-red-500 to-red-600",
     },
     {
       id: "health",
       name: "Health Insurance",
       icon: "⚕️",
-      leads: 124,
-      revenue: "$38,900",
-      conversionRate: 21.1,
+      leads: 406,
+      revenue: "$156,940",
+      conversionRate: 24.1,
       color: "from-green-500 to-green-600",
     },
   ];
@@ -85,7 +93,10 @@ export default function InsuranceProducts({ products }: InsuranceProductsProps) 
               </div>
             </div>
 
-            <button className="w-full mt-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold py-1 px-2 rounded text-xs transition-all">
+            <button
+              onClick={() => handleViewDetails(product)}
+              className="w-full mt-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold py-1 px-2 rounded text-xs transition-all active:scale-95"
+            >
               View Details
             </button>
           </div>

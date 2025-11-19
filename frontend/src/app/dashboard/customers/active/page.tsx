@@ -3,6 +3,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function ActiveCustomersPage() {
+  const [selectedCustomer, setSelectedCustomer] = useState<any>(null);
   const [customers] = useState([
     { id: "CUST-001", name: "John Smith", email: "john@example.com", phone: "+1 (555) 123-4567", policies: 3, value: "$45,000", joinDate: "2023-01-15", status: "Active" },
     { id: "CUST-002", name: "Sarah Johnson", email: "sarah@example.com", phone: "+1 (555) 234-5678", policies: 2, value: "$32,500", joinDate: "2023-03-22", status: "Active" },
@@ -83,8 +84,13 @@ export default function ActiveCustomersPage() {
                     <td className="p-4 font-bold text-slate-900">{customer.value}</td>
                     <td className="p-4 text-slate-700">{customer.joinDate}</td>
                     <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Edit</button>
+                      <button
+                        onClick={() => setSelectedCustomer(customer)}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                      >
+                        View
+                      </button>
+                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm hover:underline">Edit</button>
                     </td>
                   </tr>
                 ))}
@@ -92,6 +98,83 @@ export default function ActiveCustomersPage() {
             </table>
           </div>
         </div>
+
+        {/* View Customer Details Modal */}
+        {selectedCustomer && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedCustomer(null)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">👤 Active Customer Details</h2>
+                <button onClick={() => setSelectedCustomer(null)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Customer ID</label>
+                    <p className="text-lg font-bold text-blue-700">{selectedCustomer.id}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Status</label>
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                      ✓ Active
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Customer Name</label>
+                    <p className="text-lg font-semibold text-slate-900">{selectedCustomer.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Email Address</label>
+                    <p className="text-lg text-slate-700">{selectedCustomer.email}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Phone Number</label>
+                    <p className="text-lg text-slate-700">{selectedCustomer.phone}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Join Date</label>
+                    <p className="text-lg text-slate-700">{selectedCustomer.joinDate}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Active Policies</label>
+                    <p className="text-lg font-bold text-blue-700">{selectedCustomer.policies}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Total Value</label>
+                    <p className="text-lg font-bold text-slate-900">{selectedCustomer.value}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedCustomer(null)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => alert('Edit customer functionality coming soon!')}
+                      className="flex-1 bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Edit Customer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -3,6 +3,8 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function HomeInsurancePage() {
+  const [showNewPolicyModal, setShowNewPolicyModal] = useState(false);
+  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [policies] = useState([
     { id: "POL-HOME-001", customer: "John Smith", property: "123 Main St, NY", premium: "$1,800/yr", status: "Active", expiry: "2025-01-15" },
     { id: "POL-HOME-002", customer: "Sarah Johnson", property: "456 Oak Ave, CA", premium: "$2,100/yr", status: "Active", expiry: "2025-03-22" },
@@ -20,7 +22,10 @@ export default function HomeInsurancePage() {
             <h1 className="text-3xl font-bold text-slate-900">Home Insurance Policies</h1>
             <p className="text-slate-600 font-medium mt-1">Homeowners and property insurance coverage</p>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => setShowNewPolicyModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
             + New Home Policy
           </button>
         </div>
@@ -85,8 +90,13 @@ export default function HomeInsurancePage() {
                     </td>
                     <td className="p-4 text-slate-700">{policy.expiry}</td>
                     <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Renew</button>
+                      <button
+                        onClick={() => setSelectedPolicy(policy)}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                      >
+                        View
+                      </button>
+                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm hover:underline">Renew</button>
                     </td>
                   </tr>
                 ))}
@@ -94,6 +104,150 @@ export default function HomeInsurancePage() {
             </table>
           </div>
         </div>
+
+        {/* New Home Policy Modal */}
+        {showNewPolicyModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowNewPolicyModal(false)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">Create New Home Insurance Policy</h2>
+                <button onClick={() => setShowNewPolicyModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+              </div>
+
+              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Home policy created successfully!'); setShowNewPolicyModal(false); }}>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
+                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="John Smith" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Property Address *</label>
+                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="123 Main St, NY" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Property Type *</label>
+                    <select required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                      <option value="">Select type</option>
+                      <option value="single-family">Single Family Home</option>
+                      <option value="condo">Condominium</option>
+                      <option value="townhouse">Townhouse</option>
+                      <option value="multi-family">Multi-Family</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Coverage Amount *</label>
+                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="$500,000" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Premium *</label>
+                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="$1,800/yr" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Deductible *</label>
+                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="$2,500" />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Start Date *</label>
+                    <input type="date" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Expiry Date *</label>
+                    <input type="date" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95">
+                    Create Policy
+                  </button>
+                  <button type="button" onClick={() => setShowNewPolicyModal(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95">
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* View Policy Details Modal */}
+        {selectedPolicy && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedPolicy(null)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">🏠 Home Policy Details</h2>
+                <button onClick={() => setSelectedPolicy(null)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Policy ID</label>
+                    <p className="text-lg font-bold text-blue-700">{selectedPolicy.id}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Status</label>
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                      {selectedPolicy.status}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Customer Name</label>
+                    <p className="text-lg font-semibold text-slate-900">{selectedPolicy.customer}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Property</label>
+                    <p className="text-lg font-semibold text-slate-900">{selectedPolicy.property}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Coverage</label>
+                    <p className="text-lg font-bold text-slate-900">{selectedPolicy.coverage}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Premium</label>
+                    <p className="text-lg font-bold text-slate-900">{selectedPolicy.premium}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 mb-1">Expiry Date</label>
+                  <p className="text-lg text-slate-700">{selectedPolicy.expiry}</p>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedPolicy(null)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => alert('Renew functionality coming soon!')}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Renew Policy
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState } from "react";
 
 interface LeadActivity {
   id: string;
@@ -14,41 +14,49 @@ interface LeadManagementProps {
 }
 
 export default function LeadManagement({ activities }: LeadManagementProps) {
+  const [showModal, setShowModal] = useState(false);
   const defaultActivities: LeadActivity[] = [
     {
       id: "1",
       type: "call",
-      description: "Initial consultation call",
-      timestamp: "2 hours ago",
-      user: "John Smith",
+      description: "Follow-up call with high-value prospect",
+      timestamp: "15 minutes ago",
+      user: "Sarah Johnson",
     },
     {
       id: "2",
       type: "email",
-      description: "Sent quote for auto insurance",
-      timestamp: "4 hours ago",
-      user: "Sarah Johnson",
+      description: "Sent comprehensive life insurance proposal",
+      timestamp: "1 hour ago",
+      user: "Michael Chen",
     },
     {
       id: "3",
       type: "meeting",
-      description: "Scheduled follow-up meeting",
-      timestamp: "1 day ago",
-      user: "Mike Davis",
+      description: "Virtual consultation scheduled for tomorrow",
+      timestamp: "3 hours ago",
+      user: "Emma Rodriguez",
     },
     {
       id: "4",
-      type: "note",
-      description: "Customer interested in bundled policies",
-      timestamp: "2 days ago",
-      user: "Emma Wilson",
+      type: "status_change",
+      description: "Lead qualified and moved to Proposal stage",
+      timestamp: "5 hours ago",
+      user: "System",
     },
     {
       id: "5",
-      type: "status_change",
-      description: "Lead moved to Proposal stage",
-      timestamp: "3 days ago",
-      user: "System",
+      type: "note",
+      description: "Customer requesting multi-policy bundle discount",
+      timestamp: "8 hours ago",
+      user: "David Thompson",
+    },
+    {
+      id: "6",
+      type: "call",
+      description: "Initial discovery call completed successfully",
+      timestamp: "1 day ago",
+      user: "Lisa Martinez",
     },
   ];
 
@@ -113,10 +121,61 @@ export default function LeadManagement({ activities }: LeadManagementProps) {
       </div>
 
       <div className="mt-6 pt-6 border-t-2 border-blue-100">
-        <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm">
+        <button
+          onClick={() => setShowModal(true)}
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded transition-colors text-sm active:scale-95"
+        >
           + Add Activity
         </button>
       </div>
+
+      {/* Add Activity Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Add Activity</h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Activity Type</label>
+                <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                  <option value="call">📞 Call</option>
+                  <option value="email">📧 Email</option>
+                  <option value="meeting">📅 Meeting</option>
+                  <option value="note">📝 Note</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Description</label>
+                <textarea
+                  className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  rows={3}
+                  placeholder="Enter activity details..."
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setShowModal(false)}
+                className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  // In a real app, this would save the activity
+                }}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+              >
+                Add Activity
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

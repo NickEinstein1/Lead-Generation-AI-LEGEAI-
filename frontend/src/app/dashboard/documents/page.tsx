@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function DocumentsPage() {
+  const router = useRouter();
+  const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [documents] = useState([
     { id: 1, title: "Auto Insurance Agreement", customer: "John Smith", status: "signed", created: "2024-10-15", signed: "2024-10-16", type: "Agreement" },
     { id: 2, title: "Home Insurance Policy", customer: "Sarah Johnson", status: "pending", created: "2024-10-20", signed: null, type: "Policy" },
@@ -20,7 +23,10 @@ export default function DocumentsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Documents</h1>
             <p className="text-slate-600 font-medium mt-1">Manage documents and e-signatures</p>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => router.push("/dashboard/file-library")}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
             + New Document
           </button>
         </div>
@@ -111,7 +117,12 @@ export default function DocumentsPage() {
                     <td className="p-4 text-slate-700">{doc.created}</td>
                     <td className="p-4 text-slate-700">{doc.signed || "-"}</td>
                     <td className="p-4">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
+                      <button
+                        onClick={() => setSelectedDocument(doc)}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                      >
+                        View
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -119,6 +130,89 @@ export default function DocumentsPage() {
             </table>
           </div>
         </div>
+
+        {/* View Document Details Modal */}
+        {selectedDocument && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedDocument(null)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">📄 Document Details</h2>
+                <button onClick={() => setSelectedDocument(null)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Document ID</label>
+                    <p className="text-lg font-bold text-blue-700">DOC-{selectedDocument.id}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Status</label>
+                    <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                      selectedDocument.status === "signed"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : "bg-amber-100 text-amber-700"
+                    }`}>
+                      {selectedDocument.status === "signed" ? "✓ Signed" : "⏳ Pending"}
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-500 mb-1">Document Title</label>
+                  <p className="text-lg font-semibold text-slate-900">{selectedDocument.title}</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Customer Name</label>
+                    <p className="text-lg text-slate-700">{selectedDocument.customer}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Document Type</label>
+                    <p className="text-lg text-slate-700">{selectedDocument.type}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Created Date</label>
+                    <p className="text-lg text-slate-700">{selectedDocument.created}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Signed Date</label>
+                    <p className="text-lg text-slate-700">{selectedDocument.signed || "Not signed yet"}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedDocument(null)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => alert('Download document functionality coming soon!')}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Download
+                    </button>
+                    {selectedDocument.status === "pending" && (
+                      <button
+                        onClick={() => alert('Send reminder functionality coming soon!')}
+                        className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                      >
+                        Send Reminder
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

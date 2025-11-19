@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { API_BASE } from "@/lib/api";
 import Link from "next/link";
@@ -27,6 +28,7 @@ interface CategoryData {
 }
 
 export default function LifeInsurancePage() {
+  const router = useRouter();
   const [policyData, setPolicyData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -89,7 +91,10 @@ export default function LifeInsurancePage() {
               Comprehensive life insurance policy types and categories
             </p>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => router.push('/leads/new')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
             + Score New Lead
           </button>
         </div>

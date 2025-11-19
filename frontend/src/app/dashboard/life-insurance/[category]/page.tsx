@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { API_BASE } from "@/lib/api";
 import Link from "next/link";
@@ -23,6 +23,7 @@ interface PolicyType {
 }
 
 export default function CategoryPage() {
+  const router = useRouter();
   const params = useParams();
   const category = params.category as string;
   const [products, setProducts] = useState<PolicyType[]>([]);
@@ -112,7 +113,10 @@ export default function CategoryPage() {
               </div>
             </div>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => router.push('/leads/new')}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
             + Score New Lead
           </button>
         </div>

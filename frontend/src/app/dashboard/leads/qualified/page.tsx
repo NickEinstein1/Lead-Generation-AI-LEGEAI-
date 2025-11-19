@@ -1,8 +1,11 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function QualifiedLeadsPage() {
+  const router = useRouter();
+  const [selectedLead, setSelectedLead] = useState<any>(null);
   const [leads] = useState([
     { id: "LD-045", name: "Frank Miller", email: "frank@example.com", phone: "+1 (555) 678-9012", score: 92, status: "Hot", value: "$12,000" },
     { id: "LD-046", name: "Grace Lee", email: "grace@example.com", phone: "+1 (555) 789-0123", score: 88, status: "Hot", value: "$10,500" },
@@ -94,8 +97,13 @@ export default function QualifiedLeadsPage() {
                     </td>
                     <td className="p-4 font-bold text-slate-900">{lead.value}</td>
                     <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Convert</button>
+                      <button
+                        onClick={() => setSelectedLead(lead)}
+                        className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                      >
+                        View
+                      </button>
+                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm hover:underline">Convert</button>
                     </td>
                   </tr>
                 ))}
@@ -103,6 +111,89 @@ export default function QualifiedLeadsPage() {
             </table>
           </div>
         </div>
+
+        {/* View Lead Details Modal */}
+        {selectedLead && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setSelectedLead(null)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">🎯 Qualified Lead Details</h2>
+                <button onClick={() => setSelectedLead(null)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Lead ID</label>
+                    <p className="text-lg font-bold text-blue-700">{selectedLead.id}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Score</label>
+                    <span className="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                      {selectedLead.score}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Lead Name</label>
+                    <p className="text-lg font-semibold text-slate-900">{selectedLead.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Email Address</label>
+                    <p className="text-lg text-slate-700">{selectedLead.email}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Phone Number</label>
+                    <p className="text-lg text-slate-700">{selectedLead.phone}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Interest</label>
+                    <p className="text-lg text-slate-700">{selectedLead.interest}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Estimated Value</label>
+                    <p className="text-lg font-bold text-slate-900">{selectedLead.value}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-500 mb-1">Source</label>
+                    <p className="text-lg text-slate-700">{selectedLead.source}</p>
+                  </div>
+                </div>
+
+                <div className="pt-4 border-t border-slate-200">
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setSelectedLead(null)}
+                      className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Close
+                    </button>
+                    <button
+                      onClick={() => router.push(`/dashboard/leads/${selectedLead.id}`)}
+                      className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      View Full Details
+                    </button>
+                    <button
+                      onClick={() => alert('Convert to customer functionality coming soon!')}
+                      className="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                    >
+                      Convert
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </DashboardLayout>
   );

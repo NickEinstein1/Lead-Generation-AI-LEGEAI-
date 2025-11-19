@@ -1,8 +1,10 @@
 "use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function PendingClaimsPage() {
+  const router = useRouter();
   const [claims] = useState([
     { id: "CLM-PEND-001", policy: "POL-001", customer: "John Smith", type: "Auto", amount: "$5,000", submitted: "2024-10-20", daysWaiting: 2 },
     { id: "CLM-PEND-002", policy: "POL-002", customer: "Sarah Johnson", type: "Home", amount: "$12,500", submitted: "2024-10-18", daysWaiting: 4 },
@@ -20,7 +22,10 @@ export default function PendingClaimsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Pending Claims</h1>
             <p className="text-slate-600 font-medium mt-1">Claims awaiting review and approval</p>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => router.push("/dashboard/claims")}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
             + Review Claims
           </button>
         </div>
