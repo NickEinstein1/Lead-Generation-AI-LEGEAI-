@@ -149,7 +149,7 @@ Pre-configured test accounts are available:
 
 ---
 
-##API Documentation
+## API Documentation
 
 ### Interactive API Docs
 
@@ -249,7 +249,7 @@ Use the interactive Swagger UI at `http://localhost:8000/v1/docs`
 
 ---
 
-## 📈 Performance & Monitoring
+## Performance & Monitoring
 
 - **Prometheus Metrics** - Available at `/v1/metrics`
 - **Real-Time Monitoring** - Dashboard metrics updated in real-time
@@ -259,7 +259,7 @@ Use the interactive Swagger UI at `http://localhost:8000/v1/docs`
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -271,7 +271,7 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## 🆘 Support & Troubleshooting
+## Support & Troubleshooting
 
 ### Backend Issues
 
@@ -301,7 +301,7 @@ npm run dev -- -p 3001
 
 ---
 
-## 📞 Contact & Support
+## Contact & Support
 
 - **Documentation**: See `/docs` folder
 - **API Docs**: http://localhost:8000/v1/docs
@@ -310,7 +310,7 @@ npm run dev -- -p 3001
 
 ---
 
-## 🎉 Status
+## Status
 
 ✅ **Production Ready** - All features implemented and tested
 
