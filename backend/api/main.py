@@ -13,6 +13,9 @@ from backend.api.routing_api import router as routing_router
 from backend.api.webhooks_api import router as webhooks_router
 from backend.api.auth_api import router as auth_router
 from backend.api.life_insurance_scoring_api import router as life_insurance_router
+from backend.api.auto_insurance_scoring_api import router as auto_insurance_router
+from backend.api.home_insurance_scoring_api import router as home_insurance_router
+from backend.api.health_insurance_scoring_api import router as health_insurance_router
 
 from backend.api.documents_api import router as documents_router
 from backend.api.docuseal_webhooks import router as docuseal_webhooks_router
@@ -47,6 +50,9 @@ app.include_router(auth_router, prefix="/v1")
 app.include_router(pipeline_router, prefix="/v1")
 app.include_router(dashboard_router, prefix="/v1")
 app.include_router(life_insurance_router, prefix="/v1")
+app.include_router(auto_insurance_router, prefix="/v1")
+app.include_router(home_insurance_router, prefix="/v1")
+app.include_router(health_insurance_router, prefix="/v1")
 app.include_router(file_documents_router, prefix="/v1/file-management")  # New file document management
 
 
