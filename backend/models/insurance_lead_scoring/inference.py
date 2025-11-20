@@ -61,31 +61,34 @@ class InsuranceLeadScorer:
         """Preprocess single lead for scoring"""
         # Convert to DataFrame for consistent processing
         df = pd.DataFrame([lead_data])
-        
+
         # Handle categorical variables
         categorical_cols = ['policy_type', 'previous_insurance']
         for col in categorical_cols:
             if col in df.columns and col in self.label_encoders:
                 df[col] = self.label_encoders[col].transform(df[col].astype(str))
-        
+
         # Feature engineering
         df['age_income_ratio'] = df['age'] / (df['income'] / 1000)
         df['engagement_per_request'] = df['social_engagement_score'] / (df['quote_requests_30d'] + 1)
-        
-        # Select features
+
+        # Select features FIRST to avoid issues with non-numeric columns like lead_id
         feature_columns = [
             'age', 'income', 'policy_type', 'quote_requests_30d',
             'social_engagement_score', 'location_risk_score',
             'previous_insurance', 'credit_score_proxy',
             'age_income_ratio', 'engagement_per_request'
         ]
-        
-        # Handle missing values
-        df = df.fillna(df.median())
-        
+
+        # Select only feature columns
+        df_features = df[feature_columns]
+
+        # Handle missing values (only on numeric feature columns)
+        df_features = df_features.fillna(df_features.median(numeric_only=True))
+
         # Scale features
-        X = self.scaler.transform(df[feature_columns])
-        
+        X = self.scaler.transform(df_features)
+
         return X
     
     def score_lead(self, lead_data: Dict) -> Dict:
