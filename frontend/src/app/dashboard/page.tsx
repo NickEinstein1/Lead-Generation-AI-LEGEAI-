@@ -106,7 +106,7 @@ export default function DashboardPage() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-4 sm:space-y-6">
         {/* Key Metrics */}
         <section>
           <KeyMetrics metrics={keyMetrics} />
@@ -117,18 +117,18 @@ export default function DashboardPage() {
           <QuickActions />
         </section>
 
-        {/* Main Grid: Pipeline, Products, Scoring */}
-        <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1">
+        {/* Main Grid: Pipeline, Products, Scoring - Responsive */}
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="md:col-span-2 lg:col-span-1">
             <LeadPipeline stages={pipelineStages} />
           </div>
-          <div className="lg:col-span-2">
+          <div className="md:col-span-2 lg:col-span-2">
             <InsuranceProducts products={products} />
           </div>
         </section>
 
-        {/* Scoring and Activity */}
-        <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Scoring and Activity - Responsive */}
+        <section className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
           <div>
             <LeadScoring metrics={scoringMetrics} overallScore={stats?.lead_scoring?.overall_score} />
           </div>
@@ -137,13 +137,13 @@ export default function DashboardPage() {
           </div>
         </section>
 
-        {/* Recent Leads Section */}
-        <section className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-bold text-slate-900">Recent Leads</h2>
-            <Link href="/dashboard/leads" className="text-sm text-blue-700 hover:text-blue-800 underline font-medium">View All</Link>
+        {/* Recent Leads Section - Responsive */}
+        <section className="bg-white border-2 border-blue-200 rounded-lg p-4 sm:p-6 shadow-md">
+          <div className="flex items-center justify-between mb-3 sm:mb-4">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-900">Recent Leads</h2>
+            <Link href="/dashboard/leads" className="text-xs sm:text-sm text-blue-700 hover:text-blue-800 underline font-medium">View All</Link>
           </div>
-          <div className="text-sm text-slate-600 font-medium">Showing up to 10 recent items</div>
+          <div className="text-xs sm:text-sm text-slate-600 font-medium">Showing up to 10 recent items</div>
         </section>
       </div>
     </DashboardLayout>

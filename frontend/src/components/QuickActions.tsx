@@ -36,11 +36,7 @@ export default function QuickActions({ actions }: QuickActionsProps) {
         router.push("/dashboard/communications/campaigns");
         break;
       case "schedule-call":
-        setModalContent({
-          title: "Schedule Call",
-          message: "Call scheduling functionality coming soon! You'll be able to schedule follow-up calls with leads."
-        });
-        setShowModal(true);
+        router.push("/dashboard/scheduler");
         break;
       case "generate-report":
         router.push("/dashboard/reports");
@@ -108,39 +104,39 @@ export default function QuickActions({ actions }: QuickActionsProps) {
 
   return (
     <>
-      <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md">
-        <h2 className="text-xl font-bold text-slate-900 mb-6">Quick Actions</h2>
+      <div className="bg-white border-2 border-blue-200 rounded-lg p-4 sm:p-6 shadow-md">
+        <h2 className="text-lg sm:text-xl font-bold text-slate-900 mb-4 sm:mb-6">Quick Actions</h2>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 sm:gap-3">
           {quickActions.map((action) => (
             <button
               key={action.id}
               onClick={action.onClick}
-              className={`${action.color} text-white rounded-lg p-4 transition-all duration-200 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center gap-2`}
+              className={`${action.color} text-white rounded-lg p-3 sm:p-4 transition-all duration-200 hover:shadow-lg active:scale-95 flex flex-col items-center justify-center gap-1.5 sm:gap-2`}
               title={action.description}
             >
-              <span className="text-2xl">{action.icon}</span>
-              <span className="text-xs font-semibold text-center">{action.label}</span>
+              <span className="text-xl sm:text-2xl">{action.icon}</span>
+              <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight">{action.label}</span>
             </button>
           ))}
         </div>
 
-        <div className="mt-6 pt-6 border-t-2 border-blue-100">
-          <p className="text-xs text-slate-600 font-medium">
+        <div className="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t-2 border-blue-100">
+          <p className="text-[10px] sm:text-xs text-slate-600 font-medium">
             💡 Tip: Click any action above to quickly navigate or perform common tasks.
           </p>
         </div>
       </div>
 
-      {/* Modal for notifications */}
+      {/* Modal for notifications - Responsive */}
       {showModal && modalContent && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowModal(false)}>
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-xl font-bold text-slate-900 mb-4">{modalContent.title}</h3>
-            <p className="text-slate-700 mb-6">{modalContent.message}</p>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={() => setShowModal(false)}>
+          <div className="bg-white rounded-lg p-4 sm:p-6 max-w-md w-full shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-3 sm:mb-4">{modalContent.title}</h3>
+            <p className="text-sm sm:text-base text-slate-700 mb-4 sm:mb-6">{modalContent.message}</p>
             <button
               onClick={() => setShowModal(false)}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm sm:text-base"
             >
               Got it!
             </button>

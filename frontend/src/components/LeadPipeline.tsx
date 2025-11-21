@@ -1,5 +1,5 @@
 "use client";
-import React from "react";
+import React, { useState, useEffect } from "react";
 
 interface PipelineStage {
   name: string;
@@ -13,15 +13,35 @@ interface LeadPipelineProps {
 }
 
 export default function LeadPipeline({ stages }: LeadPipelineProps) {
-  const defaultStages: PipelineStage[] = [
-    { name: "New", count: 89, percentage: 18, color: "bg-blue-500" },
-    { name: "Contacted", count: 127, percentage: 26, color: "bg-cyan-500" },
-    { name: "Qualified", count: 98, percentage: 20, color: "bg-emerald-500" },
-    { name: "Proposal", count: 112, percentage: 23, color: "bg-amber-500" },
-    { name: "Closed", count: 64, percentage: 13, color: "bg-green-600" },
-  ];
+  const [dynamicStages, setDynamicStages] = useState<PipelineStage[]>([]);
 
-  const pipelineStages = stages || defaultStages;
+  // Generate dynamic values on component mount
+  useEffect(() => {
+    const generateDynamicStages = (): PipelineStage[] => {
+      const randomInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      // Generate random counts
+      const newCount = randomInRange(75, 105);
+      const contactedCount = randomInRange(110, 145);
+      const qualifiedCount = randomInRange(85, 115);
+      const proposalCount = randomInRange(95, 125);
+      const closedCount = randomInRange(55, 75);
+
+      const total = newCount + contactedCount + qualifiedCount + proposalCount + closedCount;
+
+      return [
+        { name: "New", count: newCount, percentage: Math.round((newCount / total) * 100), color: "bg-blue-500" },
+        { name: "Contacted", count: contactedCount, percentage: Math.round((contactedCount / total) * 100), color: "bg-cyan-500" },
+        { name: "Qualified", count: qualifiedCount, percentage: Math.round((qualifiedCount / total) * 100), color: "bg-emerald-500" },
+        { name: "Proposal", count: proposalCount, percentage: Math.round((proposalCount / total) * 100), color: "bg-amber-500" },
+        { name: "Closed", count: closedCount, percentage: Math.round((closedCount / total) * 100), color: "bg-green-600" },
+      ];
+    };
+
+    setDynamicStages(generateDynamicStages());
+  }, []); // Runs once on mount
+
+  const pipelineStages = stages || dynamicStages;
   const totalLeads = pipelineStages.reduce((sum, s) => sum + s.count, 0);
 
   return (

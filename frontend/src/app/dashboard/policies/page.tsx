@@ -1,17 +1,109 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { policiesApi } from "@/lib/api";
 
 export default function PoliciesPage() {
   const [showNewPolicyModal, setShowNewPolicyModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingPolicy, setEditingPolicy] = useState<any>(null);
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
-  const [policies] = useState([
-    { id: "POL-001", customer: "John Smith", type: "Auto", status: "active", premium: "$1,200/yr", startDate: "2024-01-15", endDate: "2025-01-15" },
-    { id: "POL-002", customer: "Sarah Johnson", type: "Home", status: "active", premium: "$1,500/yr", startDate: "2024-02-01", endDate: "2025-02-01" },
-    { id: "POL-003", customer: "Michael Brown", type: "Life", status: "expired", premium: "$500/yr", startDate: "2023-06-01", endDate: "2024-06-01" },
-    { id: "POL-004", customer: "Emily Davis", type: "Health", status: "active", premium: "$2,000/yr", startDate: "2024-03-10", endDate: "2025-03-10" },
-    { id: "POL-005", customer: "David Wilson", type: "Auto", status: "active", premium: "$1,100/yr", startDate: "2024-04-20", endDate: "2025-04-20" },
-  ]);
+  const [policies, setPolicies] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [formData, setFormData] = useState({
+    customer_name: "",
+    policy_type: "",
+    status: "active",
+    premium: 0,
+    coverage_amount: 0,
+    start_date: "",
+    end_date: "",
+    renewal_date: ""
+  });
+
+  // Fetch policies on mount
+  useEffect(() => {
+    fetchPolicies();
+  }, []);
+
+  const fetchPolicies = async () => {
+    try {
+      setLoading(true);
+      const data = await policiesApi.getAll();
+      setPolicies(data);
+    } catch (error) {
+      console.error("Failed to fetch policies:", error);
+      alert("Failed to load policies. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreatePolicy = async () => {
+    if (!formData.customer_name || !formData.policy_type || !formData.premium || !formData.start_date || !formData.end_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      await policiesApi.create(formData);
+      await fetchPolicies();
+      setShowNewPolicyModal(false);
+      setFormData({ customer_name: "", policy_type: "", status: "active", premium: 0, coverage_amount: 0, start_date: "", end_date: "", renewal_date: "" });
+      alert("Policy created successfully!");
+    } catch (error) {
+      console.error("Failed to create policy:", error);
+      alert("Failed to create policy. Please try again.");
+    }
+  };
+
+  const handleEditPolicy = (policy: any) => {
+    setEditingPolicy(policy);
+    setFormData({
+      customer_name: policy.customer_name,
+      policy_type: policy.policy_type,
+      status: policy.status,
+      premium: policy.premium,
+      coverage_amount: policy.coverage_amount || 0,
+      start_date: policy.start_date,
+      end_date: policy.end_date,
+      renewal_date: policy.renewal_date || ""
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdatePolicy = async () => {
+    if (!formData.customer_name || !formData.policy_type || !formData.premium || !formData.start_date || !formData.end_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      await policiesApi.update(editingPolicy.id, formData);
+      await fetchPolicies();
+      setShowEditModal(false);
+      setEditingPolicy(null);
+      setFormData({ customer_name: "", policy_type: "", status: "active", premium: 0, coverage_amount: 0, start_date: "", end_date: "", renewal_date: "" });
+      alert("Policy updated successfully!");
+    } catch (error) {
+      console.error("Failed to update policy:", error);
+      alert("Failed to update policy. Please try again.");
+    }
+  };
+
+  const handleDeletePolicy = async (policyId: string) => {
+    if (confirm("Are you sure you want to delete this policy? This action cannot be undone.")) {
+      try {
+        await policiesApi.delete(policyId);
+        await fetchPolicies();
+        alert("Policy deleted successfully!");
+      } catch (error) {
+        console.error("Failed to delete policy:", error);
+        alert("Failed to delete policy. Please try again.");
+      }
+    }
+  };
 
   const typeColors: { [key: string]: string } = {
     "Auto": "bg-blue-100 text-blue-700",
@@ -90,55 +182,73 @@ export default function PoliciesPage() {
           <div className="p-6 border-b border-blue-200">
             <h2 className="text-xl font-bold text-slate-900">All Policies</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-blue-50 border-b-2 border-blue-200">
-                <tr>
-                  <th className="text-left p-4 text-slate-900 font-bold">Policy ID</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Customer</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Type</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Status</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Premium</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Start Date</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">End Date</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {policies.map((policy) => (
-                  <tr key={policy.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-bold text-blue-700">{policy.id}</td>
-                    <td className="p-4 font-medium text-slate-900">{policy.customer}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${typeColors[policy.type]}`}>
-                        {policy.type}
-                      </span>
-                    </td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        policy.status === "active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-red-100 text-red-700"
-                      }`}>
-                        {policy.status === "active" ? "✓ Active" : "✗ Expired"}
-                      </span>
-                    </td>
-                    <td className="p-4 font-bold text-slate-900">{policy.premium}</td>
-                    <td className="p-4 text-slate-700">{policy.startDate}</td>
-                    <td className="p-4 text-slate-700">{policy.endDate}</td>
-                    <td className="p-4">
+          {loading ? (
+            <div className="p-8 text-center text-slate-600">Loading policies...</div>
+          ) : policies.length === 0 ? (
+            <div className="p-8 text-center text-slate-600">No policies found. Create your first policy!</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-blue-50 border-b-2 border-blue-200">
+                  <tr>
+                    <th className="text-left p-4 text-slate-900 font-bold">Policy ID</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Customer</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Type</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Status</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Premium</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Start Date</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">End Date</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {policies.map((policy) => (
+                    <tr key={policy.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-bold text-blue-700">{policy.policy_number || policy.id}</td>
+                      <td className="p-4 font-medium text-slate-900">{policy.customer_name}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${typeColors[policy.policy_type] || 'bg-gray-100 text-gray-700'}`}>
+                          {policy.policy_type}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          policy.status === "active"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-red-100 text-red-700"
+                        }`}>
+                          {policy.status === "active" ? "✓ Active" : "✗ Expired"}
+                        </span>
+                      </td>
+                      <td className="p-4 font-bold text-slate-900">${policy.premium?.toLocaleString() || '0'}</td>
+                      <td className="p-4 text-slate-700">{policy.start_date || 'N/A'}</td>
+                      <td className="p-4 text-slate-700">{policy.end_date || 'N/A'}</td>
+                    <td className="p-4 space-x-2">
                       <button
                         onClick={() => setSelectedPolicy(policy)}
                         className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
                       >
                         View
                       </button>
+                      <button
+                        onClick={() => handleEditPolicy(policy)}
+                        className="text-amber-600 hover:text-amber-800 font-medium text-sm hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeletePolicy(policy.id)}
+                        className="text-red-600 hover:text-red-800 font-medium text-sm hover:underline"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
 
         {/* New Policy Modal */}
@@ -150,71 +260,198 @@ export default function PoliciesPage() {
                 <button onClick={() => setShowNewPolicyModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
               </div>
 
-              <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); alert('Policy created successfully!'); setShowNewPolicyModal(false); }}>
-                {/* Customer Information */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
-                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="John Smith" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Customer Email *</label>
-                    <input type="email" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="john@example.com" />
-                  </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
+                  <input
+                    type="text"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="John Smith"
+                  />
                 </div>
 
-                {/* Policy Type */}
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Policy Type *</label>
-                  <select required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
                     <option value="">Select policy type</option>
-                    <option value="auto">Auto Insurance</option>
-                    <option value="home">Home Insurance</option>
-                    <option value="life">Life Insurance</option>
-                    <option value="health">Health Insurance</option>
+                    <option value="Auto">Auto Insurance</option>
+                    <option value="Home">Home Insurance</option>
+                    <option value="Life">Life Insurance</option>
+                    <option value="Health">Health Insurance</option>
                   </select>
                 </div>
 
-                {/* Coverage Details */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Coverage Amount *</label>
-                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="$500,000" />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">Premium Amount *</label>
-                    <input type="text" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="$1,200/yr" />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                  </select>
                 </div>
 
-                {/* Policy Dates */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Premium Amount *</label>
+                  <input
+                    type="text"
+                    value={formData.premium}
+                    onChange={(e) => setFormData({...formData, premium: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="$1,200/yr"
+                  />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Start Date *</label>
-                    <input type="date" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">End Date *</label>
-                    <input type="date" required className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
                   </div>
                 </div>
 
-                {/* Additional Details */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1">Policy Details</label>
-                  <textarea rows={3} className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Additional policy information..."></textarea>
-                </div>
-
-                {/* Action Buttons */}
                 <div className="flex gap-3 pt-4">
-                  <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95">
-                    Create Policy
-                  </button>
-                  <button type="button" onClick={() => setShowNewPolicyModal(false)} className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95">
+                  <button
+                    onClick={() => {
+                      setShowNewPolicyModal(false);
+                      setFormData({ customer: "", type: "", status: "active", premium: "", startDate: "", endDate: "" });
+                    }}
+                    className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                  >
                     Cancel
                   </button>
+                  <button
+                    onClick={handleCreatePolicy}
+                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                  >
+                    Create Policy
+                  </button>
                 </div>
-              </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Policy Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowEditModal(false)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-slate-900">✏️ Edit Policy</h2>
+                <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-slate-600 text-2xl">×</button>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
+                  <input
+                    type="text"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="John Smith"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Policy Type *</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select policy type</option>
+                    <option value="Auto">Auto Insurance</option>
+                    <option value="Home">Home Insurance</option>
+                    <option value="Life">Life Insurance</option>
+                    <option value="Health">Health Insurance</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Status *</label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({...formData, status: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="active">Active</option>
+                    <option value="expired">Expired</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Premium Amount *</label>
+                  <input
+                    type="text"
+                    value={formData.premium}
+                    onChange={(e) => setFormData({...formData, premium: e.target.value})}
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="$1,200/yr"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Start Date *</label>
+                    <input
+                      type="date"
+                      value={formData.startDate}
+                      onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">End Date *</label>
+                    <input
+                      type="date"
+                      value={formData.endDate}
+                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                      className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <button
+                    onClick={() => {
+                      setShowEditModal(false);
+                      setEditingPolicy(null);
+                      setFormData({ customer: "", type: "", status: "active", premium: "", startDate: "", endDate: "" });
+                    }}
+                    className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdatePolicy}
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                  >
+                    Update Policy
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}

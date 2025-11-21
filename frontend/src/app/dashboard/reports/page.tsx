@@ -1,16 +1,103 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { reportsApi } from "@/lib/api";
 
 export default function ReportsPage() {
   const [selectedReport, setSelectedReport] = useState<any>(null);
-  const [reports] = useState([
-    { id: 1, name: "Monthly Sales Report", type: "Sales", created: "2024-10-20", period: "October 2024", status: "ready" },
-    { id: 2, name: "Pipeline Analysis", type: "Pipeline", created: "2024-10-19", period: "Q4 2024", status: "ready" },
-    { id: 3, name: "Agent Performance", type: "Performance", created: "2024-10-18", period: "October 2024", status: "ready" },
-    { id: 4, name: "Customer Retention", type: "Analytics", created: "2024-10-17", period: "YTD 2024", status: "ready" },
-    { id: 5, name: "Claims Analysis", type: "Claims", created: "2024-10-16", period: "October 2024", status: "ready" },
-  ]);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingReport, setEditingReport] = useState<any>(null);
+  const [reports, setReports] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [formData, setFormData] = useState({
+    name: "",
+    report_type: "",
+    period: "",
+    format: "PDF",
+    status: "ready"
+  });
+
+  // Fetch reports on mount
+  useEffect(() => {
+    fetchReports();
+  }, []);
+
+  const fetchReports = async () => {
+    try {
+      setLoading(true);
+      const data = await reportsApi.getAll();
+      setReports(data);
+    } catch (error) {
+      console.error("Failed to fetch reports:", error);
+      alert("Failed to load reports. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    if (!formData.name || !formData.report_type || !formData.period) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await reportsApi.create(formData);
+      await fetchReports();
+      setShowGenerateModal(false);
+      setFormData({ name: "", report_type: "", period: "", format: "PDF", status: "ready" });
+      alert("Report generated successfully!");
+    } catch (error) {
+      console.error("Failed to generate report:", error);
+      alert("Failed to generate report. Please try again.");
+    }
+  };
+
+  const handleEditReport = (report: any) => {
+    setEditingReport(report);
+    setFormData({
+      name: report.name,
+      report_type: report.report_type,
+      period: report.period,
+      format: report.format || "PDF",
+      status: report.status
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateReport = async () => {
+    if (!formData.name || !formData.report_type || !formData.period) {
+      alert("Please fill in all fields");
+      return;
+    }
+
+    try {
+      await reportsApi.update(editingReport.id, formData);
+      await fetchReports();
+      setShowEditModal(false);
+      setEditingReport(null);
+      setFormData({ name: "", report_type: "", period: "", format: "PDF", status: "ready" });
+      alert("Report updated successfully!");
+    } catch (error) {
+      console.error("Failed to update report:", error);
+      alert("Failed to update report. Please try again.");
+    }
+  };
+
+  const handleDeleteReport = async (reportId: string) => {
+    if (confirm("Are you sure you want to delete this report? This action cannot be undone.")) {
+      try {
+        await reportsApi.delete(reportId);
+        await fetchReports();
+        alert("Report deleted successfully!");
+      } catch (error) {
+        console.error("Failed to delete report:", error);
+        alert("Failed to delete report. Please try again.");
+      }
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -21,7 +108,10 @@ export default function ReportsPage() {
             <h1 className="text-3xl font-bold text-slate-900">Reports</h1>
             <p className="text-slate-600 font-medium mt-1">Generate and view business reports</p>
           </div>
-          <button className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg">
+          <button
+            onClick={() => setShowGenerateModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-all shadow-md hover:shadow-lg active:scale-95"
+          >
             + Generate Report
           </button>
         </div>
@@ -79,30 +169,35 @@ export default function ReportsPage() {
           <div className="p-6 border-b border-blue-200">
             <h2 className="text-xl font-bold text-slate-900">Recent Reports</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-blue-50 border-b-2 border-blue-200">
-                <tr>
-                  <th className="text-left p-4 text-slate-900 font-bold">Report Name</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Type</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Period</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Created</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Status</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {reports.map((report) => (
-                  <tr key={report.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-medium text-slate-900">{report.name}</td>
-                    <td className="p-4 text-slate-700">{report.type}</td>
-                    <td className="p-4 text-slate-700">{report.period}</td>
-                    <td className="p-4 text-slate-700">{report.created}</td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                        ✓ Ready
-                      </span>
-                    </td>
+          {loading ? (
+            <div className="p-8 text-center text-slate-600">Loading reports...</div>
+          ) : reports.length === 0 ? (
+            <div className="p-8 text-center text-slate-600">No reports found. Generate your first report!</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-blue-50 border-b-2 border-blue-200">
+                  <tr>
+                    <th className="text-left p-4 text-slate-900 font-bold">Report Name</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Type</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Period</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Created</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Status</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {reports.map((report) => (
+                    <tr key={report.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-medium text-slate-900">{report.name}</td>
+                      <td className="p-4 text-slate-700">{report.report_type}</td>
+                      <td className="p-4 text-slate-700">{report.period}</td>
+                      <td className="p-4 text-slate-700">{report.generated_date || 'N/A'}</td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                          ✓ {report.status || 'Ready'}
+                        </span>
+                      </td>
                     <td className="p-4 space-x-2">
                       <button
                         onClick={() => setSelectedReport(report)}
@@ -110,14 +205,223 @@ export default function ReportsPage() {
                       >
                         View
                       </button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm hover:underline">Download</button>
+                      <button
+                        onClick={() => handleEditReport(report)}
+                        className="text-amber-600 hover:text-amber-800 font-medium text-sm hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReport(report.id)}
+                        className="text-red-600 hover:text-red-800 font-medium text-sm hover:underline"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
+
+        {/* Generate Report Modal */}
+        {showGenerateModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowGenerateModal(false)}>
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">📊 Generate New Report</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Report Name *</label>
+                  <input
+                    type="text"
+                    value={reportName}
+                    onChange={(e) => setReportName(e.target.value)}
+                    placeholder="e.g., Q4 Sales Performance"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Report Type *</label>
+                  <select
+                    value={reportType}
+                    onChange={(e) => setReportType(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="">Select report type...</option>
+                    <option value="Sales">💰 Sales Report</option>
+                    <option value="Pipeline">📊 Pipeline Report</option>
+                    <option value="Performance">⚡ Performance Report</option>
+                    <option value="Analytics">📈 Analytics Report</option>
+                    <option value="Claims">🔔 Claims Report</option>
+                    <option value="Customer">👥 Customer Report</option>
+                    <option value="Policy">📄 Policy Report</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Report Period *</label>
+                  <select
+                    value={reportPeriod}
+                    onChange={(e) => setReportPeriod(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="">Select period...</option>
+                    <option value="Today">Today</option>
+                    <option value="This Week">This Week</option>
+                    <option value="This Month">This Month</option>
+                    <option value="Last Month">Last Month</option>
+                    <option value="Q1 2024">Q1 2024</option>
+                    <option value="Q2 2024">Q2 2024</option>
+                    <option value="Q3 2024">Q3 2024</option>
+                    <option value="Q4 2024">Q4 2024</option>
+                    <option value="YTD 2024">YTD 2024</option>
+                    <option value="2024">Full Year 2024</option>
+                    <option value="Custom">Custom Range</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Format</label>
+                  <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                    <option value="pdf">PDF Document</option>
+                    <option value="excel">Excel Spreadsheet</option>
+                    <option value="csv">CSV File</option>
+                    <option value="json">JSON Data</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Include</label>
+                  <div className="space-y-2">
+                    <label className="flex items-center">
+                      <input type="checkbox" defaultChecked className="mr-2" />
+                      <span className="text-sm text-slate-700">Charts and Visualizations</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input type="checkbox" defaultChecked className="mr-2" />
+                      <span className="text-sm text-slate-700">Summary Statistics</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input type="checkbox" className="mr-2" />
+                      <span className="text-sm text-slate-700">Detailed Data Tables</span>
+                    </label>
+                    <label className="flex items-center">
+                      <input type="checkbox" className="mr-2" />
+                      <span className="text-sm text-slate-700">Trend Analysis</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowGenerateModal(false);
+                    setReportName("");
+                    setReportType("");
+                    setReportPeriod("");
+                  }}
+                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateReport}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                >
+                  Generate Report
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit Report Modal */}
+        {showEditModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowEditModal(false)}>
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-2xl font-bold text-slate-900 mb-4">✏️ Edit Report</h3>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Report Name *</label>
+                  <input
+                    type="text"
+                    value={reportName}
+                    onChange={(e) => setReportName(e.target.value)}
+                    placeholder="e.g., Q4 Sales Performance"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Report Type *</label>
+                  <select
+                    value={reportType}
+                    onChange={(e) => setReportType(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="">Select report type...</option>
+                    <option value="Sales">💰 Sales Report</option>
+                    <option value="Pipeline">📊 Pipeline Report</option>
+                    <option value="Performance">⚡ Performance Report</option>
+                    <option value="Analytics">📈 Analytics Report</option>
+                    <option value="Claims">🔔 Claims Report</option>
+                    <option value="Customer">👥 Customer Report</option>
+                    <option value="Policy">📄 Policy Report</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Report Period *</label>
+                  <select
+                    value={reportPeriod}
+                    onChange={(e) => setReportPeriod(e.target.value)}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="">Select period...</option>
+                    <option value="Today">Today</option>
+                    <option value="This Week">This Week</option>
+                    <option value="This Month">This Month</option>
+                    <option value="Last Month">Last Month</option>
+                    <option value="Q1 2024">Q1 2024</option>
+                    <option value="Q2 2024">Q2 2024</option>
+                    <option value="Q3 2024">Q3 2024</option>
+                    <option value="Q4 2024">Q4 2024</option>
+                    <option value="YTD 2024">YTD 2024</option>
+                    <option value="2024">Full Year 2024</option>
+                    <option value="Custom">Custom Range</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingReport(null);
+                    setReportName("");
+                    setReportType("");
+                    setReportPeriod("");
+                  }}
+                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpdateReport}
+                  className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                >
+                  Update Report
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* View Report Details Modal */}
         {selectedReport && (

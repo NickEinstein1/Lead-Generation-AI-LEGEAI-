@@ -26,42 +26,44 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
+      {/* Sidebar - Now toggleable */}
       <Sidebar />
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top Header */}
+      {/* Main Content - Full width since sidebar is now overlay */}
+      <div className="flex-1 flex flex-col overflow-hidden w-full">
+        {/* Top Header - Responsive */}
         <header className="bg-white border-b-2 border-blue-200 shadow-sm">
-          <div className="flex items-center justify-between px-6 py-4">
-            {/* Left: Breadcrumb or Title */}
-            <div className="flex items-center gap-2">
-              <span className="text-slate-600 text-sm">Dashboard</span>
+          <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4">
+            {/* Left: Breadcrumb or Title - with space for hamburger button */}
+            <div className="flex items-center gap-2 ml-12 sm:ml-14">
+              <span className="text-slate-600 text-xs sm:text-sm font-medium">Dashboard</span>
             </div>
 
-            {/* Right: User Menu */}
-            <div className="flex items-center gap-4">
-              {/* Digital Clock */}
-              <DigitalClock showDate={true} showSeconds={true} use24Hour={false} />
+            {/* Right: User Menu - Responsive */}
+            <div className="flex items-center gap-2 sm:gap-4">
+              {/* Digital Clock - Hidden on mobile */}
+              <div className="hidden md:block">
+                <DigitalClock showDate={true} showSeconds={true} use24Hour={false} />
+              </div>
 
               {/* Notifications */}
               <div className="relative">
                 <button
                   onClick={handleNotificationClick}
-                  className="relative p-2 text-slate-600 hover:text-blue-700 transition-colors"
+                  className="relative p-1.5 sm:p-2 text-slate-600 hover:text-blue-700 transition-colors"
                   title="Notifications"
                 >
-                  <span className="text-xl">🔔</span>
-                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                  <span className="text-lg sm:text-xl">🔔</span>
+                  <span className="absolute top-0.5 right-0.5 sm:top-1 sm:right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                 </button>
 
-                {/* Notifications Dropdown */}
+                {/* Notifications Dropdown - Responsive */}
                 {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border-2 border-blue-200 z-50">
-                    <div className="p-4 border-b border-gray-200">
-                      <h3 className="font-bold text-slate-900">Notifications</h3>
+                  <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-xl border-2 border-blue-200 z-50 max-w-[calc(100vw-2rem)]">
+                    <div className="p-3 sm:p-4 border-b border-gray-200">
+                      <h3 className="font-bold text-slate-900 text-sm sm:text-base">Notifications</h3>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
+                    <div className="max-h-72 sm:max-h-96 overflow-y-auto">
                       <div className="p-4 hover:bg-blue-50 border-b border-gray-100 cursor-pointer">
                         <p className="text-sm font-semibold text-slate-900">New lead assigned</p>
                         <p className="text-xs text-slate-600 mt-1">John Doe has been assigned to you</p>
@@ -93,33 +95,34 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
                 )}
               </div>
 
-              {/* User Profile */}
-              <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
-                <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900">
+              {/* User Profile - Responsive */}
+              <div className="flex items-center gap-2 sm:gap-3 pl-2 sm:pl-4 border-l border-gray-200">
+                <div className="text-right hidden sm:block">
+                  <p className="text-xs sm:text-sm font-medium text-slate-900">
                     {session?.userId || "User"}
                   </p>
                   <p className="text-xs text-slate-500">Admin</p>
                 </div>
-                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-blue-700 rounded-full flex items-center justify-center text-white font-bold text-xs sm:text-sm">
                   {(session?.userId || "U").charAt(0).toUpperCase()}
                 </div>
               </div>
 
-              {/* Logout Button */}
+              {/* Logout Button - Responsive */}
               <button
                 onClick={handleLogout}
-                className="ml-2 px-3 py-2 text-sm text-slate-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all font-medium"
+                className="ml-1 sm:ml-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm text-slate-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all font-medium"
               >
-                Logout
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
               </button>
             </div>
           </div>
         </header>
 
-        {/* Main Content Area */}
+        {/* Main Content Area - Responsive padding */}
         <main className="flex-1 overflow-y-auto">
-          <div className="p-6">
+          <div className="p-3 sm:p-4 md:p-6">
             {children}
           </div>
         </main>

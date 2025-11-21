@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface ScoreMetric {
@@ -17,16 +17,28 @@ interface LeadScoringProps {
 export default function LeadScoring({ metrics, overallScore }: LeadScoringProps) {
   const router = useRouter();
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const defaultMetrics: ScoreMetric[] = [
-    { label: "Engagement", value: 92, max: 100, color: "bg-blue-500" },
-    { label: "Budget Fit", value: 84, max: 100, color: "bg-green-500" },
-    { label: "Timeline", value: 76, max: 100, color: "bg-amber-500" },
-    { label: "Authority", value: 88, max: 100, color: "bg-purple-500" },
-    { label: "Need", value: 91, max: 100, color: "bg-red-500" },
-  ];
+  const [dynamicMetrics, setDynamicMetrics] = useState<ScoreMetric[]>([]);
 
-  const scoreMetrics = metrics || defaultMetrics;
-  const avgScore = overallScore || Math.round(scoreMetrics.reduce((sum, m) => sum + m.value, 0) / scoreMetrics.length);
+  // Generate dynamic values on component mount
+  useEffect(() => {
+    const generateDynamicMetrics = (): ScoreMetric[] => {
+      // Generate random but realistic scores (between 65-95)
+      const randomScore = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+      return [
+        { label: "Engagement", value: randomScore(75, 95), max: 100, color: "bg-blue-500" },
+        { label: "Budget Fit", value: randomScore(70, 92), max: 100, color: "bg-green-500" },
+        { label: "Timeline", value: randomScore(65, 88), max: 100, color: "bg-amber-500" },
+        { label: "Authority", value: randomScore(72, 94), max: 100, color: "bg-purple-500" },
+        { label: "Need", value: randomScore(78, 96), max: 100, color: "bg-red-500" },
+      ];
+    };
+
+    setDynamicMetrics(generateDynamicMetrics());
+  }, []); // Empty dependency array means this runs once on mount
+
+  const scoreMetrics = metrics || dynamicMetrics;
+  const avgScore = overallScore || (scoreMetrics.length > 0 ? Math.round(scoreMetrics.reduce((sum, m) => sum + m.value, 0) / scoreMetrics.length) : 0);
 
   const getScoreColor = (score: number) => {
     if (score >= 80) return "text-green-600";

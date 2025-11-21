@@ -1,17 +1,109 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { claimsApi } from "@/lib/api";
 
 export default function ClaimsPage() {
   const [showNewClaimModal, setShowNewClaimModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingClaim, setEditingClaim] = useState<any>(null);
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
-  const [claims] = useState([
-    { id: "CLM-001", policy: "POL-001", customer: "John Smith", type: "Auto", amount: "$5,000", status: "approved", date: "2024-10-15", dueDate: "2024-11-15" },
-    { id: "CLM-002", policy: "POL-002", customer: "Sarah Johnson", type: "Home", amount: "$12,500", status: "pending", date: "2024-10-20", dueDate: "2024-11-20" },
-    { id: "CLM-003", policy: "POL-004", customer: "Emily Davis", type: "Health", amount: "$2,300", status: "approved", date: "2024-10-10", dueDate: "2024-11-10" },
-    { id: "CLM-004", policy: "POL-005", customer: "David Wilson", type: "Auto", amount: "$8,750", status: "rejected", date: "2024-10-05", dueDate: "2024-11-05" },
-    { id: "CLM-005", policy: "POL-001", customer: "John Smith", type: "Auto", amount: "$3,200", status: "pending", date: "2024-10-22", dueDate: "2024-11-22" },
-  ]);
+  const [claims, setClaims] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [formData, setFormData] = useState({
+    policy_number: "",
+    customer_name: "",
+    claim_type: "",
+    amount: 0,
+    status: "pending",
+    claim_date: "",
+    due_date: "",
+    description: ""
+  });
+
+  // Fetch claims on mount
+  useEffect(() => {
+    fetchClaims();
+  }, []);
+
+  const fetchClaims = async () => {
+    try {
+      setLoading(true);
+      const data = await claimsApi.getAll();
+      setClaims(data);
+    } catch (error) {
+      console.error("Failed to fetch claims:", error);
+      alert("Failed to load claims. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateClaim = async () => {
+    if (!formData.policy_number || !formData.customer_name || !formData.claim_type || !formData.amount || !formData.claim_date || !formData.due_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      await claimsApi.create(formData);
+      await fetchClaims();
+      setShowNewClaimModal(false);
+      setFormData({ policy_number: "", customer_name: "", claim_type: "", amount: 0, status: "pending", claim_date: "", due_date: "", description: "" });
+      alert("Claim created successfully!");
+    } catch (error) {
+      console.error("Failed to create claim:", error);
+      alert("Failed to create claim. Please try again.");
+    }
+  };
+
+  const handleEditClaim = (claim: any) => {
+    setEditingClaim(claim);
+    setFormData({
+      policy_number: claim.policy_number,
+      customer_name: claim.customer_name,
+      claim_type: claim.claim_type,
+      amount: claim.amount,
+      status: claim.status,
+      claim_date: claim.claim_date,
+      due_date: claim.due_date,
+      description: claim.description || ""
+    });
+    setShowEditModal(true);
+  };
+
+  const handleUpdateClaim = async () => {
+    if (!formData.policy_number || !formData.customer_name || !formData.claim_type || !formData.amount || !formData.claim_date || !formData.due_date) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      await claimsApi.update(editingClaim.id, formData);
+      await fetchClaims();
+      setShowEditModal(false);
+      setEditingClaim(null);
+      setFormData({ policy_number: "", customer_name: "", claim_type: "", amount: 0, status: "pending", claim_date: "", due_date: "", description: "" });
+      alert("Claim updated successfully!");
+    } catch (error) {
+      console.error("Failed to update claim:", error);
+      alert("Failed to update claim. Please try again.");
+    }
+  };
+
+  const handleDeleteClaim = async (claimId: string) => {
+    if (confirm("Are you sure you want to delete this claim? This action cannot be undone.")) {
+      try {
+        await claimsApi.delete(claimId);
+        await fetchClaims();
+        alert("Claim deleted successfully!");
+      } catch (error) {
+        console.error("Failed to delete claim:", error);
+        alert("Failed to delete claim. Please try again.");
+      }
+    }
+  };
 
   return (
     <DashboardLayout>
@@ -78,53 +170,71 @@ export default function ClaimsPage() {
           <div className="p-6 border-b border-blue-200">
             <h2 className="text-xl font-bold text-slate-900">Recent Claims</h2>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-blue-50 border-b-2 border-blue-200">
-                <tr>
-                  <th className="text-left p-4 text-slate-900 font-bold">Claim ID</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Policy</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Customer</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Type</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Amount</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Status</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Date</th>
-                  <th className="text-left p-4 text-slate-900 font-bold">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {claims.map((claim) => (
-                  <tr key={claim.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-bold text-blue-700">{claim.id}</td>
-                    <td className="p-4 font-medium text-slate-900">{claim.policy}</td>
-                    <td className="p-4 text-slate-700">{claim.customer}</td>
-                    <td className="p-4 text-slate-700">{claim.type}</td>
-                    <td className="p-4 font-bold text-slate-900">{claim.amount}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        claim.status === "approved"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : claim.status === "pending"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-red-100 text-red-700"
-                      }`}>
-                        {claim.status === "approved" ? "✓ Approved" : claim.status === "pending" ? "⏳ Pending" : "✗ Rejected"}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-700">{claim.date}</td>
-                    <td className="p-4">
+          {loading ? (
+            <div className="p-8 text-center text-slate-600">Loading claims...</div>
+          ) : claims.length === 0 ? (
+            <div className="p-8 text-center text-slate-600">No claims found. Create your first claim!</div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-blue-50 border-b-2 border-blue-200">
+                  <tr>
+                    <th className="text-left p-4 text-slate-900 font-bold">Claim ID</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Policy</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Customer</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Type</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Amount</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Status</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Date</th>
+                    <th className="text-left p-4 text-slate-900 font-bold">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {claims.map((claim) => (
+                    <tr key={claim.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-bold text-blue-700">{claim.claim_number || claim.id}</td>
+                      <td className="p-4 font-medium text-slate-900">{claim.policy_number}</td>
+                      <td className="p-4 text-slate-700">{claim.customer_name}</td>
+                      <td className="p-4 text-slate-700">{claim.claim_type}</td>
+                      <td className="p-4 font-bold text-slate-900">${claim.amount?.toLocaleString() || '0'}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          claim.status === "approved"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : claim.status === "pending"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-red-100 text-red-700"
+                        }`}>
+                          {claim.status === "approved" ? "✓ Approved" : claim.status === "pending" ? "⏳ Pending" : "✗ Rejected"}
+                        </span>
+                      </td>
+                      <td className="p-4 text-slate-700">{claim.claim_date || 'N/A'}</td>
+                    <td className="p-4 space-x-2">
                       <button
                         onClick={() => setSelectedClaim(claim)}
                         className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
                       >
                         View
                       </button>
+                      <button
+                        onClick={() => handleEditClaim(claim)}
+                        className="text-amber-600 hover:text-amber-800 font-medium text-sm hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClaim(claim.id)}
+                        className="text-red-600 hover:text-red-800 font-medium text-sm hover:underline"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
@@ -137,17 +247,21 @@ export default function ClaimsPage() {
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Policy Number</label>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Policy Number *</label>
                   <input
                     type="text"
+                    value={formData.policy}
+                    onChange={(e) => setFormData({...formData, policy: e.target.value})}
                     placeholder="POL-001"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Customer Name</label>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Customer Name *</label>
                   <input
                     type="text"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
                     placeholder="John Smith"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
@@ -156,48 +270,63 @@ export default function ClaimsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Claim Type</label>
-                  <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Claim Type *</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  >
                     <option value="">Select type...</option>
-                    <option value="auto">🚗 Auto</option>
-                    <option value="home">🏠 Home</option>
-                    <option value="life">❤️ Life</option>
-                    <option value="health">⚕️ Health</option>
+                    <option value="Auto">🚗 Auto</option>
+                    <option value="Home">🏠 Home</option>
+                    <option value="Life">❤️ Life</option>
+                    <option value="Health">⚕️ Health</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-slate-900 mb-2">Claim Amount</label>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Claim Amount *</label>
                   <input
                     type="text"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
                     placeholder="$5,000"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">Incident Date</label>
-                <input
-                  type="date"
-                  className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">Description</label>
-                <textarea
-                  className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
-                  rows={4}
-                  placeholder="Describe the incident and claim details..."
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-slate-900 mb-2">Supporting Documents</label>
-                <div className="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center hover:border-blue-600 transition-colors cursor-pointer">
-                  <p className="text-slate-600">📎 Click to upload or drag and drop</p>
-                  <p className="text-xs text-slate-500 mt-1">PDF, JPG, PNG up to 10MB</p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Incident Date *</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Due Date *</label>
+                  <input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                >
+                  <option value="pending">⏳ Pending</option>
+                  <option value="approved">✓ Approved</option>
+                  <option value="rejected">✗ Rejected</option>
+                </select>
               </div>
             </div>
 
@@ -209,13 +338,124 @@ export default function ClaimsPage() {
                 Cancel
               </button>
               <button
-                onClick={() => {
-                  setShowNewClaimModal(false);
-                  // In a real app, this would submit the claim
-                }}
-                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all"
+                onClick={handleCreateClaim}
+                className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
               >
                 Submit Claim
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Claim Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowEditModal(false)}>
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-2xl font-bold text-slate-900 mb-4">✏️ Edit Claim</h3>
+
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Policy Number *</label>
+                  <input
+                    type="text"
+                    value={formData.policy}
+                    onChange={(e) => setFormData({...formData, policy: e.target.value})}
+                    placeholder="POL-001"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Customer Name *</label>
+                  <input
+                    type="text"
+                    value={formData.customer}
+                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    placeholder="John Smith"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Claim Type *</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="">Select type...</option>
+                    <option value="Auto">🚗 Auto</option>
+                    <option value="Home">🏠 Home</option>
+                    <option value="Life">❤️ Life</option>
+                    <option value="Health">⚕️ Health</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Claim Amount *</label>
+                  <input
+                    type="text"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
+                    placeholder="$5,000"
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Incident Date *</label>
+                  <input
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Due Date *</label>
+                  <input
+                    type="date"
+                    value={formData.dueDate}
+                    onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-900 mb-2">Status</label>
+                <select
+                  value={formData.status}
+                  onChange={(e) => setFormData({...formData, status: e.target.value})}
+                  className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                >
+                  <option value="pending">⏳ Pending</option>
+                  <option value="approved">✓ Approved</option>
+                  <option value="rejected">✗ Rejected</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditingClaim(null);
+                  setFormData({ policy: "", customer: "", type: "", amount: "", status: "pending", date: "", dueDate: "" });
+                }}
+                className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateClaim}
+                className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+              >
+                Update Claim
               </button>
             </div>
           </div>

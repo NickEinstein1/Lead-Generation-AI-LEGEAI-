@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 interface Product {
@@ -19,51 +19,63 @@ interface InsuranceProductsProps {
 export default function InsuranceProducts({ products }: InsuranceProductsProps) {
   const router = useRouter();
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [dynamicProducts, setDynamicProducts] = useState<Product[]>([]);
 
   const handleViewDetails = (product: Product) => {
     // Navigate to the product-specific page
     router.push(`/dashboard/life-insurance/${product.id}`);
   };
-  const defaultProducts: Product[] = [
-    {
-      id: "auto",
-      name: "Auto Insurance",
-      icon: "🚗",
-      leads: 387,
-      revenue: "$142,850",
-      conversionRate: 26.4,
-      color: "from-blue-500 to-blue-600",
-    },
-    {
-      id: "home",
-      name: "Home Insurance",
-      icon: "🏠",
-      leads: 256,
-      revenue: "$98,750",
-      conversionRate: 28.9,
-      color: "from-amber-500 to-amber-600",
-    },
-    {
-      id: "life",
-      name: "Life Insurance",
-      icon: "❤️",
-      leads: 198,
-      revenue: "$87,320",
-      conversionRate: 22.6,
-      color: "from-red-500 to-red-600",
-    },
-    {
-      id: "health",
-      name: "Health Insurance",
-      icon: "⚕️",
-      leads: 406,
-      revenue: "$156,940",
-      conversionRate: 24.1,
-      color: "from-green-500 to-green-600",
-    },
-  ];
 
-  const insuranceProducts = products || defaultProducts;
+  // Generate dynamic values on component mount
+  useEffect(() => {
+    const generateDynamicProducts = (): Product[] => {
+      const randomInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+      const randomDecimal = (min: number, max: number) => (Math.random() * (max - min) + min).toFixed(1);
+
+      return [
+        {
+          id: "auto",
+          name: "Auto Insurance",
+          icon: "🚗",
+          leads: randomInRange(350, 420),
+          revenue: `$${randomInRange(130, 160)},${randomInRange(100, 999).toString().padStart(3, '0')}`,
+          conversionRate: parseFloat(randomDecimal(23, 30)),
+          color: "from-blue-500 to-blue-600",
+        },
+        {
+          id: "home",
+          name: "Home Insurance",
+          icon: "🏠",
+          leads: randomInRange(220, 290),
+          revenue: `$${randomInRange(85, 115)},${randomInRange(100, 999).toString().padStart(3, '0')}`,
+          conversionRate: parseFloat(randomDecimal(25, 32)),
+          color: "from-amber-500 to-amber-600",
+        },
+        {
+          id: "life",
+          name: "Life Insurance",
+          icon: "❤️",
+          leads: randomInRange(170, 230),
+          revenue: `$${randomInRange(75, 100)},${randomInRange(100, 999).toString().padStart(3, '0')}`,
+          conversionRate: parseFloat(randomDecimal(20, 26)),
+          color: "from-red-500 to-red-600",
+        },
+        {
+          id: "health",
+          name: "Health Insurance",
+          icon: "⚕️",
+          leads: randomInRange(370, 450),
+          revenue: `$${randomInRange(140, 175)},${randomInRange(100, 999).toString().padStart(3, '0')}`,
+          conversionRate: parseFloat(randomDecimal(21, 28)),
+          color: "from-green-500 to-green-600",
+        },
+      ];
+    };
+
+    setDynamicProducts(generateDynamicProducts());
+  }, []); // Runs once on mount
+
+  const insuranceProducts = products || dynamicProducts;
 
   return (
     <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md">
