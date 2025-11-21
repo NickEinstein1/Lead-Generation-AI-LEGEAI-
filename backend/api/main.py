@@ -28,6 +28,7 @@ from backend.api.claims_api import router as claims_router
 from backend.api.communications_api import router as communications_router
 from backend.api.reports_api import router as reports_router
 from backend.api.scheduler_api import router as scheduler_router
+from backend.api.marketing_automation_api import router as marketing_router
 
 import os
 from backend.database.connection import init_db
@@ -131,6 +132,7 @@ app.include_router(claims_router, prefix="/v1")
 app.include_router(communications_router, prefix="/v1")
 app.include_router(reports_router, prefix="/v1")
 app.include_router(scheduler_router, prefix="/v1")
+app.include_router(marketing_router, prefix="/v1")
 
 app.include_router(routing_router, prefix="/v1")
 app.include_router(webhooks_router, prefix="/v1")

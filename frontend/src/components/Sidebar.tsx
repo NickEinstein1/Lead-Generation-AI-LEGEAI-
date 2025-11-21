@@ -165,6 +165,20 @@ const getNavItems = (
     ],
   },
   {
+    id: "marketing",
+    label: "Marketing",
+    icon: "📢",
+    href: "/dashboard/marketing",
+    badge: 5,
+    submenu: [
+      { id: "marketing-overview", label: "Overview", icon: "📊", href: "/dashboard/marketing" },
+      { id: "marketing-campaigns", label: "Campaigns", icon: "📧", href: "/dashboard/marketing/campaigns" },
+      { id: "marketing-segments", label: "Segments", icon: "👥", href: "/dashboard/marketing/segments" },
+      { id: "marketing-templates", label: "Templates", icon: "📝", href: "/dashboard/marketing/templates" },
+      { id: "marketing-automation", label: "Automation", icon: "⚡", href: "/dashboard/marketing/automation" },
+    ],
+  },
+  {
     id: "reports",
     label: "Reports",
     icon: "📈",
