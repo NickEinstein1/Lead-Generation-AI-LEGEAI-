@@ -21,6 +21,14 @@ from backend.api.documents_api import router as documents_router
 from backend.api.docuseal_webhooks import router as docuseal_webhooks_router
 from backend.api.file_documents_api import router as file_documents_router
 
+# CRUD API Routers
+from backend.api.customers_api import router as customers_router
+from backend.api.policies_api import router as policies_router
+from backend.api.claims_api import router as claims_router
+from backend.api.communications_api import router as communications_router
+from backend.api.reports_api import router as reports_router
+from backend.api.scheduler_api import router as scheduler_router
+
 import os
 from backend.database.connection import init_db
 from backend.security.authentication import auth_manager, UserRole
@@ -115,6 +123,14 @@ async def on_startup():
 
 app.include_router(leads_router, prefix="/v1")
 app.include_router(documents_router, prefix="/v1")
+
+# CRUD API Routers
+app.include_router(customers_router, prefix="/v1")
+app.include_router(policies_router, prefix="/v1")
+app.include_router(claims_router, prefix="/v1")
+app.include_router(communications_router, prefix="/v1")
+app.include_router(reports_router, prefix="/v1")
+app.include_router(scheduler_router, prefix="/v1")
 
 app.include_router(routing_router, prefix="/v1")
 app.include_router(webhooks_router, prefix="/v1")
