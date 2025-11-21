@@ -1,10 +1,12 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException, Depends, Query
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 import logging
 from backend.models.insurance_lead_scoring.inference import InsuranceLeadScorer
 from backend.models.auto_insurance_scoring.ensemble_scorer import EnsembleAutoInsuranceScorer
 import os
+import random
+from datetime import datetime, timedelta
 
 router = APIRouter(prefix="/auto-insurance", tags=["Auto Insurance"])
 logger = logging.getLogger(__name__)
@@ -272,6 +274,63 @@ async def assess_auto_insurance_risk(
         "underwriting_recommendation": "standard" if overall_risk != "high" else "substandard",
         "estimated_premium_multiplier": 1.0 if overall_risk == "low" else 1.3 if overall_risk == "medium" else 1.8
     }
+
+
+@router.get("/analytics")
+async def get_auto_insurance_analytics(
+    date_range: Optional[str] = Query(None, description="Date range filter"),
+    score_filter: Optional[str] = Query(None, description="Score filter")
+):
+    """Get analytics data for auto insurance leads"""
+    try:
+        # Generate mock analytics data
+        # In production, this would query a database
+        analytics_data = {
+            "total_leads": random.randint(1100, 1300),
+            "avg_score": round(random.uniform(0.65, 0.75), 2),
+            "high_quality_leads": random.randint(300, 400),
+            "model_accuracy": "74.2%",
+            "score_distribution": {
+                "high": round(random.uniform(25, 32), 1),
+                "medium": round(random.uniform(42, 48), 1),
+                "low": round(random.uniform(22, 28), 1)
+            },
+            "vehicle_type_distribution": {
+                "sedan": 38.2,
+                "suv": 29.4,
+                "truck": 18.7,
+                "sports_car": 13.7
+            },
+            "coverage_type_distribution": {
+                "liability": 42.3,
+                "comprehensive": 31.8,
+                "collision": 25.9
+            },
+            "trend_data": [
+                {"date": (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d"), "leads": random.randint(150, 200), "avg_score": round(random.uniform(0.6, 0.75), 2)},
+                {"date": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"), "leads": random.randint(150, 200), "avg_score": round(random.uniform(0.6, 0.75), 2)},
+                {"date": (datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"), "leads": random.randint(150, 200), "avg_score": round(random.uniform(0.6, 0.75), 2)},
+                {"date": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"), "leads": random.randint(150, 200), "avg_score": round(random.uniform(0.6, 0.75), 2)},
+                {"date": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"), "leads": random.randint(150, 200), "avg_score": round(random.uniform(0.6, 0.75), 2)},
+                {"date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"), "leads": random.randint(150, 200), "avg_score": round(random.uniform(0.6, 0.75), 2)},
+                {"date": datetime.now().strftime("%Y-%m-%d"), "leads": random.randint(150, 200), "avg_score": round(random.uniform(0.6, 0.75), 2)}
+            ],
+            "filters_applied": {
+                "date_range": date_range or "all",
+                "score_filter": score_filter or "all"
+            }
+        }
+
+        return {
+            "status": "success",
+            "data": analytics_data,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching auto insurance analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 # Standalone mode for testing
 if __name__ == "__main__":

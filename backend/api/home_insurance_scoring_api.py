@@ -3,13 +3,14 @@ Home Insurance Scoring API
 FastAPI router for home insurance lead scoring with ensemble models
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from backend.models.insurance_lead_scoring.inference import InsuranceLeadScorer
 from backend.models.home_insurance_scoring.ensemble_scorer import EnsembleHomeInsuranceScorer
+import random
 
 router = APIRouter(prefix="/home-insurance", tags=["Home Insurance"])
 logger = logging.getLogger(__name__)
@@ -192,4 +193,61 @@ async def model_info():
         ],
         "compliance": ["GDPR", "CCPA", "TCPA"]
     }
+
+
+@router.get("/analytics")
+async def get_home_insurance_analytics(
+    date_range: Optional[str] = Query(None, description="Date range filter"),
+    score_filter: Optional[str] = Query(None, description="Score filter")
+):
+    """Get analytics data for home insurance leads"""
+    try:
+        # Generate mock analytics data
+        # In production, this would query a database
+        analytics_data = {
+            "total_leads": random.randint(1200, 1350),
+            "avg_score": round(random.uniform(0.62, 0.72), 2),
+            "high_quality_leads": random.randint(320, 420),
+            "model_accuracy": "72.8%",
+            "score_distribution": {
+                "high": round(random.uniform(24, 30), 1),
+                "medium": round(random.uniform(44, 50), 1),
+                "low": round(random.uniform(22, 28), 1)
+            },
+            "property_type_distribution": {
+                "single_family": 52.3,
+                "condo": 24.8,
+                "townhouse": 15.4,
+                "multi_family": 7.5
+            },
+            "coverage_amount_distribution": {
+                "under_300k": 28.5,
+                "300k_500k": 42.3,
+                "500k_1m": 22.7,
+                "over_1m": 6.5
+            },
+            "trend_data": [
+                {"date": (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d"), "leads": random.randint(160, 210), "avg_score": round(random.uniform(0.58, 0.73), 2)},
+                {"date": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"), "leads": random.randint(160, 210), "avg_score": round(random.uniform(0.58, 0.73), 2)},
+                {"date": (datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"), "leads": random.randint(160, 210), "avg_score": round(random.uniform(0.58, 0.73), 2)},
+                {"date": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"), "leads": random.randint(160, 210), "avg_score": round(random.uniform(0.58, 0.73), 2)},
+                {"date": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"), "leads": random.randint(160, 210), "avg_score": round(random.uniform(0.58, 0.73), 2)},
+                {"date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"), "leads": random.randint(160, 210), "avg_score": round(random.uniform(0.58, 0.73), 2)},
+                {"date": datetime.now().strftime("%Y-%m-%d"), "leads": random.randint(160, 210), "avg_score": round(random.uniform(0.58, 0.73), 2)}
+            ],
+            "filters_applied": {
+                "date_range": date_range or "all",
+                "score_filter": score_filter or "all"
+            }
+        }
+
+        return {
+            "status": "success",
+            "data": analytics_data,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching home insurance analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 

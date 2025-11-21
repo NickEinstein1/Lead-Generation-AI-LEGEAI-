@@ -3,13 +3,14 @@ Health Insurance Scoring API
 FastAPI router for health insurance lead scoring with ensemble models
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel, Field
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Any
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from backend.models.insurance_lead_scoring.inference import InsuranceLeadScorer
 from backend.models.healthcare_insurance_scoring.ensemble_scorer import EnsembleHealthInsuranceScorer
+import random
 
 router = APIRouter(prefix="/health-insurance", tags=["Health Insurance"])
 logger = logging.getLogger(__name__)
@@ -192,4 +193,60 @@ async def model_info():
         ],
         "compliance": ["GDPR", "CCPA", "TCPA"]
     }
+
+
+@router.get("/analytics")
+async def get_health_insurance_analytics(
+    date_range: Optional[str] = Query(None, description="Date range filter"),
+    score_filter: Optional[str] = Query(None, description="Score filter")
+):
+    """Get analytics data for health insurance leads"""
+    try:
+        # Generate mock analytics data
+        # In production, this would query a database
+        analytics_data = {
+            "total_leads": random.randint(1250, 1400),
+            "avg_score": round(random.uniform(0.68, 0.78), 2),
+            "high_quality_leads": random.randint(350, 450),
+            "model_accuracy": "76.5%",
+            "score_distribution": {
+                "high": round(random.uniform(28, 34), 1),
+                "medium": round(random.uniform(42, 48), 1),
+                "low": round(random.uniform(20, 26), 1)
+            },
+            "plan_type_distribution": {
+                "hmo": 35.2,
+                "ppo": 42.8,
+                "epo": 12.5,
+                "pos": 9.5
+            },
+            "coverage_tier_distribution": {
+                "individual": 38.4,
+                "family": 45.2,
+                "individual_plus_spouse": 16.4
+            },
+            "trend_data": [
+                {"date": (datetime.now() - timedelta(days=6)).strftime("%Y-%m-%d"), "leads": random.randint(170, 220), "avg_score": round(random.uniform(0.64, 0.79), 2)},
+                {"date": (datetime.now() - timedelta(days=5)).strftime("%Y-%m-%d"), "leads": random.randint(170, 220), "avg_score": round(random.uniform(0.64, 0.79), 2)},
+                {"date": (datetime.now() - timedelta(days=4)).strftime("%Y-%m-%d"), "leads": random.randint(170, 220), "avg_score": round(random.uniform(0.64, 0.79), 2)},
+                {"date": (datetime.now() - timedelta(days=3)).strftime("%Y-%m-%d"), "leads": random.randint(170, 220), "avg_score": round(random.uniform(0.64, 0.79), 2)},
+                {"date": (datetime.now() - timedelta(days=2)).strftime("%Y-%m-%d"), "leads": random.randint(170, 220), "avg_score": round(random.uniform(0.64, 0.79), 2)},
+                {"date": (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d"), "leads": random.randint(170, 220), "avg_score": round(random.uniform(0.64, 0.79), 2)},
+                {"date": datetime.now().strftime("%Y-%m-%d"), "leads": random.randint(170, 220), "avg_score": round(random.uniform(0.64, 0.79), 2)}
+            ],
+            "filters_applied": {
+                "date_range": date_range or "all",
+                "score_filter": score_filter or "all"
+            }
+        }
+
+        return {
+            "status": "success",
+            "data": analytics_data,
+            "timestamp": datetime.now().isoformat()
+        }
+
+    except Exception as e:
+        logger.error(f"Error fetching health insurance analytics: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
