@@ -15,7 +15,7 @@ export default function ClaimsPage() {
     policy_number: "",
     customer_name: "",
     claim_type: "",
-    amount: 0,
+    amount: "" as any,
     status: "pending",
     claim_date: "",
     due_date: "",
@@ -30,8 +30,9 @@ export default function ClaimsPage() {
   const fetchClaims = async () => {
     try {
       setLoading(true);
-      const data = await claimsApi.getAll();
-      setClaims(data);
+      const response = await claimsApi.getAll();
+      // Backend returns paginated response: { claims: [...], total: X, ... }
+      setClaims(response.claims || []);
     } catch (error) {
       console.error("Failed to fetch claims:", error);
       alert("Failed to load claims. Please try again.");
@@ -50,7 +51,7 @@ export default function ClaimsPage() {
       await claimsApi.create(formData);
       await fetchClaims();
       setShowNewClaimModal(false);
-      setFormData({ policy_number: "", customer_name: "", claim_type: "", amount: 0, status: "pending", claim_date: "", due_date: "", description: "" });
+      setFormData({ policy_number: "", customer_name: "", claim_type: "", amount: "" as any, status: "pending", claim_date: "", due_date: "", description: "" });
       alert("Claim created successfully!");
     } catch (error) {
       console.error("Failed to create claim:", error);
@@ -84,7 +85,7 @@ export default function ClaimsPage() {
       await fetchClaims();
       setShowEditModal(false);
       setEditingClaim(null);
-      setFormData({ policy_number: "", customer_name: "", claim_type: "", amount: 0, status: "pending", claim_date: "", due_date: "", description: "" });
+      setFormData({ policy_number: "", customer_name: "", claim_type: "", amount: "" as any, status: "pending", claim_date: "", due_date: "", description: "" });
       alert("Claim updated successfully!");
     } catch (error) {
       console.error("Failed to update claim:", error);
@@ -195,8 +196,8 @@ export default function ClaimsPage() {
                       <td className="p-4 font-bold text-blue-700">{claim.claim_number || claim.id}</td>
                       <td className="p-4 font-medium text-slate-900">{claim.policy_number}</td>
                       <td className="p-4 text-slate-700">{claim.customer_name}</td>
-                      <td className="p-4 text-slate-700">{claim.claim_type}</td>
-                      <td className="p-4 font-bold text-slate-900">${claim.amount?.toLocaleString() || '0'}</td>
+                      <td className="p-4 text-slate-700 capitalize">{claim.claim_type}</td>
+                      <td className="p-4 font-bold text-slate-900">${typeof claim.amount === 'number' ? claim.amount.toLocaleString() : claim.amount || '0'}</td>
                       <td className="p-4">
                         <span className={`px-3 py-1 rounded-full text-xs font-bold ${
                           claim.status === "approved"
@@ -250,8 +251,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Policy Number *</label>
                   <input
                     type="text"
-                    value={formData.policy}
-                    onChange={(e) => setFormData({...formData, policy: e.target.value})}
+                    value={formData.policy_number}
+                    onChange={(e) => setFormData({...formData, policy_number: e.target.value})}
                     placeholder="POL-001"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
@@ -260,8 +261,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Customer Name *</label>
                   <input
                     type="text"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                     placeholder="John Smith"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
@@ -272,15 +273,17 @@ export default function ClaimsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Claim Type *</label>
                   <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    value={formData.claim_type}
+                    onChange={(e) => setFormData({...formData, claim_type: e.target.value})}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   >
                     <option value="">Select type...</option>
-                    <option value="Auto">🚗 Auto</option>
-                    <option value="Home">🏠 Home</option>
-                    <option value="Life">❤️ Life</option>
-                    <option value="Health">⚕️ Health</option>
+                    <option value="accident">🚗 Accident</option>
+                    <option value="theft">🔒 Theft</option>
+                    <option value="damage">💥 Damage</option>
+                    <option value="medical">⚕️ Medical</option>
+                    <option value="liability">⚖️ Liability</option>
+                    <option value="other">📋 Other</option>
                   </select>
                 </div>
                 <div>
@@ -288,8 +291,8 @@ export default function ClaimsPage() {
                   <input
                     type="text"
                     value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    placeholder="$5,000"
+                    onChange={(e) => setFormData({...formData, amount: e.target.value as any})}
+                    placeholder="5000"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
@@ -300,8 +303,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Incident Date *</label>
                   <input
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    value={formData.claim_date}
+                    onChange={(e) => setFormData({...formData, claim_date: e.target.value})}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
@@ -309,8 +312,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Due Date *</label>
                   <input
                     type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                    value={formData.due_date}
+                    onChange={(e) => setFormData({...formData, due_date: e.target.value})}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
@@ -360,8 +363,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Policy Number *</label>
                   <input
                     type="text"
-                    value={formData.policy}
-                    onChange={(e) => setFormData({...formData, policy: e.target.value})}
+                    value={formData.policy_number}
+                    onChange={(e) => setFormData({...formData, policy_number: e.target.value})}
                     placeholder="POL-001"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
@@ -370,8 +373,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Customer Name *</label>
                   <input
                     type="text"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                     placeholder="John Smith"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
@@ -382,15 +385,17 @@ export default function ClaimsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Claim Type *</label>
                   <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    value={formData.claim_type}
+                    onChange={(e) => setFormData({...formData, claim_type: e.target.value})}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   >
                     <option value="">Select type...</option>
-                    <option value="Auto">🚗 Auto</option>
-                    <option value="Home">🏠 Home</option>
-                    <option value="Life">❤️ Life</option>
-                    <option value="Health">⚕️ Health</option>
+                    <option value="accident">🚗 Accident</option>
+                    <option value="theft">🔒 Theft</option>
+                    <option value="damage">💥 Damage</option>
+                    <option value="medical">⚕️ Medical</option>
+                    <option value="liability">⚖️ Liability</option>
+                    <option value="other">📋 Other</option>
                   </select>
                 </div>
                 <div>
@@ -398,8 +403,8 @@ export default function ClaimsPage() {
                   <input
                     type="text"
                     value={formData.amount}
-                    onChange={(e) => setFormData({...formData, amount: e.target.value})}
-                    placeholder="$5,000"
+                    onChange={(e) => setFormData({...formData, amount: e.target.value as any})}
+                    placeholder="5000"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
@@ -410,8 +415,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Incident Date *</label>
                   <input
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    value={formData.claim_date}
+                    onChange={(e) => setFormData({...formData, claim_date: e.target.value})}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
@@ -419,8 +424,8 @@ export default function ClaimsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Due Date *</label>
                   <input
                     type="date"
-                    value={formData.dueDate}
-                    onChange={(e) => setFormData({...formData, dueDate: e.target.value})}
+                    value={formData.due_date}
+                    onChange={(e) => setFormData({...formData, due_date: e.target.value})}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
                 </div>
@@ -445,7 +450,7 @@ export default function ClaimsPage() {
                 onClick={() => {
                   setShowEditModal(false);
                   setEditingClaim(null);
-                  setFormData({ policy: "", customer: "", type: "", amount: "", status: "pending", date: "", dueDate: "" });
+                  setFormData({ policy_number: "", customer_name: "", claim_type: "", amount: "" as any, status: "pending", claim_date: "", due_date: "", description: "" });
                 }}
                 className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
               >
@@ -509,7 +514,7 @@ export default function ClaimsPage() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-500 mb-1">Claim Amount</label>
-                  <p className="text-lg font-bold text-slate-900">{selectedClaim.amount}</p>
+                  <p className="text-lg font-bold text-slate-900">${typeof selectedClaim.amount === 'number' ? selectedClaim.amount.toLocaleString() : selectedClaim.amount || '0'}</p>
                 </div>
               </div>
 

@@ -22,8 +22,16 @@ export default function InsuranceProducts({ products }: InsuranceProductsProps) 
   const [dynamicProducts, setDynamicProducts] = useState<Product[]>([]);
 
   const handleViewDetails = (product: Product) => {
-    // Navigate to the product-specific page
-    router.push(`/dashboard/life-insurance/${product.id}`);
+    // Navigate to the product-specific page based on product ID
+    const routeMap: { [key: string]: string } = {
+      'auto': '/dashboard/auto-insurance',
+      'home': '/dashboard/home-insurance',
+      'life': '/dashboard/life-insurance',
+      'health': '/dashboard/health-insurance',
+    };
+
+    const route = routeMap[product.id] || `/dashboard/${product.id}-insurance`;
+    router.push(route);
   };
 
   // Generate dynamic values on component mount
@@ -78,39 +86,58 @@ export default function InsuranceProducts({ products }: InsuranceProductsProps) 
   const insuranceProducts = products || dynamicProducts;
 
   return (
-    <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md">
-      <h2 className="text-xl font-bold text-slate-900 mb-6">Insurance Products</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div className="bg-slate-900/60 backdrop-blur-xl border border-blue-500/30 rounded-2xl p-6 shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 relative overflow-hidden">
+      {/* Background glow */}
+      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 via-orange-500/10 to-cyan-500/10"></div>
+
+      <h2 className="text-xl font-bold text-blue-100 mb-6 flex items-center gap-2 relative z-10">
+        <span className="text-2xl">🏢</span>
+        <span className="bg-gradient-to-r from-cyan-300 to-blue-300 bg-clip-text text-transparent">Insurance Products</span>
+      </h2>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 relative z-10">
         {insuranceProducts.map((product) => (
           <div
             key={product.id}
-            className={`bg-gradient-to-br ${product.color} rounded-lg p-4 text-white shadow-md hover:shadow-lg transition-shadow cursor-pointer`}
+            onClick={() => handleViewDetails(product)}
+            className={`group relative bg-slate-800/60 backdrop-blur-xl rounded-2xl p-4 text-white shadow-2xl hover:shadow-cyan-500/30 transition-all duration-300 hover:-translate-y-2 cursor-pointer overflow-hidden border border-blue-500/30 hover:border-cyan-400/60 active:scale-95`}
           >
-            <div className="text-3xl mb-2">{product.icon}</div>
-            <h3 className="font-bold text-sm mb-3">{product.name}</h3>
-            
-            <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="opacity-90">Leads:</span>
-                <span className="font-bold">{product.leads}</span>
+            {/* Gradient overlay */}
+            <div className={`absolute inset-0 bg-gradient-to-br ${product.color} opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
+
+            {/* Glow effect */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+            {/* Content */}
+            <div className="relative z-10">
+              <div className="text-4xl mb-2 group-hover:scale-125 group-hover:rotate-12 transition-all duration-300 filter drop-shadow-lg">{product.icon}</div>
+              <h3 className="font-bold text-sm mb-3 tracking-wide text-cyan-200">{product.name}</h3>
+
+              <div className="space-y-2 text-xs">
+                <div className="flex justify-between bg-cyan-500/20 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-cyan-400/30">
+                  <span className="text-cyan-300 font-medium">Leads:</span>
+                  <span className="font-bold text-white">{product.leads}</span>
+                </div>
+                <div className="flex justify-between bg-cyan-500/20 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-cyan-400/30">
+                  <span className="text-cyan-300 font-medium">Revenue:</span>
+                  <span className="font-bold text-white">{product.revenue}</span>
+                </div>
+                <div className="flex justify-between bg-cyan-500/20 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-cyan-400/30">
+                  <span className="text-cyan-300 font-medium">Conversion:</span>
+                  <span className="font-bold text-white">{product.conversionRate}%</span>
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="opacity-90">Revenue:</span>
-                <span className="font-bold">{product.revenue}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="opacity-90">Conversion:</span>
-                <span className="font-bold">{product.conversionRate}%</span>
+
+              <div className="w-full mt-3 bg-gradient-to-r from-cyan-500/30 to-blue-500/30 group-hover:from-cyan-500/50 group-hover:to-blue-500/50 backdrop-blur-sm text-white font-bold py-2 px-2 rounded-lg text-xs transition-all shadow-lg group-hover:shadow-cyan-500/50 border border-cyan-400/30 group-hover:border-cyan-300/50 text-center">
+                View Details →
               </div>
             </div>
 
-            <button
-              onClick={() => handleViewDetails(product)}
-              className="w-full mt-3 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-semibold py-1 px-2 rounded text-xs transition-all active:scale-95"
-            >
-              View Details
-            </button>
+            {/* Decorative corner accent */}
+            <div className="absolute -bottom-6 -right-6 w-20 h-20 bg-cyan-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+
+            {/* Border glow */}
+            <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[inset_0_0_20px_rgba(34,211,238,0.2)]"></div>
           </div>
         ))}
       </div>

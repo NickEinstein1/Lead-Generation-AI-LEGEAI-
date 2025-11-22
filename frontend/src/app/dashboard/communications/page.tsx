@@ -29,8 +29,9 @@ export default function CommunicationsPage() {
   const fetchCommunications = async () => {
     try {
       setLoading(true);
-      const data = await communicationsApi.getAll();
-      setCommunications(data);
+      const response = await communicationsApi.getAll();
+      // Backend returns paginated response: { communications: [...], total: X, ... }
+      setCommunications(response.communications || []);
     } catch (error) {
       console.error("Failed to fetch communications:", error);
       alert("Failed to load communications. Please try again.");
@@ -253,11 +254,11 @@ export default function CommunicationsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Communication Type *</label>
                   <select
-                    value={formData.type}
+                    value={formData.comm_type}
                     onChange={(e) => {
-                      const type = e.target.value;
+                      const comm_type = e.target.value;
                       const channelMap: any = { email: "Email", sms: "SMS", call: "Phone" };
-                      setFormData({...formData, type, channel: channelMap[type]});
+                      setFormData({...formData, comm_type, channel: channelMap[comm_type]});
                     }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
@@ -271,8 +272,8 @@ export default function CommunicationsPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
                   <input
                     type="text"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="John Smith"
                   />
@@ -307,8 +308,8 @@ export default function CommunicationsPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Date *</label>
                   <input
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    value={formData.comm_date}
+                    onChange={(e) => setFormData({...formData, comm_date: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -317,7 +318,7 @@ export default function CommunicationsPage() {
                   <button
                     onClick={() => {
                       setShowNewCommModal(false);
-                      setFormData({ type: "email", customer: "", subject: "", status: "sent", date: "", channel: "Email" });
+                      setFormData({ comm_type: "email", customer_name: "", subject: "", status: "sent", comm_date: "", channel: "Email", content: "" });
                     }}
                     className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
                   >
@@ -348,11 +349,11 @@ export default function CommunicationsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Communication Type *</label>
                   <select
-                    value={formData.type}
+                    value={formData.comm_type}
                     onChange={(e) => {
-                      const type = e.target.value;
+                      const comm_type = e.target.value;
                       const channelMap: any = { email: "Email", sms: "SMS", call: "Phone" };
-                      setFormData({...formData, type, channel: channelMap[type]});
+                      setFormData({...formData, comm_type, channel: channelMap[comm_type]});
                     }}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
@@ -366,8 +367,8 @@ export default function CommunicationsPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
                   <input
                     type="text"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="John Smith"
                   />
@@ -402,8 +403,8 @@ export default function CommunicationsPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Date *</label>
                   <input
                     type="date"
-                    value={formData.date}
-                    onChange={(e) => setFormData({...formData, date: e.target.value})}
+                    value={formData.comm_date}
+                    onChange={(e) => setFormData({...formData, comm_date: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
@@ -413,7 +414,7 @@ export default function CommunicationsPage() {
                     onClick={() => {
                       setShowEditModal(false);
                       setEditingComm(null);
-                      setFormData({ type: "email", customer: "", subject: "", status: "sent", date: "", channel: "Email" });
+                      setFormData({ comm_type: "email", customer_name: "", subject: "", status: "sent", comm_date: "", channel: "Email", content: "" });
                     }}
                     className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
                   >

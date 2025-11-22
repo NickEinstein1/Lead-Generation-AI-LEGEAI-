@@ -30,8 +30,9 @@ export default function PoliciesPage() {
   const fetchPolicies = async () => {
     try {
       setLoading(true);
-      const data = await policiesApi.getAll();
-      setPolicies(data);
+      const response = await policiesApi.getAll();
+      // Backend returns paginated response: { policies: [...], total: X, ... }
+      setPolicies(response.policies || []);
     } catch (error) {
       console.error("Failed to fetch policies:", error);
       alert("Failed to load policies. Please try again.");
@@ -265,8 +266,8 @@ export default function PoliciesPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
                   <input
                     type="text"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="John Smith"
                   />
@@ -275,8 +276,8 @@ export default function PoliciesPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Policy Type *</label>
                   <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    value={formData.policy_type}
+                    onChange={(e) => setFormData({...formData, policy_type: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select policy type</option>
@@ -302,11 +303,11 @@ export default function PoliciesPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Premium Amount *</label>
                   <input
-                    type="text"
+                    type="number"
                     value={formData.premium}
-                    onChange={(e) => setFormData({...formData, premium: e.target.value})}
+                    onChange={(e) => setFormData({...formData, premium: parseFloat(e.target.value) || 0})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="$1,200/yr"
+                    placeholder="1200"
                   />
                 </div>
 
@@ -315,8 +316,8 @@ export default function PoliciesPage() {
                     <label className="block text-sm font-medium text-slate-700 mb-1">Start Date *</label>
                     <input
                       type="date"
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({...formData, start_date: e.target.value})}
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -324,8 +325,8 @@ export default function PoliciesPage() {
                     <label className="block text-sm font-medium text-slate-700 mb-1">End Date *</label>
                     <input
                       type="date"
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                      value={formData.end_date}
+                      onChange={(e) => setFormData({...formData, end_date: e.target.value})}
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -335,7 +336,7 @@ export default function PoliciesPage() {
                   <button
                     onClick={() => {
                       setShowNewPolicyModal(false);
-                      setFormData({ customer: "", type: "", status: "active", premium: "", startDate: "", endDate: "" });
+                      setFormData({ customer_name: "", policy_type: "", status: "active", premium: 0, coverage_amount: 0, start_date: "", end_date: "", renewal_date: "" });
                     }}
                     className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
                   >
@@ -367,8 +368,8 @@ export default function PoliciesPage() {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Customer Name *</label>
                   <input
                     type="text"
-                    value={formData.customer}
-                    onChange={(e) => setFormData({...formData, customer: e.target.value})}
+                    value={formData.customer_name}
+                    onChange={(e) => setFormData({...formData, customer_name: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     placeholder="John Smith"
                   />
@@ -377,8 +378,8 @@ export default function PoliciesPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Policy Type *</label>
                   <select
-                    value={formData.type}
-                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                    value={formData.policy_type}
+                    onChange={(e) => setFormData({...formData, policy_type: e.target.value})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
                     <option value="">Select policy type</option>
@@ -404,11 +405,11 @@ export default function PoliciesPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Premium Amount *</label>
                   <input
-                    type="text"
+                    type="number"
                     value={formData.premium}
-                    onChange={(e) => setFormData({...formData, premium: e.target.value})}
+                    onChange={(e) => setFormData({...formData, premium: parseFloat(e.target.value) || 0})}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="$1,200/yr"
+                    placeholder="1200"
                   />
                 </div>
 
@@ -417,8 +418,8 @@ export default function PoliciesPage() {
                     <label className="block text-sm font-medium text-slate-700 mb-1">Start Date *</label>
                     <input
                       type="date"
-                      value={formData.startDate}
-                      onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                      value={formData.start_date}
+                      onChange={(e) => setFormData({...formData, start_date: e.target.value})}
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -426,8 +427,8 @@ export default function PoliciesPage() {
                     <label className="block text-sm font-medium text-slate-700 mb-1">End Date *</label>
                     <input
                       type="date"
-                      value={formData.endDate}
-                      onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                      value={formData.end_date}
+                      onChange={(e) => setFormData({...formData, end_date: e.target.value})}
                       className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
@@ -438,7 +439,7 @@ export default function PoliciesPage() {
                     onClick={() => {
                       setShowEditModal(false);
                       setEditingPolicy(null);
-                      setFormData({ customer: "", type: "", status: "active", premium: "", startDate: "", endDate: "" });
+                      setFormData({ customer_name: "", policy_type: "", status: "active", premium: 0, coverage_amount: 0, start_date: "", end_date: "", renewal_date: "" });
                     }}
                     className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
                   >

@@ -64,24 +64,39 @@ export default function KeyMetrics({ metrics }: KeyMetricsProps) {
       {keyMetrics.map((metric, idx) => (
         <div
           key={idx}
-          className={`bg-gradient-to-br ${metric.color} rounded-lg p-4 sm:p-6 text-white shadow-md hover:shadow-lg transition-shadow`}
+          className={`group relative bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 sm:p-6 text-white shadow-2xl hover:shadow-cyan-500/20 transition-all duration-300 hover:-translate-y-2 overflow-hidden border border-blue-500/30 hover:border-cyan-400/60`}
         >
-          <div className="flex items-start justify-between mb-3 sm:mb-4">
-            <div>
-              <p className="text-xs sm:text-sm opacity-90 font-medium">{metric.label}</p>
-              <p className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">{metric.value}</p>
+          {/* Animated gradient background */}
+          <div className={`absolute inset-0 bg-gradient-to-br ${metric.color} opacity-20 group-hover:opacity-30 transition-opacity duration-300`}></div>
+
+          {/* Glow effect */}
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-orange-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+          {/* Content */}
+          <div className="relative z-10">
+            <div className="flex items-start justify-between mb-3 sm:mb-4">
+              <div>
+                <p className="text-xs sm:text-sm text-cyan-300 font-bold tracking-wider uppercase">{metric.label}</p>
+                <p className="text-2xl sm:text-3xl lg:text-4xl font-bold mt-1 sm:mt-2 tracking-tight bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">{metric.value}</p>
+              </div>
+              <div className="text-3xl sm:text-4xl opacity-80 group-hover:scale-110 group-hover:rotate-12 transition-all duration-300 filter drop-shadow-lg">
+                {metric.icon}
+              </div>
             </div>
-            <span className="text-2xl sm:text-3xl">{metric.icon}</span>
+
+            <div className="flex items-center gap-1.5 text-xs sm:text-sm bg-cyan-500/20 backdrop-blur-sm rounded-full px-3 py-1.5 w-fit border border-cyan-400/30">
+              <span className={`font-bold ${metric.change >= 0 ? "text-green-300" : "text-red-300"}`}>
+                {metric.change >= 0 ? "↑" : "↓"} {Math.abs(metric.change)}%
+              </span>
+              <span className="text-blue-200 font-medium">vs last month</span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-1 text-xs sm:text-sm">
-            <span className={metric.change >= 0 ? "text-green-200" : "text-red-200"}>
-              {metric.change >= 0 ? "↑" : "↓"}
-            </span>
-            <span className="opacity-90">
-              {Math.abs(metric.change)}% vs last month
-            </span>
-          </div>
+          {/* Decorative corner accent */}
+          <div className="absolute -bottom-6 -right-6 w-24 h-24 bg-cyan-500/20 rounded-full blur-2xl group-hover:scale-150 transition-transform duration-500"></div>
+
+          {/* Border glow */}
+          <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 shadow-[inset_0_0_20px_rgba(34,211,238,0.3)]"></div>
         </div>
       ))}
     </div>

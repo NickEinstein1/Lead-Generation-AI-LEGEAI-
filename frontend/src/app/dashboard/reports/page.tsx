@@ -27,8 +27,9 @@ export default function ReportsPage() {
   const fetchReports = async () => {
     try {
       setLoading(true);
-      const data = await reportsApi.getAll();
-      setReports(data);
+      const response = await reportsApi.getAll();
+      // Backend returns paginated response: { reports: [...], total: X, ... }
+      setReports(response.reports || []);
     } catch (error) {
       console.error("Failed to fetch reports:", error);
       alert("Failed to load reports. Please try again.");
