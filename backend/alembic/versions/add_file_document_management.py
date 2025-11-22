@@ -1,7 +1,7 @@
 """add file document management
 
 Revision ID: file_doc_mgmt_001
-Revises: 2dd19a2d0626
+Revises: 5a1c2e3d4f56
 Create Date: 2025-11-17 12:00:00.000000
 
 """
@@ -11,7 +11,7 @@ from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
 revision = 'file_doc_mgmt_001'
-down_revision = '2dd19a2d0626'
+down_revision = '5a1c2e3d4f56'
 branch_labels = None
 depends_on = None
 
