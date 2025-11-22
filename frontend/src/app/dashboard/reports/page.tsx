@@ -238,8 +238,8 @@ export default function ReportsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Report Name *</label>
                   <input
                     type="text"
-                    value={reportName}
-                    onChange={(e) => setReportName(e.target.value)}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Q4 Sales Performance"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
@@ -248,8 +248,8 @@ export default function ReportsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Report Type *</label>
                   <select
-                    value={reportType}
-                    onChange={(e) => setReportType(e.target.value)}
+                    value={formData.report_type}
+                    onChange={(e) => setFormData({ ...formData, report_type: e.target.value })}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   >
                     <option value="">Select report type...</option>
@@ -266,8 +266,8 @@ export default function ReportsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Report Period *</label>
                   <select
-                    value={reportPeriod}
-                    onChange={(e) => setReportPeriod(e.target.value)}
+                    value={formData.period}
+                    onChange={(e) => setFormData({ ...formData, period: e.target.value })}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   >
                     <option value="">Select period...</option>
@@ -287,11 +287,15 @@ export default function ReportsPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Format</label>
-                  <select className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600">
-                    <option value="pdf">PDF Document</option>
-                    <option value="excel">Excel Spreadsheet</option>
-                    <option value="csv">CSV File</option>
-                    <option value="json">JSON Data</option>
+                  <select
+                    value={formData.format}
+                    onChange={(e) => setFormData({ ...formData, format: e.target.value })}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  >
+                    <option value="PDF">PDF Document</option>
+                    <option value="Excel">Excel Spreadsheet</option>
+                    <option value="CSV">CSV File</option>
+                    <option value="JSON">JSON Data</option>
                   </select>
                 </div>
 
@@ -322,9 +326,7 @@ export default function ReportsPage() {
                 <button
                   onClick={() => {
                     setShowGenerateModal(false);
-                    setReportName("");
-                    setReportType("");
-                    setReportPeriod("");
+                    setFormData({ name: "", report_type: "", period: "", format: "PDF", status: "ready" });
                   }}
                   className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
                 >
@@ -352,8 +354,8 @@ export default function ReportsPage() {
                   <label className="block text-sm font-medium text-slate-900 mb-2">Report Name *</label>
                   <input
                     type="text"
-                    value={reportName}
-                    onChange={(e) => setReportName(e.target.value)}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="e.g., Q4 Sales Performance"
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   />
@@ -362,8 +364,8 @@ export default function ReportsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Report Type *</label>
                   <select
-                    value={reportType}
-                    onChange={(e) => setReportType(e.target.value)}
+                    value={formData.report_type}
+                    onChange={(e) => setFormData({ ...formData, report_type: e.target.value })}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   >
                     <option value="">Select report type...</option>
@@ -380,8 +382,8 @@ export default function ReportsPage() {
                 <div>
                   <label className="block text-sm font-medium text-slate-900 mb-2">Report Period *</label>
                   <select
-                    value={reportPeriod}
-                    onChange={(e) => setReportPeriod(e.target.value)}
+                    value={formData.period}
+                    onChange={(e) => setFormData({ ...formData, period: e.target.value })}
                     className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
                   >
                     <option value="">Select period...</option>
@@ -405,9 +407,7 @@ export default function ReportsPage() {
                   onClick={() => {
                     setShowEditModal(false);
                     setEditingReport(null);
-                    setReportName("");
-                    setReportType("");
-                    setReportPeriod("");
+                    setFormData({ name: "", report_type: "", period: "", format: "PDF", status: "ready" });
                   }}
                   className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
                 >
