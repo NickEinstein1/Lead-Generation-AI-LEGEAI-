@@ -18,6 +18,29 @@ if config.config_file_name is not None:
 # add your model's MetaData object here
 # for 'autogenerate' support
 from backend.models.base import Base
+
+# Import all models so Alembic can detect them
+from backend.models.user import User
+from backend.models.session import Session
+from backend.models.lead import Lead
+from backend.models.score import Score
+from backend.models.document import Document
+from backend.models.customer import Customer
+from backend.models.policy import Policy
+from backend.models.claim import Claim
+from backend.models.communication import Communication
+from backend.models.report import Report
+
+# Import marketing automation models
+from backend.models.marketing_automation import (
+    Campaign,
+    AudienceSegment,
+    MarketingTemplate,
+    AutomationTrigger,
+    CampaignAnalytics,
+    CampaignSend
+)
+
 # target_metadata = mymodel.Base.metadata
 target_metadata = Base.metadata
 
