@@ -50,7 +50,7 @@ TRIGGER_ID_COUNTER = 1
 ANALYTICS_ID_COUNTER = 1
 SEND_ID_COUNTER = 1
 
-router = APIRouter(prefix="/v1/marketing", tags=["Marketing Automation"])
+router = APIRouter(prefix="/marketing", tags=["Marketing Automation"])
 
 
 # ==================== Pydantic Schemas ====================
@@ -230,7 +230,26 @@ class AnalyticsResponse(BaseModel):
 
 # ==================== Campaign Endpoints ====================
 
-@router.post("/campaigns", response_model=Dict[str, Any], status_code=201)
+def serialize_datetime(obj):
+    """Convert datetime objects to ISO format strings"""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    return obj
+
+def serialize_campaign(campaign: dict) -> dict:
+    """Serialize campaign data for JSON response"""
+    return {
+        **campaign,
+        "campaign_type": campaign.get("campaign_type") if isinstance(campaign.get("campaign_type"), str) else campaign.get("campaign_type").value if campaign.get("campaign_type") else None,
+        "status": campaign.get("status") if isinstance(campaign.get("status"), str) else campaign.get("status").value if campaign.get("status") else None,
+        "created_at": serialize_datetime(campaign.get("created_at")),
+        "updated_at": serialize_datetime(campaign.get("updated_at")),
+        "scheduled_at": serialize_datetime(campaign.get("scheduled_at")),
+        "started_at": serialize_datetime(campaign.get("started_at")),
+        "completed_at": serialize_datetime(campaign.get("completed_at")),
+    }
+
+@router.post("/campaigns", status_code=201)
 def create_campaign(campaign: CampaignCreate):
     """Create a new marketing campaign"""
     global CAMPAIGN_ID_COUNTER
@@ -248,9 +267,14 @@ def create_campaign(campaign: CampaignCreate):
         CAMPAIGN_ID_COUNTER += 1
 
         now = datetime.utcnow()
+        campaign_data = campaign.dict()
+        # Convert enum to string
+        if hasattr(campaign_data.get("campaign_type"), "value"):
+            campaign_data["campaign_type"] = campaign_data["campaign_type"].value
+
         db_campaign = {
             "id": campaign_id,
-            **campaign.dict(),
+            **campaign_data,
             "status": CampaignStatus.DRAFT.value,
             "target_count": 0,
             "started_at": None,
@@ -261,7 +285,9 @@ def create_campaign(campaign: CampaignCreate):
         CAMPAIGNS_DB[campaign_id] = db_campaign
 
         # Create analytics record
+        global ANALYTICS_ID_COUNTER
         analytics_id = ANALYTICS_ID_COUNTER
+        ANALYTICS_ID_COUNTER += 1
         ANALYTICS_DB[campaign_id] = {
             "id": analytics_id,
             "campaign_id": campaign_id,
@@ -283,14 +309,14 @@ def create_campaign(campaign: CampaignCreate):
             "last_updated": now,
         }
 
-        return db_campaign
+        return serialize_campaign(db_campaign)
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating campaign: {str(e)}")
 
 
-@router.get("/campaigns", response_model=List[Dict[str, Any]])
+@router.get("/campaigns")
 def get_campaigns(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -312,19 +338,20 @@ def get_campaigns(
     campaigns.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
 
     # Pagination
-    return campaigns[skip:skip + limit]
+    paginated = campaigns[skip:skip + limit]
+    return [serialize_campaign(c) for c in paginated]
 
 
-@router.get("/campaigns/{campaign_id}", response_model=Dict[str, Any])
+@router.get("/campaigns/{campaign_id}")
 def get_campaign(campaign_id: int):
     """Get a specific campaign by ID"""
     campaign = CAMPAIGNS_DB.get(campaign_id)
     if not campaign:
         raise HTTPException(status_code=404, detail=f"Campaign {campaign_id} not found")
-    return campaign
+    return serialize_campaign(campaign)
 
 
-@router.put("/campaigns/{campaign_id}", response_model=Dict[str, Any])
+@router.put("/campaigns/{campaign_id}")
 def update_campaign(campaign_id: int, campaign_update: CampaignUpdate):
     """Update a campaign"""
     campaign = CAMPAIGNS_DB.get(campaign_id)
@@ -334,10 +361,14 @@ def update_campaign(campaign_id: int, campaign_update: CampaignUpdate):
     try:
         update_data = campaign_update.dict(exclude_unset=True)
         for key, value in update_data.items():
-            campaign[key] = value
+            # Convert enum to string
+            if hasattr(value, "value"):
+                campaign[key] = value.value
+            else:
+                campaign[key] = value
 
         campaign["updated_at"] = datetime.utcnow()
-        return campaign
+        return serialize_campaign(campaign)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating campaign: {str(e)}")
 
@@ -356,7 +387,7 @@ def delete_campaign(campaign_id: int):
         raise HTTPException(status_code=500, detail=f"Error deleting campaign: {str(e)}")
 
 
-@router.post("/campaigns/{campaign_id}/launch", response_model=Dict[str, Any])
+@router.post("/campaigns/{campaign_id}/launch")
 def launch_campaign(campaign_id: int):
     """Launch a campaign (change status to ACTIVE)"""
     campaign = CAMPAIGNS_DB.get(campaign_id)
@@ -370,12 +401,12 @@ def launch_campaign(campaign_id: int):
         campaign["status"] = CampaignStatus.ACTIVE.value
         campaign["started_at"] = datetime.utcnow()
         campaign["updated_at"] = datetime.utcnow()
-        return campaign
+        return serialize_campaign(campaign)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error launching campaign: {str(e)}")
 
 
-@router.post("/campaigns/{campaign_id}/pause", response_model=Dict[str, Any])
+@router.post("/campaigns/{campaign_id}/pause")
 def pause_campaign(campaign_id: int):
     """Pause an active campaign"""
     campaign = CAMPAIGNS_DB.get(campaign_id)
@@ -388,23 +419,37 @@ def pause_campaign(campaign_id: int):
     try:
         campaign["status"] = CampaignStatus.PAUSED.value
         campaign["updated_at"] = datetime.utcnow()
-        return campaign
+        return serialize_campaign(campaign)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error pausing campaign: {str(e)}")
 
 
-@router.get("/campaigns/{campaign_id}/analytics", response_model=Dict[str, Any])
+@router.get("/campaigns/{campaign_id}/analytics")
 def get_campaign_analytics(campaign_id: int):
     """Get analytics for a specific campaign"""
     analytics = ANALYTICS_DB.get(campaign_id)
     if not analytics:
         raise HTTPException(status_code=404, detail=f"Analytics for campaign {campaign_id} not found")
-    return analytics
+
+    # Serialize datetime
+    return {
+        **analytics,
+        "last_updated": serialize_datetime(analytics.get("last_updated"))
+    }
 
 
 # ==================== Audience Segment Endpoints ====================
 
-@router.post("/segments", response_model=Dict[str, Any], status_code=201)
+def serialize_segment(segment: dict) -> dict:
+    """Serialize segment data for JSON response"""
+    return {
+        **segment,
+        "operator": segment.get("operator") if isinstance(segment.get("operator"), str) else segment.get("operator").value if segment.get("operator") else None,
+        "created_at": serialize_datetime(segment.get("created_at")),
+        "last_calculated_at": serialize_datetime(segment.get("last_calculated_at")),
+    }
+
+@router.post("/segments", status_code=201)
 def create_segment(segment: SegmentCreate):
     """Create a new audience segment"""
     global SEGMENT_ID_COUNTER
@@ -413,21 +458,26 @@ def create_segment(segment: SegmentCreate):
         SEGMENT_ID_COUNTER += 1
 
         now = datetime.utcnow()
+        segment_data = segment.dict()
+        # Convert enum to string
+        if hasattr(segment_data.get("operator"), "value"):
+            segment_data["operator"] = segment_data["operator"].value
+
         db_segment = {
             "id": segment_id,
-            **segment.dict(),
+            **segment_data,
             "estimated_size": 0,
             "last_calculated_at": None,
             "is_active": True,
             "created_at": now,
         }
         SEGMENTS_DB[segment_id] = db_segment
-        return db_segment
+        return serialize_segment(db_segment)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating segment: {str(e)}")
 
 
-@router.get("/segments", response_model=List[Dict[str, Any]])
+@router.get("/segments")
 def get_segments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -440,19 +490,20 @@ def get_segments(
         segments = [s for s in segments if s.get("is_active") == is_active]
 
     segments.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
-    return segments[skip:skip + limit]
+    paginated = segments[skip:skip + limit]
+    return [serialize_segment(s) for s in paginated]
 
 
-@router.get("/segments/{segment_id}", response_model=Dict[str, Any])
+@router.get("/segments/{segment_id}")
 def get_segment(segment_id: int):
     """Get a specific segment by ID"""
     segment = SEGMENTS_DB.get(segment_id)
     if not segment:
         raise HTTPException(status_code=404, detail=f"Segment {segment_id} not found")
-    return segment
+    return serialize_segment(segment)
 
 
-@router.put("/segments/{segment_id}", response_model=Dict[str, Any])
+@router.put("/segments/{segment_id}")
 def update_segment(segment_id: int, segment_update: SegmentUpdate):
     """Update a segment"""
     segment = SEGMENTS_DB.get(segment_id)
@@ -462,8 +513,12 @@ def update_segment(segment_id: int, segment_update: SegmentUpdate):
     try:
         update_data = segment_update.dict(exclude_unset=True)
         for key, value in update_data.items():
-            segment[key] = value
-        return segment
+            # Convert enum to string
+            if hasattr(value, "value"):
+                segment[key] = value.value
+            else:
+                segment[key] = value
+        return serialize_segment(segment)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating segment: {str(e)}")
 
@@ -482,7 +537,15 @@ def delete_segment(segment_id: int):
 
 # ==================== Template Endpoints ====================
 
-@router.post("/templates", response_model=Dict[str, Any], status_code=201)
+def serialize_template(template: dict) -> dict:
+    """Serialize template data for JSON response"""
+    return {
+        **template,
+        "template_type": template.get("template_type") if isinstance(template.get("template_type"), str) else template.get("template_type").value if template.get("template_type") else None,
+        "created_at": serialize_datetime(template.get("created_at")),
+    }
+
+@router.post("/templates", status_code=201)
 def create_template(template: TemplateCreate):
     """Create a new marketing template"""
     global TEMPLATE_ID_COUNTER
@@ -491,20 +554,25 @@ def create_template(template: TemplateCreate):
         TEMPLATE_ID_COUNTER += 1
 
         now = datetime.utcnow()
+        template_data = template.dict()
+        # Convert enum to string
+        if hasattr(template_data.get("template_type"), "value"):
+            template_data["template_type"] = template_data["template_type"].value
+
         db_template = {
             "id": template_id,
-            **template.dict(),
-            "personalization_tokens": template.dict().get("personalization_tokens", []),
+            **template_data,
+            "available_tokens": template_data.get("available_tokens", []),
             "is_active": True,
             "created_at": now,
         }
         TEMPLATES_DB[template_id] = db_template
-        return db_template
+        return serialize_template(db_template)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating template: {str(e)}")
 
 
-@router.get("/templates", response_model=List[Dict[str, Any]])
+@router.get("/templates")
 def get_templates(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -520,19 +588,20 @@ def get_templates(
         templates = [t for t in templates if t.get("is_active") == is_active]
 
     templates.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
-    return templates[skip:skip + limit]
+    paginated = templates[skip:skip + limit]
+    return [serialize_template(t) for t in paginated]
 
 
-@router.get("/templates/{template_id}", response_model=Dict[str, Any])
+@router.get("/templates/{template_id}")
 def get_template(template_id: int):
     """Get a specific template by ID"""
     template = TEMPLATES_DB.get(template_id)
     if not template:
         raise HTTPException(status_code=404, detail=f"Template {template_id} not found")
-    return template
+    return serialize_template(template)
 
 
-@router.put("/templates/{template_id}", response_model=Dict[str, Any])
+@router.put("/templates/{template_id}")
 def update_template(template_id: int, template_update: TemplateUpdate):
     """Update a template"""
     template = TEMPLATES_DB.get(template_id)
@@ -543,7 +612,7 @@ def update_template(template_id: int, template_update: TemplateUpdate):
         update_data = template_update.dict(exclude_unset=True)
         for key, value in update_data.items():
             template[key] = value
-        return template
+        return serialize_template(template)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating template: {str(e)}")
 
@@ -562,7 +631,15 @@ def delete_template(template_id: int):
 
 # ==================== Automation Trigger Endpoints ====================
 
-@router.post("/triggers", response_model=Dict[str, Any], status_code=201)
+def serialize_trigger(trigger: dict) -> dict:
+    """Serialize trigger data for JSON response"""
+    return {
+        **trigger,
+        "trigger_type": trigger.get("trigger_type") if isinstance(trigger.get("trigger_type"), str) else trigger.get("trigger_type").value if trigger.get("trigger_type") else None,
+        "created_at": serialize_datetime(trigger.get("created_at")),
+    }
+
+@router.post("/triggers", status_code=201)
 def create_trigger(trigger: TriggerCreate):
     """Create a new automation trigger"""
     global TRIGGER_ID_COUNTER
@@ -571,19 +648,24 @@ def create_trigger(trigger: TriggerCreate):
         TRIGGER_ID_COUNTER += 1
 
         now = datetime.utcnow()
+        trigger_data = trigger.dict()
+        # Convert enum to string
+        if hasattr(trigger_data.get("trigger_type"), "value"):
+            trigger_data["trigger_type"] = trigger_data["trigger_type"].value
+
         db_trigger = {
             "id": trigger_id,
-            **trigger.dict(),
+            **trigger_data,
             "is_active": True,
             "created_at": now,
         }
         TRIGGERS_DB[trigger_id] = db_trigger
-        return db_trigger
+        return serialize_trigger(db_trigger)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error creating trigger: {str(e)}")
 
 
-@router.get("/triggers", response_model=List[Dict[str, Any]])
+@router.get("/triggers")
 def get_triggers(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
@@ -599,19 +681,20 @@ def get_triggers(
         triggers = [t for t in triggers if t.get("is_active") == is_active]
 
     triggers.sort(key=lambda x: x.get("created_at", datetime.min), reverse=True)
-    return triggers[skip:skip + limit]
+    paginated = triggers[skip:skip + limit]
+    return [serialize_trigger(t) for t in paginated]
 
 
-@router.get("/triggers/{trigger_id}", response_model=Dict[str, Any])
+@router.get("/triggers/{trigger_id}")
 def get_trigger(trigger_id: int):
     """Get a specific trigger by ID"""
     trigger = TRIGGERS_DB.get(trigger_id)
     if not trigger:
         raise HTTPException(status_code=404, detail=f"Trigger {trigger_id} not found")
-    return trigger
+    return serialize_trigger(trigger)
 
 
-@router.put("/triggers/{trigger_id}", response_model=Dict[str, Any])
+@router.put("/triggers/{trigger_id}")
 def update_trigger(trigger_id: int, trigger_update: TriggerUpdate):
     """Update a trigger"""
     trigger = TRIGGERS_DB.get(trigger_id)
@@ -622,7 +705,7 @@ def update_trigger(trigger_id: int, trigger_update: TriggerUpdate):
         update_data = trigger_update.dict(exclude_unset=True)
         for key, value in update_data.items():
             trigger[key] = value
-        return trigger
+        return serialize_trigger(trigger)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating trigger: {str(e)}")
 
