@@ -29,6 +29,17 @@ export default function CategoryPage() {
   const [products, setProducts] = useState<PolicyType[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showQuoteModal, setShowQuoteModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<PolicyType | null>(null);
+  const [quoteFormData, setQuoteFormData] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    age: "",
+    coverage_amount: "",
+    health_status: "good",
+    smoking_status: "non_smoker"
+  });
 
   useEffect(() => {
     const fetchCategoryProducts = async () => {
@@ -69,6 +80,95 @@ export default function CategoryPage() {
       complex: "bg-red-100 text-red-700",
     };
     return colors[complexity] || "bg-gray-100 text-gray-700";
+  };
+
+  const handleGetQuote = (product: PolicyType) => {
+    setSelectedProduct(product);
+    setShowQuoteModal(true);
+  };
+
+  const handleSubmitQuote = async () => {
+    if (!quoteFormData.name || !quoteFormData.email || !quoteFormData.age || !quoteFormData.coverage_amount) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      // Generate unique idempotency key
+      const idempotencyKey = `life-quote-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+      // Split name into first and last name
+      const nameParts = quoteFormData.name.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+
+      // Prepare lead data for API
+      const leadData = {
+        idempotency_key: idempotencyKey,
+        source: "life_insurance_quote",
+        channel: "web",
+        product_interest: "life",
+        contact: {
+          first_name: firstName,
+          last_name: lastName,
+          email: quoteFormData.email,
+          phone: quoteFormData.phone || null
+        },
+        attributes: {
+          age: parseInt(quoteFormData.age),
+          coverage_amount: parseFloat(quoteFormData.coverage_amount),
+          health_status: quoteFormData.health_status,
+          smoking_status: quoteFormData.smoking_status,
+          product_type: selectedProduct?.type || "unknown",
+          product_name: selectedProduct?.display_name || "Unknown Product",
+          category: params.category
+        },
+        consent: {
+          marketing: true,
+          terms_accepted: true,
+          timestamp: new Date().toISOString()
+        }
+      };
+
+      // Submit to backend API
+      const response = await fetch("http://localhost:8000/v1/leads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(leadData),
+      });
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const result = await response.json();
+
+      // Show success message with lead ID
+      alert(`✅ Quote request submitted successfully!\n\n` +
+            `Lead ID: ${result.lead_id}\n` +
+            `Product: ${selectedProduct?.display_name}\n` +
+            `Name: ${quoteFormData.name}\n` +
+            `Coverage: $${quoteFormData.coverage_amount}\n\n` +
+            `Our team will contact you within 24 hours.`);
+
+      // Reset form and close modal
+      setShowQuoteModal(false);
+      setQuoteFormData({
+        name: "",
+        email: "",
+        phone: "",
+        age: "",
+        coverage_amount: "",
+        health_status: "good",
+        smoking_status: "non_smoker"
+      });
+      setSelectedProduct(null);
+    } catch (error) {
+      console.error("Failed to submit quote:", error);
+      alert("❌ Failed to submit quote request. Please try again.\n\nError: " + (error instanceof Error ? error.message : "Unknown error"));
+    }
   };
 
   if (loading) {
@@ -194,7 +294,10 @@ export default function CategoryPage() {
 
               {/* Action Button */}
               <div className="mt-4 pt-4 border-t border-slate-200">
-                <button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm">
+                <button
+                  onClick={() => handleGetQuote(product)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all text-sm active:scale-95"
+                >
                   Get Quote
                 </button>
               </div>
@@ -209,6 +312,167 @@ export default function CategoryPage() {
             <Link href="/dashboard/life-insurance" className="text-blue-600 hover:text-blue-700 underline mt-2 inline-block">
               View all categories
             </Link>
+          </div>
+        )}
+
+        {/* Get Quote Modal */}
+        {showQuoteModal && selectedProduct && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" onClick={() => setShowQuoteModal(false)}>
+            <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 shadow-xl max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-2xl font-bold text-slate-900 mb-2">💼 Get Quote</h3>
+              <p className="text-sm text-slate-600 mb-4">Request a quote for <span className="font-semibold text-blue-600">{selectedProduct.display_name}</span></p>
+
+              <div className="space-y-4">
+                {/* Personal Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Full Name *</label>
+                    <input
+                      type="text"
+                      value={quoteFormData.name}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, name: e.target.value })}
+                      placeholder="John Smith"
+                      className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Email Address *</label>
+                    <input
+                      type="email"
+                      value={quoteFormData.email}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, email: e.target.value })}
+                      placeholder="john@example.com"
+                      className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Phone Number</label>
+                    <input
+                      type="tel"
+                      value={quoteFormData.phone}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, phone: e.target.value })}
+                      placeholder="(555) 123-4567"
+                      className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Age *</label>
+                    <input
+                      type="number"
+                      value={quoteFormData.age}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, age: e.target.value })}
+                      placeholder="35"
+                      min={selectedProduct.age_range.min}
+                      max={selectedProduct.age_range.max}
+                      className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">Age range: {selectedProduct.age_range.min}-{selectedProduct.age_range.max} years</p>
+                  </div>
+                </div>
+
+                {/* Coverage Information */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-900 mb-2">Desired Coverage Amount *</label>
+                  <input
+                    type="number"
+                    value={quoteFormData.coverage_amount}
+                    onChange={(e) => setQuoteFormData({ ...quoteFormData, coverage_amount: e.target.value })}
+                    placeholder="500000"
+                    min={selectedProduct.coverage_range.min}
+                    max={selectedProduct.coverage_range.max}
+                    className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Coverage range: ${(selectedProduct.coverage_range.min / 1000).toFixed(0)}K - ${(selectedProduct.coverage_range.max / 1000000).toFixed(1)}M
+                  </p>
+                </div>
+
+                {/* Health Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Health Status</label>
+                    <select
+                      value={quoteFormData.health_status}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, health_status: e.target.value })}
+                      className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                    >
+                      <option value="excellent">Excellent</option>
+                      <option value="good">Good</option>
+                      <option value="fair">Fair</option>
+                      <option value="poor">Poor</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-slate-900 mb-2">Smoking Status</label>
+                    <select
+                      value={quoteFormData.smoking_status}
+                      onChange={(e) => setQuoteFormData({ ...quoteFormData, smoking_status: e.target.value })}
+                      className="w-full px-4 py-2 border-2 border-blue-200 rounded-lg focus:outline-none focus:border-blue-600"
+                    >
+                      <option value="non_smoker">Non-Smoker</option>
+                      <option value="former_smoker">Former Smoker</option>
+                      <option value="smoker">Smoker</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Product Summary */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm font-semibold text-slate-900 mb-2">Selected Product Summary:</p>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                      <span className="text-slate-600">Product:</span>
+                      <span className="ml-2 font-semibold text-slate-900">{selectedProduct.display_name}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Category:</span>
+                      <span className="ml-2 font-semibold text-slate-900 capitalize">{selectedProduct.category}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Premium Type:</span>
+                      <span className="ml-2 font-semibold text-slate-900 capitalize">{selectedProduct.features.premium_flexibility}</span>
+                    </div>
+                    <div>
+                      <span className="text-slate-600">Underwriting:</span>
+                      <span className="ml-2 font-semibold text-slate-900 capitalize">{selectedProduct.underwriting_complexity}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setShowQuoteModal(false);
+                    setQuoteFormData({
+                      name: "",
+                      email: "",
+                      phone: "",
+                      age: "",
+                      coverage_amount: "",
+                      health_status: "good",
+                      smoking_status: "non_smoker"
+                    });
+                    setSelectedProduct(null);
+                  }}
+                  className="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold py-2 px-4 rounded-lg transition-all"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSubmitQuote}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-all active:scale-95"
+                >
+                  Submit Quote Request
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>
