@@ -1,4 +1,4 @@
-# LEAGAI - Insurance Lead Generation AI Platform
+# 🚀 LEGEAI - AI-Powered Lead Generation Platform
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-green)](https://fastapi.tiangolo.com/)
@@ -6,21 +6,24 @@
 [![React](https://img.shields.io/badge/React-19-61dafb)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 
+> **Revolutionize Your Leads with Intelligent Automation**
 
-##  Overview
+---
 
-**LEAGAI** is an enterprise-grade Lead Generation AI Platform designed to revolutionize insurance sales through intelligent automation, AI-powered lead scoring, and real-time analytics. The platform combines advanced machine learning models with a modern, intuitive user interface to maximize sales efficiency and customer engagement.
+## 📖 Overview
 
-### Key Capabilities
+**LEGEAI** is an enterprise-grade AI-powered lead generation and management platform for the insurance industry. Built with cutting-edge technology, it combines advanced machine learning, real-time analytics, and intelligent automation to maximize sales efficiency and customer engagement.
 
-- **AI-Powered Lead Scoring** - Intelligent lead qualification using deep learning models
-- **Real-Time Analytics** - Comprehensive dashboards with actionable insights
-- **Automated Workflows** - Intelligent lead nurturing and follow-up automation
-- **Multi-Channel Communications** - Email, SMS, and call management
-- **Document Management** - E-signature integration with DocuSeal
-- **Sales Pipeline Management** - Track leads through 5-stage conversion funnel
-- **Enterprise Security** - JWT authentication, role-based access control
-- **Performance Monitoring** - Real-time metrics and KPI tracking
+### ✨ Key Features
+
+- 🎯 **AI-Powered Lead Scoring** - Deep learning models for intelligent lead qualification
+- 📊 **Real-Time Analytics** - Comprehensive dashboards with actionable insights
+- 🤖 **Marketing Automation** - Automated campaigns, segments, and triggers
+- 📞 **Multi-Channel Communications** - Email, SMS, and call management
+- 📄 **Document Management** - E-signature integration with DocuSeal
+- 🔗 **Meeting Scheduler** - Zoom, Google Meet, and Teams integration
+- 🔒 **Enterprise Security** - JWT authentication and role-based access control
+- 📈 **Performance Monitoring** - Real-time metrics and KPI tracking
 
 ---
 
@@ -92,174 +95,237 @@ LEAGAI/
 
 ---
 
-##  Quick Start
+## 🚀 Quick Start
 
-### Prerequisites
+### Option 1: Automated Setup (Recommended)
 
-- Python 3.10 or higher
-- Node.js 18 or higher
-- npm or yarn
-- PostgreSQL (optional - uses in-memory fallback)
-- Redis (optional - uses in-memory fallback)
+**macOS/Linux:**
+```bash
+chmod +x setup.sh
+./setup.sh
+```
 
-### Installation & Setup
+**Windows:**
+```powershell
+.\setup.ps1
+```
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/yourusername/leagai.git
-   cd leagai
-   ```
+### Option 2: Manual Setup
 
-2. **Install Python dependencies**
-   ```bash
-   pip install -r requirements.txt
-   ```
+**See the complete installation guide:** 📘 **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**
 
-3. **Install frontend dependencies**
-   ```bash
-   cd frontend
-   npm install
-   cd ..
-   ```
+The setup guide includes:
+- System requirements and prerequisites
+- Step-by-step installation for all platforms
+- Database configuration options
+- Troubleshooting common issues
+- Production deployment instructions
 
-4. **Start the backend**
-   ```powershell
-   .\run_backend.ps1
-   ```
-   Backend runs on: `http://localhost:8000`
+### Quick Manual Start
 
-5. **Start the frontend** (in a new terminal)
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-   Frontend runs on: `http://localhost:3000`
+```bash
+# 1. Install dependencies
+pip install -r requirements.txt
+cd frontend && npm install && cd ..
 
-### Test Accounts
+# 2. Start backend (Terminal 1)
+.\run_backend.ps1  # Windows
+# OR
+python -m uvicorn backend.api.main:app --reload  # macOS/Linux
 
-Pre-configured test accounts are available:
+# 3. Start frontend (Terminal 2)
+cd frontend
+npm run dev
+```
 
-| Username | Email | Password | Role |
-|----------|-------|----------|------|
-| admin | admin@leagai.dev | AdminPass123! | Admin |
-| manager | manager@leagai.dev | ManagerPass123! | Manager |
-| agent1 | agent1@leagai.dev | AgentPass123! | Agent |
-| agent2 | agent2@leagai.dev | AgentPass456! | Agent |
-| viewer | viewer@leagai.dev | ViewerPass123! | Viewer |
+**Access the application:**
+- Frontend: http://localhost:3000
+- Backend API: http://localhost:8000
+- API Docs: http://localhost:8000/v1/docs
+
+### 🔑 Test Accounts
+
+| Role | Email | Password |
+|------|-------|----------|
+| Admin | admin@legeai.dev | AdminPass123! |
+| Manager | manager@legeai.dev | ManagerPass123! |
+| Agent | agent1@legeai.dev | AgentPass123! |
+
+**Full credentials:** See [CREDENTIALS_REFERENCE.txt](./CREDENTIALS_REFERENCE.txt)
 
 ---
 
-## API Documentation
+## 📚 Documentation
 
-### Interactive API Docs
+### 📘 Setup & Installation
+- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - Complete installation and setup guide
+  - System requirements
+  - Prerequisites installation (Python, Node.js, PostgreSQL, Redis)
+  - Backend and frontend setup
+  - Database configuration
+  - Running the application
+  - Troubleshooting
+  - Production deployment
 
+### 🔧 Technical Documentation
+- **[DEEP_LEARNING_SUMMARY.md](./DEEP_LEARNING_SUMMARY.md)** - AI/ML models documentation
+- **[DOCUMENT_MANAGEMENT_SYSTEM.md](./DOCUMENT_MANAGEMENT_SYSTEM.md)** - Document management features
+- **[docs/Insurance_Lead_Scoring_Models_Documentation.md](./docs/Insurance_Lead_Scoring_Models_Documentation.md)** - Lead scoring models
+- **[docs/Life_Insurance_Policy_Types.md](./docs/Life_Insurance_Policy_Types.md)** - Life insurance policy types
+
+### 🐛 Implementation & Fixes
+- **[DATABASE_READINESS_STATUS_UPDATED.md](./DATABASE_READINESS_STATUS_UPDATED.md)** - Database migration status
+- **[LIFE_INSURANCE_GET_QUOTE_FIX.md](./LIFE_INSURANCE_GET_QUOTE_FIX.md)** - Quote functionality implementation
+- **[REPORT_GENERATION_FIX.md](./REPORT_GENERATION_FIX.md)** - Report generation fixes
+
+### 🌐 API Documentation
+
+**Interactive API Docs:**
 - **Swagger UI**: http://localhost:8000/v1/docs
 - **ReDoc**: http://localhost:8000/v1/redoc
 - **OpenAPI Schema**: http://localhost:8000/v1/openapi.json
 
-### Key Endpoints
-
-**Authentication**
-- `POST /v1/auth/register` - Register new user
-- `POST /v1/auth/login` - User login
-- `POST /v1/auth/logout` - User logout
-
-**Leads**
-- `GET /v1/leads` - List all leads
-- `POST /v1/leads` - Create new lead
-- `GET /v1/leads/{id}` - Get lead details
-- `PUT /v1/leads/{id}` - Update lead
-
-**Dashboard**
-- `GET /v1/dashboard/metrics` - Get dashboard metrics
-- `GET /v1/dashboard/pipeline` - Get sales pipeline data
-
-**Analytics**
-- `GET /v1/analytics/reports` - Get analytics reports
-- `GET /v1/analytics/performance` - Get performance metrics
+**Key Endpoints:**
+- Authentication: `/v1/auth/*`
+- Leads: `/v1/leads/*`
+- Customers: `/v1/customers/*`
+- Policies: `/v1/policies/*`
+- Claims: `/v1/claims/*`
+- Communications: `/v1/communications/*`
+- Marketing: `/v1/marketing/*`
+- Analytics: `/v1/analytics/*`
 
 ---
 
-## Dashboard Features
+## 🎨 Features
 
-### Main Dashboard
-- Key performance indicators (KPIs)
-- Sales pipeline visualization
-- Lead scoring metrics
-- Insurance product performance
-- Conversion funnel analysis
+### 🏠 Landing Page
+- Futuristic cyberpunk design with animated particle background
+- Glassmorphism effects and gradient text
+- Features showcase, pricing tiers, and call-to-action
 
-### Sidebar Navigation (8 Sections)
+### 🔐 Authentication
+- JWT-based secure authentication
+- Role-based access control (Admin, Manager, Agent, Viewer, User)
+- Password hashing with bcrypt
 
-1. **Leads** - New, Qualified, Contacted leads
-2. **Customers** - Active, Inactive customers
-3. **Policies** - Auto, Home, Life, Health insurance
-4. **Claims** - Pending, Approved, Rejected claims
-5. **Documents** - Pending signatures, Signed docs, Templates
-6. **Communications** - Emails, SMS, Calls, Campaigns
-7. **Reports** - Sales, Pipeline, Performance analytics
-8. **Settings** - Profile, Team, Integrations, Notifications
+### 📊 Dashboard (27+ Pages)
+- **Main Dashboard** - KPIs, sales pipeline, lead scoring metrics
+- **Leads** - New, Qualified, Contacted leads with AI scoring
+- **Customers** - Active/Inactive customer management
+- **Policies** - Auto, Home, Life, Health insurance policies
+- **Claims** - Pending, Approved, Rejected claims tracking
+- **Documents** - E-signature integration with DocuSeal
+- **Communications** - Email, SMS, Calls, Campaigns
+- **Marketing Automation** - Campaigns, Segments, Templates, Triggers
+- **Meeting Scheduler** - Zoom, Google Meet, Teams integration
+- **Reports** - Sales, Pipeline, Performance analytics
+- **Settings** - Profile, Team, Integrations, Notifications
 
-### Total Pages: 27+ Sub-Pages
+### 🤖 AI/ML Features
+- **Lead Scoring Models** - XGBoost, LightGBM, CatBoost ensemble
+- **Deep Learning** - PyTorch neural networks for advanced scoring
+- **Real-Time Predictions** - Instant lead qualification
+- **Multi-Product Support** - Auto, Home, Life, Health insurance
 
----
-
-## Security Features
-
-- **JWT Authentication** - Secure token-based authentication
-- **Password Hashing** - bcrypt with salt
-- **Role-Based Access Control** - 5 user roles (Admin, Manager, Agent, Viewer, User)
-- **CORS Protection** - Cross-origin request handling
-- **Input Validation** - Pydantic models for all inputs
-- **SQL Injection Prevention** - Parameterized queries
-- **Rate Limiting** - API rate limiting (configurable)
-
----
-
-## Database Models
-
-- **User** - User accounts and profiles
-- **Lead** - Lead information and scoring
-- **Customer** - Customer details
-- **Policy** - Insurance policies
-- **Claim** - Insurance claims
-- **Document** - Document management
-- **Communication** - Email, SMS, call logs
-- **Session** - User sessions
-- **Score** - Lead scoring data
-- **Analytics** - Analytics data
+### 📱 Responsive Design
+- Mobile, tablet, and desktop optimized
+- Futuristic UI with cyberpunk aesthetic
+- Interactive sidebar with keyboard shortcuts (Ctrl+B)
 
 ---
 
-## Testing & Quality
+## 🔒 Security
 
-### Run Frontend Tests
+- ✅ JWT token-based authentication
+- ✅ Password hashing with bcrypt
+- ✅ Role-based access control (5 roles)
+- ✅ CORS protection
+- ✅ Input validation with Pydantic
+- ✅ SQL injection prevention
+- ✅ Rate limiting (configurable)
+
+---
+
+## 🗄️ Database
+
+### Models (15+ Tables)
+- User, Lead, Customer, Policy, Claim
+- Document, Communication, Session
+- Score, Analytics, Marketing Campaign
+- Meeting, Report, Notification
+
+### Migrations
+- Alembic for schema management
+- Automated migration scripts
+- See [DATABASE_READINESS_STATUS_UPDATED.md](./DATABASE_READINESS_STATUS_UPDATED.md)
+
+---
+
+## 🧪 Testing
+
 ```bash
+# Frontend tests
 cd frontend
 npm test
-```
 
-### Run Backend Tests
-```bash
+# Backend tests
 pytest backend/
+
+# API testing
+# Use Swagger UI at http://localhost:8000/v1/docs
 ```
 
-### API Testing
-Use the interactive Swagger UI at `http://localhost:8000/v1/docs`
+---
+
+## 📈 Performance & Monitoring
+
+- ⚡ Async/await for non-blocking operations
+- 🔄 Redis caching for frequently accessed data
+- 📊 Prometheus metrics at `/v1/metrics`
+- 🎯 Real-time dashboard updates
+- 🚀 Horizontal scaling support
 
 ---
 
-## Performance & Monitoring
+## 🛠️ Troubleshooting
 
-- **Prometheus Metrics** - Available at `/v1/metrics`
-- **Real-Time Monitoring** - Dashboard metrics updated in real-time
-- **Performance Optimization** - Async/await for non-blocking operations
-- **Caching** - Redis caching for frequently accessed data
-- **Load Balancing** - Horizontal scaling support
+**For detailed troubleshooting, see:** 📘 **[SETUP_GUIDE.md - Troubleshooting Section](./SETUP_GUIDE.md#troubleshooting)**
+
+### Quick Fixes
+
+**Backend port 8000 in use:**
+```bash
+# Windows
+netstat -ano | findstr :8000
+taskkill /PID <PID> /F
+
+# macOS/Linux
+lsof -ti:8000 | xargs kill -9
+```
+
+**Frontend port 3000 in use:**
+```bash
+npm run dev -- -p 3001
+```
+
+**Database connection errors:**
+```bash
+# Use in-memory fallback
+set USE_DB=false  # Windows
+export USE_DB=false  # macOS/Linux
+```
+
+**Module not found errors:**
+```bash
+# Reinstall dependencies
+pip install -r requirements.txt
+cd frontend && npm install
+```
 
 ---
 
-## Contributing
+## 🤝 Contributing
 
 Contributions are welcome! Please follow these steps:
 
@@ -271,54 +337,36 @@ Contributions are welcome! Please follow these steps:
 
 ---
 
-## Support & Troubleshooting
+## 📞 Support
 
-### Backend Issues
-
-**Port 8000 already in use:**
-```bash
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-```
-
-**Database connection errors:**
-- Set `USE_DB=false` to use in-memory fallback
-- Check PostgreSQL is running
-- Verify connection string in `.env`
-
-### Frontend Issues
-
-**Dependencies not installing:**
-```bash
-rm -rf node_modules package-lock.json
-npm install
-```
-
-**Port 3000 already in use:**
-```bash
-npm run dev -- -p 3001
-```
+- 📘 **Documentation**: See markdown files in root directory
+- 🌐 **API Docs**: http://localhost:8000/v1/docs
+- 🐛 **Issues**: GitHub Issues
+- 📧 **Email**: support@legeai.dev
 
 ---
 
-## Contact & Support
+## ✅ Status
 
-- **Documentation**: See `/docs` folder
-- **API Docs**: http://localhost:8000/v1/docs
-- **Issues**: GitHub Issues
-- **Email**: support@leagai.dev
+**Production Ready** - All features implemented and tested
 
----
-
-## Status
-
-✅ **Production Ready** - All features implemented and tested
-
-**Last Updated**: November 2025  
-**Version**: 1.0.0  
-**Maintainer**: LEAGAI Team
+- **Version**: 1.0.0
+- **Last Updated**: November 2024
+- **Maintainer**: LEGEAI Team
 
 ---
 
-**Made with ❤️ by the LEAGAI Team**
+## 📄 License
+
+This project is proprietary software. All rights reserved.
+
+---
+
+<div align="center">
+
+**Made with ❤️ by the LEGEAI Team**
+
+🚀 **Revolutionize Your Leads with Intelligent Automation** 🚀
+
+</div>
 
