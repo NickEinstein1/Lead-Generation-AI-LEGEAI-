@@ -163,7 +163,7 @@ export default function LoginPage() {
               <h1 className="text-3xl font-bold bg-gradient-to-r from-cyan-300 to-blue-400 bg-clip-text text-transparent mb-2">
                 Welcome Back
               </h1>
-              <p className="text-cyan-200/60 text-sm">Sign in to access your dashboard</p>
+              <p className="text-cyan-200/60 text-sm">Sign in to access your account</p>
             </div>
 
             {/* Username Input */}
