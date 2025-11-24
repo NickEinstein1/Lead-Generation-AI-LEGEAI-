@@ -96,7 +96,7 @@ LEAGAI/
 
 ### Prerequisites
 
-- Python 3.9 or higher
+- Python 3.10 or higher
 - Node.js 18 or higher
 - npm or yarn
 - PostgreSQL (optional - uses in-memory fallback)
