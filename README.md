@@ -12,7 +12,7 @@
 
 ## 📖 Overview
 
-**LEGEAI** is an enterprise-grade AI-powered lead generation and management platform for the insurance industry. Built with cutting-edge technology, it combines advanced machine learning, real-time analytics, and intelligent automation to maximize sales efficiency and customer engagement.
+**LEGEAI** is an enterprise-grade AI-powered lead generation and management platform. Built with cutting-edge technology, it combines advanced machine learning, real-time analytics, and intelligent automation to maximize sales efficiency and customer engagement.
 
 ### ✨ Key Features
 
