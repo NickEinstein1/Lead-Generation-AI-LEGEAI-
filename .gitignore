@@ -70,16 +70,29 @@ logs/
 ehthumbs.db
 Thumbs.db
 
-# Model artifacts
+# Model artifacts (trained models should not be in git - too large)
 models/*/artifacts/
+models/*/deep_learning_artifacts/
+backend/models/*/saved_models/
 *.pkl
 *.joblib
 *.h5
 *.pb
+*.pth
 
-# Data files
-data/
-*.csv
+# Data files - EXCEPT training data
+# Ignore large data files
+*.parquet
+data/raw/
+data/processed/
+data/temp/
+
+# But KEEP training data (needed for model training)
+!data/*.csv
+!data/training/
+!data/training/*.csv
+
+# JSON files
 *.json
 
 # Allow project manifests
@@ -87,12 +100,13 @@ data/
 !package-lock.json
 !frontend/package.json
 !frontend/package-lock.json
+!tsconfig.json
+!frontend/tsconfig.json
+!backend/alembic.ini
 
-
-# Keep the frontend manifest tracked (some users run npm in repo root)
-!frontend/package.json
-
-*.parquet
+# Allow model config files
+!models/*/deep_learning_artifacts/config.json
+!backend/models/*/saved_models/config.json
 
 # Temporary files
 tmp/
