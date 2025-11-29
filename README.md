@@ -10,6 +10,22 @@
 
 ---
 
+## 🎉 Latest Updates
+
+### ✅ Training Data Now Included (Critical Fix)
+**All ML training data is now included in the repository!** (~1.8MB total)
+
+- ✅ **No more missing data errors** - Training CSVs are version controlled
+- ✅ **One-command model training** - Run `train_all_models.ps1` or `.sh`
+- ✅ **Backend works out of the box** - Uses fallbacks until models trained
+- ✅ **Consistent environments** - All developers have same training data
+
+**See:** [CRITICAL_FIX_GITIGNORE_DATA.md](./CRITICAL_FIX_GITIGNORE_DATA.md) for details.
+
+**Seeing backend warnings?** They're normal! See [BACKEND_ERRORS_QUICK_FIX.md](./BACKEND_ERRORS_QUICK_FIX.md)
+
+---
+
 ## 📖 Overview
 
 **LEGEAI** is an enterprise-grade AI-powered lead generation and management platform. Built with cutting-edge technology, it combines advanced machine learning, real-time analytics, and intelligent automation to maximize sales efficiency and customer engagement.
@@ -87,9 +103,20 @@ LEAGAI/
 │   ├── public/                       # Static assets
 │   └── package.json                  # Dependencies
 │
+├── data/                             # Training data (included in repo)
+│   ├── insurance_leads_training.csv  # General insurance leads (572KB)
+│   ├── life_insurance_leads_training.csv  # Life insurance (847KB)
+│   ├── auto_insurance_leads_training.csv  # Auto insurance (138KB)
+│   ├── home_insurance_leads_training.csv  # Home insurance (145KB)
+│   └── health_insurance_leads_training.csv  # Health insurance (149KB)
+│
 ├── docs/                             # Documentation
 ├── requirements.txt                  # Python dependencies
-├── run_backend.ps1                   # Backend startup script
+├── run_backend.ps1                   # Backend startup script (Windows)
+├── train_all_models.ps1              # Train all ML models (Windows)
+├── train_all_models.sh               # Train all ML models (macOS/Linux)
+├── setup.ps1                         # Automated setup (Windows)
+├── setup.sh                          # Automated setup (macOS/Linux)
 └── README.md                         # This file
 ```
 
@@ -167,6 +194,27 @@ npm run dev
   - Troubleshooting
   - Production deployment
 
+### 🚨 Backend Errors & Troubleshooting
+- **[BACKEND_ERRORS_QUICK_FIX.md](./BACKEND_ERRORS_QUICK_FIX.md)** - ⭐ **START HERE** - Quick reference for backend errors
+- **[BACKEND_ERRORS_FIX_GUIDE.md](./BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide to fixing backend errors
+  - Redis connection issues
+  - ML model training
+  - Database setup
+  - Step-by-step solutions
+- **[CRITICAL_FIX_GITIGNORE_DATA.md](./CRITICAL_FIX_GITIGNORE_DATA.md)** - Training data now included in repository
+
+### 🤖 ML Model Training
+- **Training data included** - All 5 training datasets (~1.8MB) are now in the repository
+- **Automated training scripts:**
+  - `train_all_models.ps1` (Windows)
+  - `train_all_models.sh` (macOS/Linux)
+- **Models supported:**
+  - Insurance Lead Scoring (XGBoost)
+  - Life Insurance (XGBoost + Deep Learning)
+  - Auto Insurance (Deep Learning)
+  - Home Insurance (Deep Learning)
+  - Health Insurance (Deep Learning)
+
 ### 🔧 Technical Documentation
 - **[DEEP_LEARNING_SUMMARY.md](./DEEP_LEARNING_SUMMARY.md)** - AI/ML models documentation
 - **[DOCUMENT_MANAGEMENT_SYSTEM.md](./DOCUMENT_MANAGEMENT_SYSTEM.md)** - Document management features
@@ -227,6 +275,9 @@ npm run dev
 - **Deep Learning** - PyTorch neural networks for advanced scoring
 - **Real-Time Predictions** - Instant lead qualification
 - **Multi-Product Support** - Auto, Home, Life, Health insurance
+- **Training Data Included** - All training datasets (~1.8MB) in repository
+- **Automated Training** - One-command model training scripts
+- **Graceful Fallbacks** - Rule-based scoring when models unavailable
 
 ### 📱 Responsive Design
 - Mobile, tablet, and desktop optimized
@@ -290,6 +341,30 @@ pytest backend/
 
 ## 🛠️ Troubleshooting
 
+### Backend Errors (Redis, ML Models, Database)
+
+**⚠️ Seeing backend warnings?** The backend works perfectly with warnings! See:
+- **[BACKEND_ERRORS_QUICK_FIX.md](./BACKEND_ERRORS_QUICK_FIX.md)** - Quick reference (start here!)
+- **[BACKEND_ERRORS_FIX_GUIDE.md](./BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide
+
+**Common backend warnings:**
+```
+✅ Redis unavailable → Uses in-memory sessions (works fine!)
+✅ ML models missing → Uses rule-based scoring (works fine!)
+✅ Database unavailable → Uses in-memory storage (works fine!)
+```
+
+**To train ML models (optional):**
+```bash
+# Windows
+.\train_all_models.ps1
+
+# macOS/Linux
+./train_all_models.sh
+```
+
+### General Troubleshooting
+
 **For detailed troubleshooting, see:** 📘 **[SETUP_GUIDE.md - Troubleshooting Section](./SETUP_GUIDE.md#troubleshooting)**
 
 ### Quick Fixes
@@ -311,7 +386,7 @@ npm run dev -- -p 3001
 
 **Database connection errors:**
 ```bash
-# Use in-memory fallback
+# Use in-memory fallback (recommended for development)
 set USE_DB=false  # Windows
 export USE_DB=false  # macOS/Linux
 ```
@@ -321,6 +396,16 @@ export USE_DB=false  # macOS/Linux
 # Reinstall dependencies
 pip install -r requirements.txt
 cd frontend && npm install
+```
+
+**Training data missing:**
+```bash
+# Training data is now included in git!
+# If missing, pull latest changes:
+git pull origin main
+
+# Or regenerate:
+python generate_training_data.py
 ```
 
 ---
