@@ -20,9 +20,9 @@
 - ✅ **Backend works out of the box** - Uses fallbacks until models trained
 - ✅ **Consistent environments** - All developers have same training data
 
-**See:** [CRITICAL_FIX_GITIGNORE_DATA.md](./CRITICAL_FIX_GITIGNORE_DATA.md) for details.
+**See:** [docs/CRITICAL_FIX_GITIGNORE_DATA.md](./docs/CRITICAL_FIX_GITIGNORE_DATA.md) for details.
 
-**Seeing backend warnings?** They're normal! See [BACKEND_ERRORS_QUICK_FIX.md](./BACKEND_ERRORS_QUICK_FIX.md)
+**Seeing backend warnings?** They're normal! See [docs/BACKEND_ERRORS_QUICK_FIX.md](./docs/BACKEND_ERRORS_QUICK_FIX.md)
 
 ---
 
@@ -185,7 +185,7 @@ npm run dev
 ## 📚 Documentation
 
 ### 📘 Setup & Installation
-- **[SETUP_GUIDE.md](./SETUP_GUIDE.md)** - Complete installation and setup guide
+- **[docs/SETUP_GUIDE.md](./docs/SETUP_GUIDE.md)** - Complete installation and setup guide
   - System requirements
   - Prerequisites installation (Python, Node.js, PostgreSQL, Redis)
   - Backend and frontend setup
@@ -195,13 +195,13 @@ npm run dev
   - Production deployment
 
 ### 🚨 Backend Errors & Troubleshooting
-- **[BACKEND_ERRORS_QUICK_FIX.md](./BACKEND_ERRORS_QUICK_FIX.md)** - ⭐ **START HERE** - Quick reference for backend errors
-- **[BACKEND_ERRORS_FIX_GUIDE.md](./BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide to fixing backend errors
+- **[docs/BACKEND_ERRORS_QUICK_FIX.md](./docs/BACKEND_ERRORS_QUICK_FIX.md)** - ⭐ **START HERE** - Quick reference for backend errors
+- **[docs/BACKEND_ERRORS_FIX_GUIDE.md](./docs/BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide to fixing backend errors
   - Redis connection issues
   - ML model training
   - Database setup
   - Step-by-step solutions
-- **[CRITICAL_FIX_GITIGNORE_DATA.md](./CRITICAL_FIX_GITIGNORE_DATA.md)** - Training data now included in repository
+- **[docs/CRITICAL_FIX_GITIGNORE_DATA.md](./docs/CRITICAL_FIX_GITIGNORE_DATA.md)** - Training data now included in repository
 
 ### 🤖 ML Model Training
 - **Training data included** - All 5 training datasets (~1.8MB) are now in the repository
@@ -216,15 +216,15 @@ npm run dev
   - Health Insurance (Deep Learning)
 
 ### 🔧 Technical Documentation
-- **[DEEP_LEARNING_SUMMARY.md](./DEEP_LEARNING_SUMMARY.md)** - AI/ML models documentation
-- **[DOCUMENT_MANAGEMENT_SYSTEM.md](./DOCUMENT_MANAGEMENT_SYSTEM.md)** - Document management features
+- **[docs/DEEP_LEARNING_SUMMARY.md](./docs/DEEP_LEARNING_SUMMARY.md)** - AI/ML models documentation
+- **[docs/DOCUMENT_MANAGEMENT_SYSTEM.md](./docs/DOCUMENT_MANAGEMENT_SYSTEM.md)** - Document management features
 - **[docs/Insurance_Lead_Scoring_Models_Documentation.md](./docs/Insurance_Lead_Scoring_Models_Documentation.md)** - Lead scoring models
 - **[docs/Life_Insurance_Policy_Types.md](./docs/Life_Insurance_Policy_Types.md)** - Life insurance policy types
 
 ### 🐛 Implementation & Fixes
-- **[DATABASE_READINESS_STATUS_UPDATED.md](./DATABASE_READINESS_STATUS_UPDATED.md)** - Database migration status
-- **[LIFE_INSURANCE_GET_QUOTE_FIX.md](./LIFE_INSURANCE_GET_QUOTE_FIX.md)** - Quote functionality implementation
-- **[REPORT_GENERATION_FIX.md](./REPORT_GENERATION_FIX.md)** - Report generation fixes
+- **[docs/DATABASE_READINESS_STATUS_UPDATED.md](./docs/DATABASE_READINESS_STATUS_UPDATED.md)** - Database migration status
+- **[docs/LIFE_INSURANCE_GET_QUOTE_FIX.md](./docs/LIFE_INSURANCE_GET_QUOTE_FIX.md)** - Quote functionality implementation
+- **[docs/REPORT_GENERATION_FIX.md](./docs/REPORT_GENERATION_FIX.md)** - Report generation fixes
 
 ### 🌐 API Documentation
 
@@ -309,7 +309,7 @@ npm run dev
 ### Migrations
 - Alembic for schema management
 - Automated migration scripts
-- See [DATABASE_READINESS_STATUS_UPDATED.md](./DATABASE_READINESS_STATUS_UPDATED.md)
+- See [docs/DATABASE_READINESS_STATUS_UPDATED.md](./docs/DATABASE_READINESS_STATUS_UPDATED.md)
 
 ---
 
@@ -344,8 +344,8 @@ pytest backend/
 ### Backend Errors (Redis, ML Models, Database)
 
 **⚠️ Seeing backend warnings?** The backend works perfectly with warnings! See:
-- **[BACKEND_ERRORS_QUICK_FIX.md](./BACKEND_ERRORS_QUICK_FIX.md)** - Quick reference (start here!)
-- **[BACKEND_ERRORS_FIX_GUIDE.md](./BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide
+- **[docs/BACKEND_ERRORS_QUICK_FIX.md](./docs/BACKEND_ERRORS_QUICK_FIX.md)** - Quick reference (start here!)
+- **[docs/BACKEND_ERRORS_FIX_GUIDE.md](./docs/BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide
 
 **Common backend warnings:**
 ```
@@ -365,7 +365,7 @@ pytest backend/
 
 ### General Troubleshooting
 
-**For detailed troubleshooting, see:** 📘 **[SETUP_GUIDE.md - Troubleshooting Section](./SETUP_GUIDE.md#troubleshooting)**
+**For detailed troubleshooting, see:** 📘 **[docs/SETUP_GUIDE.md - Troubleshooting Section](./docs/SETUP_GUIDE.md#troubleshooting)**
 
 ### Quick Fixes
 
