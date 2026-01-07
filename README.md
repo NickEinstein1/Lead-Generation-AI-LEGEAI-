@@ -1,4 +1,4 @@
-# 🚀 LEGEAI - AI-Powered Lead Generation Platform
+# LEGEAI - AI-Powered Lead Generation Platform
 
 [![Python 3.9+](https://img.shields.io/badge/Python-3.9%2B-blue)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.104.1-green)](https://fastapi.tiangolo.com/)
@@ -6,125 +6,67 @@
 [![React](https://img.shields.io/badge/React-19-61dafb)](https://react.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
 
-> **Revolutionize Your Leads with Intelligent Automation**
+**Revolutionize Your Leads with Intelligent Automation**
 
 ---
 
-## 🎉 Latest Updates
+## Overview
 
-### ✅ Training Data Now Included (Critical Fix)
-**All ML training data is now included in the repository!** (~1.8MB total)
+LEGEAI is an enterprise-grade AI-powered lead generation and management platform designed to maximize sales efficiency and customer engagement through intelligent automation and advanced analytics.
 
-- ✅ **No more missing data errors** - Training CSVs are version controlled
-- ✅ **One-command model training** - Run `train_all_models.ps1` or `.sh`
-- ✅ **Backend works out of the box** - Uses fallbacks until models trained
-- ✅ **Consistent environments** - All developers have same training data
+### Key Features
 
-**See:** [docs/CRITICAL_FIX_GITIGNORE_DATA.md](./docs/CRITICAL_FIX_GITIGNORE_DATA.md) for details.
-
-**Seeing backend warnings?** They're normal! See [docs/BACKEND_ERRORS_QUICK_FIX.md](./docs/BACKEND_ERRORS_QUICK_FIX.md)
-
----
-
-## 📖 Overview
-
-**LEGEAI** is an enterprise-grade AI-powered lead generation and management platform. Built with cutting-edge technology, it combines advanced machine learning, real-time analytics, and intelligent automation to maximize sales efficiency and customer engagement.
-
-### ✨ Key Features
-
-- 🎯 **AI-Powered Lead Scoring** - Deep learning models for intelligent lead qualification
-- 📊 **Real-Time Analytics** - Comprehensive dashboards with actionable insights
-- 🤖 **Marketing Automation** - Automated campaigns, segments, and triggers
-- 📞 **Multi-Channel Communications** - Email, SMS, and call management
-- 📄 **Document Management** - E-signature integration with DocuSeal
-- 🔗 **Meeting Scheduler** - Zoom, Google Meet, and Teams integration
-- 🔒 **Enterprise Security** - JWT authentication and role-based access control
-- 📈 **Performance Monitoring** - Real-time metrics and KPI tracking
+- **AI-Powered Lead Scoring** - Deep learning models for intelligent lead qualification across multiple insurance types
+- **Real-Time Analytics** - Comprehensive dashboards with actionable insights and performance metrics
+- **Marketing Automation** - Automated campaigns, customer segmentation, and behavioral triggers
+- **Multi-Channel Communications** - Integrated email, SMS, and call management
+- **Document Management** - E-signature integration with DocuSeal for seamless contract processing
+- **Meeting Scheduler** - Built-in scheduling with Zoom, Google Meet, and Teams integration
+- **Insurance Product Management** - Specialized modules for Auto, Home, Health, and Life insurance
+- **Enterprise Security** - JWT authentication with role-based access control
 
 ---
 
-## 🏗️ Architecture
-
-### Technology Stack
+## Technology Stack
 
 **Backend:**
 - FastAPI 0.104.1 - High-performance async web framework
-- Python 3.9+ - Core language
-- Deep Learning - TensorFlow, PyTorch, Neural Networks, NLP, Autoencoders, Transformer-based models.
-- SQLAlchemy - ORM for database operations
-- Pydantic - Data validation
-- JWT - Secure authentication
-- Prometheus - Metrics collection
+- Python 3.9+ - Core programming language
+- TensorFlow & PyTorch - Deep learning frameworks
+- SQLAlchemy - Database ORM
+- PostgreSQL - Primary database
+- Redis - Caching and session management
 
 **Frontend:**
 - Next.js 15.5.5 - React framework with App Router
 - React 19 - UI library
 - TypeScript 5.0 - Type-safe development
-- Tailwind CSS - Utility-first styling
-- Axios - HTTP client
+- Tailwind CSS - Modern styling framework
 
 **Infrastructure:**
-- PostgreSQL - Primary database
-- Redis - Caching and sessions
 - Docker - Containerization
 - Alembic - Database migrations
-
-### Project Structure
-
-```
-LEAGAI/
-├── backend/                          # Backend application
-│   ├── api/                          # FastAPI endpoints (23+ modules)
-│   │   ├── main.py                   # Application entry point
-│   │   ├── auth_api.py               # Authentication endpoints
-│   │   ├── leads_api.py              # Lead management
-│   │   ├── dashboard_api.py          # Dashboard data
-│   │   ├── analytics_api.py          # Analytics endpoints
-│   │   └── ...
-│   ├── models/                       # Data models (15+ models)
-│   ├── database/                     # Database layer
-│   ├── security/                     # Authentication & authorization
-│   ├── ai_sales_automation/          # Sales automation engines
-│   ├── advanced_ml/                  # Machine learning models
-│   ├── analytics/                    # Analytics engine
-│   ├── compliance/                   # Compliance management
-│   └── monitoring/                   # Performance monitoring
-│
-├── frontend/                         # Next.js frontend
-│   ├── src/
-│   │   ├── app/                      # App Router pages
-│   │   │   ├── page.tsx              # Home page
-│   │   │   ├── login/page.tsx        # Login page
-│   │   │   ├── register/page.tsx     # Registration page
-│   │   │   └── dashboard/            # Dashboard pages (27+ sub-pages)
-│   │   ├── components/               # Reusable React components
-│   │   ├── lib/                      # Utilities and helpers
-│   │   └── styles/                   # Global styles
-│   ├── public/                       # Static assets
-│   └── package.json                  # Dependencies
-│
-├── data/                             # Training data (included in repo)
-│   ├── insurance_leads_training.csv  # General insurance leads (572KB)
-│   ├── life_insurance_leads_training.csv  # Life insurance (847KB)
-│   ├── auto_insurance_leads_training.csv  # Auto insurance (138KB)
-│   ├── home_insurance_leads_training.csv  # Home insurance (145KB)
-│   └── health_insurance_leads_training.csv  # Health insurance (149KB)
-│
-├── docs/                             # Documentation
-├── requirements.txt                  # Python dependencies
-├── run_backend.ps1                   # Backend startup script (Windows)
-├── train_all_models.ps1              # Train all ML models (Windows)
-├── train_all_models.sh               # Train all ML models (macOS/Linux)
-├── setup.ps1                         # Automated setup (Windows)
-├── setup.sh                          # Automated setup (macOS/Linux)
-└── README.md                         # This file
-```
+- Prometheus - Metrics and monitoring
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
-### Option 1: Automated Setup (Recommended)
+### Prerequisites
+
+- **Python 3.9+** - [Download Python](https://www.python.org/downloads/)
+- **Node.js 18.17.0+** - [Download Node.js](https://nodejs.org/)
+- **PostgreSQL** (optional) - For database features
+- **Redis** (optional) - For caching
+
+### Installation
+
+#### Option 1: Automated Setup (Recommended)
+
+**Windows:**
+```powershell
+.\setup.ps1
+```
 
 **macOS/Linux:**
 ```bash
@@ -132,35 +74,67 @@ chmod +x setup.sh
 ./setup.sh
 ```
 
-**Windows:**
-```powershell
-.\setup.ps1
+#### Option 2: Manual Setup
+
+**1. Clone the repository:**
+```bash
+git clone <repository-url>
+cd Lead-Generation-AI-LEGEAI-
 ```
 
-### Option 2: Manual Setup
-
-**See the complete installation guide:** 📘 **[SETUP_GUIDE.md](./SETUP_GUIDE.md)**
-
-The setup guide includes:
-- System requirements and prerequisites
-- Step-by-step installation for all platforms
-- Database configuration options
-- Troubleshooting common issues
-- Production deployment instructions
-
-### Quick Manual Start
-
+**2. Set up the backend:**
 ```bash
-# 1. Install dependencies
+# Create virtual environment
+python -m venv venv
+
+# Activate virtual environment
+# Windows:
+venv\Scripts\activate
+# macOS/Linux:
+source venv/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
-cd frontend && npm install && cd ..
+```
 
-# 2. Start backend (Terminal 1)
-.\run_backend.ps1  # Windows
-# OR
-python -m uvicorn backend.api.main:app --reload  # macOS/Linux
+**3. Set up the frontend:**
+```bash
+cd frontend
+npm install
+cd ..
+```
 
-# 3. Start frontend (Terminal 2)
+**4. Configure environment variables:**
+```bash
+# Copy example environment file
+cp .env.example .env
+
+# Edit .env with your configuration
+```
+
+**5. Train ML models (optional):**
+```bash
+# Windows:
+.\train_all_models.ps1
+
+# macOS/Linux:
+chmod +x train_all_models.sh
+./train_all_models.sh
+```
+
+### Running the Application
+
+**Start the backend:**
+```bash
+# Windows:
+.\run_backend.ps1
+
+# macOS/Linux:
+python -m uvicorn backend.api.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+**Start the frontend:**
+```bash
 cd frontend
 npm run dev
 ```
@@ -168,290 +142,46 @@ npm run dev
 **Access the application:**
 - Frontend: http://localhost:3000
 - Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/v1/docs
-
-### 🔑 Test Accounts
-
-| Role | Email | Password |
-|------|-------|----------|
-| Admin | admin@legeai.dev | AdminPass123! |
-| Manager | manager@legeai.dev | ManagerPass123! |
-| Agent | agent1@legeai.dev | AgentPass123! |
-
-**Full credentials:** See [CREDENTIALS_REFERENCE.txt](./CREDENTIALS_REFERENCE.txt)
+- API Documentation: http://localhost:8000/docs
 
 ---
 
-## 📚 Documentation
+## Usage
 
-### 📘 Setup & Installation
-- **[docs/SETUP_GUIDE.md](./docs/SETUP_GUIDE.md)** - Complete installation and setup guide
-  - System requirements
-  - Prerequisites installation (Python, Node.js, PostgreSQL, Redis)
-  - Backend and frontend setup
-  - Database configuration
-  - Running the application
-  - Troubleshooting
-  - Production deployment
+### Default Credentials
 
-### 🚨 Backend Errors & Troubleshooting
-- **[docs/BACKEND_ERRORS_QUICK_FIX.md](./docs/BACKEND_ERRORS_QUICK_FIX.md)** - ⭐ **START HERE** - Quick reference for backend errors
-- **[docs/BACKEND_ERRORS_FIX_GUIDE.md](./docs/BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide to fixing backend errors
-  - Redis connection issues
-  - ML model training
-  - Database setup
-  - Step-by-step solutions
-- **[docs/CRITICAL_FIX_GITIGNORE_DATA.md](./docs/CRITICAL_FIX_GITIGNORE_DATA.md)** - Training data now included in repository
+For development and testing:
+- **Username:** `demo@example.com`
+- **Password:** `demo123`
 
-### 🤖 ML Model Training
-- **Training data included** - All 5 training datasets (~1.8MB) are now in the repository
-- **Automated training scripts:**
-  - `train_all_models.ps1` (Windows)
-  - `train_all_models.sh` (macOS/Linux)
-- **Models supported:**
-  - Insurance Lead Scoring (XGBoost)
-  - Life Insurance (XGBoost + Deep Learning)
-  - Auto Insurance (Deep Learning)
-  - Home Insurance (Deep Learning)
-  - Health Insurance (Deep Learning)
+### Main Features
 
-### 🔧 Technical Documentation
-- **[docs/DEEP_LEARNING_SUMMARY.md](./docs/DEEP_LEARNING_SUMMARY.md)** - AI/ML models documentation
-- **[docs/DOCUMENT_MANAGEMENT_SYSTEM.md](./docs/DOCUMENT_MANAGEMENT_SYSTEM.md)** - Document management features
-- **[docs/Insurance_Lead_Scoring_Models_Documentation.md](./docs/Insurance_Lead_Scoring_Models_Documentation.md)** - Lead scoring models
-- **[docs/Life_Insurance_Policy_Types.md](./docs/Life_Insurance_Policy_Types.md)** - Life insurance policy types
-
-### 🐛 Implementation & Fixes
-- **[docs/DATABASE_READINESS_STATUS_UPDATED.md](./docs/DATABASE_READINESS_STATUS_UPDATED.md)** - Database migration status
-- **[docs/LIFE_INSURANCE_GET_QUOTE_FIX.md](./docs/LIFE_INSURANCE_GET_QUOTE_FIX.md)** - Quote functionality implementation
-- **[docs/REPORT_GENERATION_FIX.md](./docs/REPORT_GENERATION_FIX.md)** - Report generation fixes
-
-### 🌐 API Documentation
-
-**Interactive API Docs:**
-- **Swagger UI**: http://localhost:8000/v1/docs
-- **ReDoc**: http://localhost:8000/v1/redoc
-- **OpenAPI Schema**: http://localhost:8000/v1/openapi.json
-
-**Key Endpoints:**
-- Authentication: `/v1/auth/*`
-- Leads: `/v1/leads/*`
-- Customers: `/v1/customers/*`
-- Policies: `/v1/policies/*`
-- Claims: `/v1/claims/*`
-- Communications: `/v1/communications/*`
-- Marketing: `/v1/marketing/*`
-- Analytics: `/v1/analytics/*`
+1. **Dashboard** - View key metrics, lead pipeline, and performance analytics
+2. **Lead Management** - Create, score, and manage leads across insurance products
+3. **Marketing Campaigns** - Create and manage automated marketing campaigns
+4. **Communications** - Send emails, SMS, and manage calls
+5. **Document Management** - Upload, sign, and manage documents
+6. **Reports** - Generate comprehensive reports and analytics
+7. **Scheduler** - Schedule meetings and appointments
 
 ---
 
-## 🎨 Features
+## Documentation
 
-### 🏠 Landing Page
-- Futuristic cyberpunk design with animated particle background
-- Glassmorphism effects and gradient text
-- Features showcase, pricing tiers, and call-to-action
+For detailed documentation, see the [docs](./docs/) folder:
 
-### 🔐 Authentication
-- JWT-based secure authentication
-- Role-based access control (Admin, Manager, Agent, Viewer, User)
-- Password hashing with bcrypt
-
-### 📊 Dashboard (27+ Pages)
-- **Main Dashboard** - KPIs, sales pipeline, lead scoring metrics
-- **Leads** - New, Qualified, Contacted leads with AI scoring
-- **Customers** - Active/Inactive customer management
-- **Policies** - Auto, Home, Life, Health insurance policies
-- **Claims** - Pending, Approved, Rejected claims tracking
-- **Documents** - E-signature integration with DocuSeal
-- **Communications** - Email, SMS, Calls, Campaigns
-- **Marketing Automation** - Campaigns, Segments, Templates, Triggers
-- **Meeting Scheduler** - Zoom, Google Meet, Teams integration
-- **Reports** - Sales, Pipeline, Performance analytics
-- **Settings** - Profile, Team, Integrations, Notifications
-
-### 🤖 AI/ML Features
-- **Lead Scoring Models** - XGBoost, LightGBM, CatBoost ensemble
-- **Deep Learning** - PyTorch neural networks for advanced scoring
-- **Real-Time Predictions** - Instant lead qualification
-- **Multi-Product Support** - Auto, Home, Life, Health insurance
-- **Training Data Included** - All training datasets (~1.8MB) in repository
-- **Automated Training** - One-command model training scripts
-- **Graceful Fallbacks** - Rule-based scoring when models unavailable
-
-### 📱 Responsive Design
-- Mobile, tablet, and desktop optimized
-- Futuristic UI with cyberpunk aesthetic
-- Interactive sidebar with keyboard shortcuts (Ctrl+B)
+- [Setup Guide](./docs/SETUP_GUIDE.md) - Comprehensive setup instructions
+- [Webpack Build Fix](./docs/WEBPACK_BUILD_ERRORS_FIX.md) - Troubleshooting build issues
 
 ---
 
-## 🔒 Security
-
-- ✅ JWT token-based authentication
-- ✅ Password hashing with bcrypt
-- ✅ Role-based access control (5 roles)
-- ✅ CORS protection
-- ✅ Input validation with Pydantic
-- ✅ SQL injection prevention
-- ✅ Rate limiting (configurable)
-
----
-
-## 🗄️ Database
-
-### Models (15+ Tables)
-- User, Lead, Customer, Policy, Claim
-- Document, Communication, Session
-- Score, Analytics, Marketing Campaign
-- Meeting, Report, Notification
-
-### Migrations
-- Alembic for schema management
-- Automated migration scripts
-- See [docs/DATABASE_READINESS_STATUS_UPDATED.md](./docs/DATABASE_READINESS_STATUS_UPDATED.md)
-
----
-
-## 🧪 Testing
-
-```bash
-# Frontend tests
-cd frontend
-npm test
-
-# Backend tests
-pytest backend/
-
-# API testing
-# Use Swagger UI at http://localhost:8000/v1/docs
-```
-
----
-
-## 📈 Performance & Monitoring
-
-- ⚡ Async/await for non-blocking operations
-- 🔄 Redis caching for frequently accessed data
-- 📊 Prometheus metrics at `/v1/metrics`
-- 🎯 Real-time dashboard updates
-- 🚀 Horizontal scaling support
-
----
-
-## 🛠️ Troubleshooting
-
-### Backend Errors (Redis, ML Models, Database)
-
-**⚠️ Seeing backend warnings?** The backend works perfectly with warnings! See:
-- **[docs/BACKEND_ERRORS_QUICK_FIX.md](./docs/BACKEND_ERRORS_QUICK_FIX.md)** - Quick reference (start here!)
-- **[docs/BACKEND_ERRORS_FIX_GUIDE.md](./docs/BACKEND_ERRORS_FIX_GUIDE.md)** - Complete guide
-
-**Common backend warnings:**
-```
-✅ Redis unavailable → Uses in-memory sessions (works fine!)
-✅ ML models missing → Uses rule-based scoring (works fine!)
-✅ Database unavailable → Uses in-memory storage (works fine!)
-```
-
-**To train ML models (optional):**
-```bash
-# Windows
-.\train_all_models.ps1
-
-# macOS/Linux
-./train_all_models.sh
-```
-
-### General Troubleshooting
-
-**For detailed troubleshooting, see:** 📘 **[docs/SETUP_GUIDE.md - Troubleshooting Section](./docs/SETUP_GUIDE.md#troubleshooting)**
-
-### Quick Fixes
-
-**Backend port 8000 in use:**
-```bash
-# Windows
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-
-# macOS/Linux
-lsof -ti:8000 | xargs kill -9
-```
-
-**Frontend port 3000 in use:**
-```bash
-npm run dev -- -p 3001
-```
-
-**Database connection errors:**
-```bash
-# Use in-memory fallback (recommended for development)
-set USE_DB=false  # Windows
-export USE_DB=false  # macOS/Linux
-```
-
-**Module not found errors:**
-```bash
-# Reinstall dependencies
-pip install -r requirements.txt
-cd frontend && npm install
-```
-
-**Training data missing:**
-```bash
-# Training data is now included in git!
-# If missing, pull latest changes:
-git pull origin main
-
-# Or regenerate:
-python generate_training_data.py
-```
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📞 Support
-
-- 📘 **Documentation**: See markdown files in root directory
-- 🌐 **API Docs**: http://localhost:8000/v1/docs
-- 🐛 **Issues**: GitHub Issues
-- 📧 **Email**: support@legeai.dev
-
----
-
-## ✅ Status
-
-**Production Ready** - All features implemented and tested
-
-- **Version**: 1.0.0
-- **Last Updated**: November 2024
-- **Maintainer**: LEGEAI Team
-
----
-
-## 📄 License
+## License
 
 This project is proprietary software. All rights reserved.
 
 ---
 
-<div align="center">
+**Made with Purpose by the LEGEAI Team**
 
-**Made with ❤️ by the LEGEAI Team**
-
-🚀 **Revolutionize Your Leads with Intelligent Automation** 🚀
-
-</div>
+**Revolutionize Your Leads with Intelligent Automation**
 
