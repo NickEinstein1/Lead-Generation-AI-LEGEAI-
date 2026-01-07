@@ -11,6 +11,9 @@ export default function CommunicationsPage() {
   const [communications, setCommunications] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+	// Aggregated stats for dashboard cards
+	const [stats, setStats] = useState<any | null>(null);
+
   const [formData, setFormData] = useState({
     comm_type: "email",
     customer_name: "",
@@ -21,10 +24,11 @@ export default function CommunicationsPage() {
     content: ""
   });
 
-  // Fetch communications on mount
-  useEffect(() => {
-    fetchCommunications();
-  }, []);
+	// Fetch communications and stats on mount
+	useEffect(() => {
+		fetchCommunications();
+		fetchCommunicationStats();
+	}, []);
 
   const fetchCommunications = async () => {
     try {
@@ -39,6 +43,15 @@ export default function CommunicationsPage() {
       setLoading(false);
     }
   };
+
+	const fetchCommunicationStats = async () => {
+		try {
+			const data = await communicationsApi.getStats();
+			setStats(data);
+		} catch (error) {
+			console.error("Failed to fetch communication stats:", error);
+		}
+	};
 
   const handleCreateCommunication = async () => {
     if (!formData.customer_name || !formData.subject || !formData.comm_date) {
@@ -121,53 +134,69 @@ export default function CommunicationsPage() {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Total Sent</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">3,456</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">This month</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Delivery Rate</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">98.5%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Successfully delivered</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Open Rate</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">42.3%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Email opens</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Click Rate</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">18.7%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Link clicks</p>
-          </div>
-        </div>
+	        {/* Stats */}
+	        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Total Communications</p>
+	            <p className="text-3xl font-bold text-blue-700 mt-2">
+	              {stats ? stats.total_communications.toLocaleString() : communications.length.toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">All time</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Sent (30 days)</p>
+	            <p className="text-3xl font-bold text-emerald-600 mt-2">
+	              {stats ? stats.sent_last_30_days.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Last 30 days</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Delivered</p>
+	            <p className="text-3xl font-bold text-amber-600 mt-2">
+	              {stats ? stats.delivered_count.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Delivered or completed</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Read</p>
+	            <p className="text-3xl font-bold text-purple-600 mt-2">
+	              {stats ? stats.read_count.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Marked as read</p>
+	          </div>
+	        </div>
 
-        {/* Communication Channels */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">📧 Emails</p>
-            <p className="text-2xl font-bold text-blue-700 mt-2">1,234</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">35.7% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">💬 SMS</p>
-            <p className="text-2xl font-bold text-emerald-700 mt-2">1,567</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">45.3% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">☎️ Calls</p>
-            <p className="text-2xl font-bold text-red-700 mt-2">456</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">13.2% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">📢 Campaigns</p>
-            <p className="text-2xl font-bold text-purple-700 mt-2">45</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Active campaigns</p>
-          </div>
-        </div>
+	        {/* Communication Channels */}
+	        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">📧 Emails</p>
+	            <p className="text-2xl font-bold text-blue-700 mt-2">
+	              {stats ? (stats.by_channel?.email || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By channel</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">💬 SMS</p>
+	            <p className="text-2xl font-bold text-emerald-700 mt-2">
+	              {stats ? (stats.by_channel?.sms || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By channel</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">☎️ Calls</p>
+	            <p className="text-2xl font-bold text-red-700 mt-2">
+	              {stats ? (stats.by_channel?.phone || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By channel</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">📢 Campaigns</p>
+	            <p className="text-2xl font-bold text-purple-700 mt-2">
+	              {stats ? (stats.by_type?.campaign || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By type</p>
+	          </div>
+	        </div>
 
         {/* Communications Table */}
         <div className="bg-white border-2 border-blue-200 rounded-lg shadow-md overflow-hidden">

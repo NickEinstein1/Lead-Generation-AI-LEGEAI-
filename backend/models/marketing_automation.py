@@ -5,7 +5,7 @@ from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, Float, 
 from sqlalchemy.orm import relationship
 from datetime import datetime
 import enum
-from backend.database import Base
+from backend.models.base import Base
 
 
 class CampaignType(str, enum.Enum):

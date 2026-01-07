@@ -20,6 +20,7 @@ class Customer(Base, TimestampMixin):
     last_active: Mapped[Optional[str]] = mapped_column(String(50), nullable=True)
     reason: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)  # For inactive customers
     
-    # Additional metadata
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    # Additional metadata (stored in DB column "metadata" but avoid reserved
+    # attribute name on the SQLAlchemy declarative base)
+    extra_metadata: Mapped[Optional[dict]] = mapped_column("metadata", JSON, nullable=True)
 

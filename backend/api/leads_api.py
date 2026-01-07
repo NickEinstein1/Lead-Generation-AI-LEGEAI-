@@ -10,6 +10,8 @@ from sqlalchemy import select
 from backend.database.connection import session_dep
 from backend.models.lead import Lead
 from backend.models.score import Score
+from backend.api.auth_dependencies import require_permission
+from backend.security.authentication import Permission
 
 # Minimal in-memory stores for MVP (replace with DB layer later)
 LEADS_DB: Dict[str, Dict[str, Any]] = {}
@@ -45,7 +47,11 @@ class LeadCreate(BaseModel):
 
 
 @router.post("", summary="Create/ingest a lead (idempotent)")
-async def create_lead(payload: LeadCreate, session: AsyncSession = Depends(session_dep)):
+async def create_lead(
+    payload: LeadCreate,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.CREATE_LEADS)),
+):
     use_db = os.getenv("USE_DB", "false").lower() == "true"
 
     if use_db:
@@ -102,7 +108,12 @@ async def create_lead(payload: LeadCreate, session: AsyncSession = Depends(sessi
 
 
 @router.get("", summary="List leads")
-async def list_leads(limit: int = 50, offset: int = 0, session: AsyncSession = Depends(session_dep)):
+async def list_leads(
+    limit: int = 50,
+    offset: int = 0,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
     use_db = os.getenv("USE_DB", "false").lower() == "true"
 
     if use_db:
@@ -138,7 +149,11 @@ async def list_leads(limit: int = 50, offset: int = 0, session: AsyncSession = D
 
 
 @router.get("/{lead_id}", summary="Get lead details")
-async def get_lead(lead_id: str, session: AsyncSession = Depends(session_dep)):
+async def get_lead(
+    lead_id: str,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
     use_db = os.getenv("USE_DB", "false").lower() == "true"
 
     if use_db:
@@ -179,7 +194,12 @@ class ScoreInput(BaseModel):
 
 
 @router.post("/{lead_id}/score", summary="Score a lead using current model")
-async def score_lead(lead_id: str, payload: ScoreInput, session: AsyncSession = Depends(session_dep)):
+async def score_lead(
+    lead_id: str,
+    payload: ScoreInput,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.GENERATE_SCORES)),
+):
     use_db = os.getenv("USE_DB", "false").lower() == "true"
 
     try:
@@ -256,7 +276,11 @@ async def score_lead(lead_id: str, payload: ScoreInput, session: AsyncSession = 
 
 
 @router.get("/{lead_id}/scores", summary="Get score history for a lead")
-async def get_scores(lead_id: str, session: AsyncSession = Depends(session_dep)):
+async def get_scores(
+    lead_id: str,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_SCORES)),
+):
     use_db = os.getenv("USE_DB", "false").lower() == "true"
     if use_db:
         rows = (await session.execute(select(Score).where(Score.lead_id == int(lead_id)).order_by(Score.scored_at.desc()))).scalars().all() if lead_id.isdigit() else []

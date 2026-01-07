@@ -9,6 +9,9 @@ from backend.models.lead import Lead
 from datetime import datetime, timezone
 import os
 
+from backend.api.auth_dependencies import require_permission
+from backend.security.authentication import Permission
+
 from backend.api.docuseal_client import (
     create_submission,
     extract_first_submitter_slug,
@@ -52,7 +55,11 @@ def _doc_to_dict(d: Document | Dict[str, Any]) -> Dict[str, Any]:
 
 
 @router.get("/leads/{lead_id}/documents")
-async def list_documents_for_lead(lead_id: int, session: AsyncSession = Depends(session_dep)):
+async def list_documents_for_lead(
+    lead_id: int,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
     if USE_DB:
         res = await session.execute(select(Document).where(Document.lead_id == lead_id))
         items = [_doc_to_dict(d) for d in res.scalars().all()]
@@ -63,7 +70,12 @@ async def list_documents_for_lead(lead_id: int, session: AsyncSession = Depends(
 
 
 @router.post("/leads/{lead_id}/documents")
-async def create_document_for_lead(lead_id: int, body: CreateDocumentRequest, session: AsyncSession = Depends(session_dep)):
+async def create_document_for_lead(
+    lead_id: int,
+    body: CreateDocumentRequest,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.CREATE_LEADS)),
+):
     title = (body.title or "").strip() or "Insurance Agreement"
 
     # Determine provider: prefer explicit; else use DocuSeal if API key present; otherwise internal
@@ -173,7 +185,11 @@ async def create_document_for_lead(lead_id: int, body: CreateDocumentRequest, se
 
 
 @router.get("/documents/{doc_id}")
-async def get_document(doc_id: int, session: AsyncSession = Depends(session_dep)):
+async def get_document(
+    doc_id: int,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
     if USE_DB:
         doc = (await session.execute(select(Document).where(Document.id == doc_id))).scalars().first()
         if not doc:
@@ -186,7 +202,11 @@ async def get_document(doc_id: int, session: AsyncSession = Depends(session_dep)
 
 
 @router.post("/documents/{doc_id}/simulate-sign")
-async def simulate_sign(doc_id: int, session: AsyncSession = Depends(session_dep)):
+async def simulate_sign(
+    doc_id: int,
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
+):
     now = datetime.now(timezone.utc)
     if USE_DB:
         doc = (await session.execute(select(Document).where(Document.id == doc_id))).scalars().first()

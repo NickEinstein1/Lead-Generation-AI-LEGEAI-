@@ -6,7 +6,13 @@ Write-Host "Running from root directory to ensure proper module resolution" -For
 
 # Set environment variables
 $env:PYTHONPATH = "."
-$env:USE_DB = "false"
+
+# Prefer DB-backed mode by default. If USE_DB is not already set in the
+# environment (e.g., via .env), default it to "true" so that the backend
+# uses the real database instead of in-memory demo mode.
+if (-not $env:USE_DB) {
+    $env:USE_DB = "true"
+}
 
 # Run the backend from ROOT directory (not from backend folder)
 # This ensures Python can find the 'backend' module

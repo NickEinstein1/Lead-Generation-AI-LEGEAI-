@@ -55,31 +55,67 @@ class DataMaskingRule:
 
 class DataProtectionManager:
     """Comprehensive data protection and encryption system"""
-    
-    def __init__(self, redis_config: Dict[str, Any] = None):
+
+    def __init__(self, redis_config: Dict[str, Any] = None, lazy_init: bool = True):
         self.redis_config = redis_config or {
             'host': 'localhost',
             'port': 6379,
-            'db': 5
+            'db': 5,
+            'socket_timeout': 1,
+            'socket_connect_timeout': 1,
+            'retry_on_timeout': False
         }
-        
-        self.redis_client = redis.Redis(**self.redis_config)
-        
+
+        self._redis_client = None
+        self._redis_available = None
+
         # Encryption keys
         self.encryption_keys: Dict[str, EncryptionKey] = {}
         self.current_key_id = "default"
-        
-        # Initialize default encryption key
-        self._initialize_encryption_keys()
-        
+
+        # RSA keys - lazy initialized
+        self._rsa_private_key = None
+        self._rsa_public_key = None
+        self._keys_initialized = False
+
         # PII detection patterns
         self.pii_patterns = self._load_pii_patterns()
-        
+
         # Data masking rules
         self.masking_rules = self._load_masking_rules()
-        
+
         # Tokenization vault
         self.token_vault: Dict[str, str] = {}
+
+        # Initialize keys immediately only if not lazy
+        if not lazy_init:
+            self._ensure_keys_initialized()
+
+    @property
+    def redis_client(self):
+        """Lazy Redis client initialization"""
+        if self._redis_client is None:
+            self._redis_client = redis.Redis(**self.redis_config)
+        return self._redis_client
+
+    @property
+    def rsa_private_key(self):
+        """Lazy RSA private key initialization"""
+        self._ensure_keys_initialized()
+        return self._rsa_private_key
+
+    @property
+    def rsa_public_key(self):
+        """Lazy RSA public key initialization"""
+        self._ensure_keys_initialized()
+        return self._rsa_public_key
+
+    def _ensure_keys_initialized(self):
+        """Initialize encryption keys if not already done"""
+        if self._keys_initialized:
+            return
+        self._initialize_encryption_keys()
+        self._keys_initialized = True
         
     def _initialize_encryption_keys(self):
         """Initialize encryption keys"""
@@ -87,22 +123,26 @@ class DataProtectionManager:
         default_key = os.getenv('DEFAULT_ENCRYPTION_KEY')
         if not default_key:
             default_key = Fernet.generate_key()
-        
+
         self.encryption_keys["default"] = EncryptionKey(
             key_id="default",
             key_data=default_key if isinstance(default_key, bytes) else default_key.encode(),
             algorithm="Fernet",
             created_at=datetime.now(timezone.utc)
         )
-        
+
         # Generate RSA key pair for asymmetric encryption
-        private_key = rsa.generate_private_key(
-            public_exponent=65537,
-            key_size=2048
-        )
-        
-        self.rsa_private_key = private_key
-        self.rsa_public_key = private_key.public_key()
+        try:
+            private_key = rsa.generate_private_key(
+                public_exponent=65537,
+                key_size=2048
+            )
+            self._rsa_private_key = private_key
+            self._rsa_public_key = private_key.public_key()
+        except Exception as e:
+            logger.warning(f"Failed to generate RSA keys: {e}. Asymmetric encryption disabled.")
+            self._rsa_private_key = None
+            self._rsa_public_key = None
     
     def _load_pii_patterns(self) -> Dict[PIIType, str]:
         """Load PII detection patterns"""

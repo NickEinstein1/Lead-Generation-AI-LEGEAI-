@@ -1,5 +1,6 @@
 ﻿aiohappyeyeballs==2.6.1
 aiohttp==3.13.0
+aiofiles>=23.2.1
 aioredis==2.0.1
 aiosignal==1.4.0
 alembic==1.13.2
@@ -100,6 +101,7 @@ stripe==12.4.0
 supabase==2.17.0
 supafunc==0.10.1
 threadpoolctl==3.6.0
+torch==2.9.1
 typing-inspection==0.4.1
 typing_extensions==4.14.1
 tzdata==2025.2

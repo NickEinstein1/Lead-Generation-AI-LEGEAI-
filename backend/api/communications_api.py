@@ -1,11 +1,16 @@
+"""Communications API - CRUD endpoints for communications management.
+
+These endpoints are currently backed by in-memory storage and are intended for
+demo/sandbox use only. They are guarded by the ENABLE_DEMO_MODE feature flag to
+avoid accidentally relying on mock data in production.
 """
-Communications API - CRUD endpoints for communications management
-"""
+
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Iterable
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+import os
 from backend.utils.validators import (
     validate_string_length,
     validate_choice,
@@ -17,17 +22,113 @@ from backend.utils.business_rules import (
     can_send_marketing_to_customer,
     get_communication_priority
 )
-from backend.api.auth_dependencies import get_current_user_from_session, get_optional_user
+from backend.api.auth_dependencies import require_permission
+from backend.security.authentication import Permission
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from backend.database.connection import session_dep
+from backend.models.communication import Communication
 
 router = APIRouter(prefix="/communications", tags=["Communications"])
 logger = logging.getLogger(__name__)
 
+ENABLE_DEMO_MODE = os.getenv("ENABLE_DEMO_MODE", "false").lower() == "true"
+USE_DB = os.getenv("USE_DB", "false").lower() == "true"
+
+
+def _ensure_demo_mode_enabled() -> None:
+    """Guard demo-only, in-memory communication endpoints behind ENABLE_DEMO_MODE.
+
+    When ENABLE_DEMO_MODE is false (e.g., production), these endpoints return
+    501 to make it clear that they are mock-only.
+    """
+
+    if not ENABLE_DEMO_MODE:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "Communications endpoints are mock-only and are available "
+                "only when ENABLE_DEMO_MODE=true."
+            ),
+        )
+
+
 # In-memory storage
-COMMUNICATIONS_DB = {}
+COMMUNICATIONS_DB: Dict[str, Dict[str, Any]] = {}
 COMMUNICATION_ID_COUNTER = 1
 
 # Import customers database for business rules
 from backend.api.customers_api import CUSTOMERS_DB
+
+
+def _get_attr(obj: Any, name: str, default: Any = None) -> Any:
+    """Helper to read attributes from either ORM objects or dicts."""
+
+    if isinstance(obj, dict):
+        return obj.get(name, default)
+    return getattr(obj, name, default)
+
+
+class CommunicationStats(BaseModel):
+    """Aggregate statistics for communications, used by dashboard KPI cards."""
+
+    total_communications: int
+    sent_last_30_days: int
+    delivered_count: int
+    read_count: int
+    by_status: Dict[str, int]
+    by_channel: Dict[str, int]
+    by_type: Dict[str, int]
+
+
+def _compute_communication_stats(comms: Iterable[Any]) -> CommunicationStats:
+    comms_list = list(comms)
+    total_communications = len(comms_list)
+
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+
+    sent_last_30_days = 0
+    delivered_count = 0
+    read_count = 0
+    by_status: Dict[str, int] = {}
+    by_channel: Dict[str, int] = {}
+    by_type: Dict[str, int] = {}
+
+    for c in comms_list:
+        status = str(_get_attr(c, "status", "")).lower()
+        channel = str(_get_attr(c, "channel", "unknown")).lower()
+        comm_type = str(_get_attr(c, "comm_type", "unknown")).lower()
+
+        by_status[status] = by_status.get(status, 0) + 1
+        by_channel[channel] = by_channel.get(channel, 0) + 1
+        by_type[comm_type] = by_type.get(comm_type, 0) + 1
+
+        if status in {"sent", "delivered", "completed", "read"}:
+            comm_date_raw = _get_attr(c, "comm_date")
+            if comm_date_raw:
+                try:
+                    dt = datetime.fromisoformat(comm_date_raw) if "T" in comm_date_raw else datetime.strptime(
+                        comm_date_raw, "%Y-%m-%d"
+                    )
+                    if dt >= thirty_days_ago:
+                        sent_last_30_days += 1
+                except Exception:  # pragma: no cover - defensive
+                    pass
+
+        if status in {"delivered", "completed"}:
+            delivered_count += 1
+        if status == "read":
+            read_count += 1
+
+    return CommunicationStats(
+        total_communications=total_communications,
+        sent_last_30_days=sent_last_30_days,
+        delivered_count=delivered_count,
+        read_count=read_count,
+        by_status=by_status,
+        by_channel=by_channel,
+        by_type=by_type,
+    )
 
 class CommunicationCreate(BaseModel):
     customer_name: str = Field(..., min_length=2, max_length=100, description="Customer name")
@@ -180,14 +281,43 @@ class PaginatedCommunicationsResponse(BaseModel):
     page_size: int
     total_pages: int
 
+
+@router.get("/stats", response_model=CommunicationStats)
+async def get_communication_stats(
+    session: AsyncSession = Depends(session_dep),
+    current_user: Dict[str, Any] = Depends(require_permission(Permission.VIEW_MESSAGES)),
+):
+    """Get aggregate communication statistics for dashboards.
+
+    When USE_DB=true this endpoint aggregates statistics from the real
+    ``communications`` table. When USE_DB=false it falls back to the in-memory
+    ``COMMUNICATIONS_DB`` demo store. In that case the values are mock-only and
+    should not be relied on in production.
+    """
+
+    if USE_DB:
+        result = await session.execute(select(Communication))
+        comms = result.scalars().all()
+        return _compute_communication_stats(comms)
+
+    # Demo-only fallback using in-memory store
+    return _compute_communication_stats(COMMUNICATIONS_DB.values())
+
 @router.get("", response_model=PaginatedCommunicationsResponse)
 async def get_communications(
     comm_type: Optional[str] = None,
     status: Optional[str] = None,
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of items per page")
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    current_user: Dict[str, Any] = Depends(require_permission(Permission.VIEW_MESSAGES)),
 ):
-    """Get all communications with pagination, optionally filtered by type or status"""
+    """Get all communications with pagination, optionally filtered by type or status.
+
+    Authentication: Requires VIEW_MESSAGES permission.
+    """
+
+    _ensure_demo_mode_enabled()
+
     communications = list(COMMUNICATIONS_DB.values())
 
     # Apply filters
@@ -214,8 +344,17 @@ async def get_communications(
     }
 
 @router.get("/{communication_id}", response_model=CommunicationResponse)
-async def get_communication(communication_id: str):
-    """Get a specific communication by ID"""
+async def get_communication(
+    communication_id: str,
+    current_user: Dict[str, Any] = Depends(require_permission(Permission.VIEW_MESSAGES)),
+):
+    """Get a specific communication by ID.
+
+    Authentication: Requires VIEW_MESSAGES permission.
+    """
+
+    _ensure_demo_mode_enabled()
+
     if communication_id not in COMMUNICATIONS_DB:
         raise HTTPException(status_code=404, detail="Communication not found")
     return COMMUNICATIONS_DB[communication_id]
@@ -223,7 +362,7 @@ async def get_communication(communication_id: str):
 @router.post("", response_model=CommunicationResponse)
 async def create_communication(
     communication: CommunicationCreate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.SEND_MESSAGES)),
 ):
     """
     Create a new communication
@@ -238,6 +377,8 @@ async def create_communication(
     - Communication date defaults to now if not provided
     """
     global COMMUNICATION_ID_COUNTER
+
+    _ensure_demo_mode_enabled()
 
     # Business Rule: Verify customer exists (warning only, not blocking)
     customer = find_customer_by_name(communication.customer_name, CUSTOMERS_DB)
@@ -290,7 +431,7 @@ async def create_communication(
 async def update_communication(
     communication_id: str,
     communication: CommunicationUpdate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.SEND_MESSAGES)),
 ):
     """
     Update an existing communication
@@ -301,6 +442,8 @@ async def update_communication(
     Business Rules:
     - Status changes are logged
     """
+    _ensure_demo_mode_enabled()
+
     if communication_id not in COMMUNICATIONS_DB:
         raise HTTPException(status_code=404, detail="Communication not found")
 
@@ -323,7 +466,7 @@ async def update_communication(
 @router.delete("/{communication_id}")
 async def delete_communication(
     communication_id: str,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.SEND_MESSAGES)),
 ):
     """
     Delete a communication
@@ -331,6 +474,8 @@ async def delete_communication(
     Authentication: Required
     Headers: X-Session-ID or X-API-Key
     """
+    _ensure_demo_mode_enabled()
+
     if communication_id not in COMMUNICATIONS_DB:
         raise HTTPException(status_code=404, detail="Communication not found")
 

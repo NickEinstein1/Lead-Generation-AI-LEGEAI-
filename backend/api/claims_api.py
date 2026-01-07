@@ -3,9 +3,10 @@ Claims API - CRUD endpoints for claims management
 """
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Iterable
 import logging
 from datetime import datetime, timedelta
+import os
 from backend.utils.validators import (
     validate_string_length,
     validate_choice,
@@ -19,16 +20,114 @@ from backend.utils.business_rules import (
     should_auto_approve_claim,
     # Advanced business rules
     should_escalate_claim,
-    get_claim_priority
+    get_claim_priority,
 )
-from backend.api.auth_dependencies import get_current_user_from_session, get_optional_user
+from backend.api.auth_dependencies import (
+    get_current_user_from_session,
+    get_optional_user,
+    require_permission,
+)
+from backend.security.authentication import Permission
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from backend.database.connection import session_dep
+from backend.models.claim import Claim
 
 router = APIRouter(prefix="/claims", tags=["Claims"])
 logger = logging.getLogger(__name__)
 
+ENABLE_DEMO_MODE = os.getenv("ENABLE_DEMO_MODE", "false").lower() == "true"
+USE_DB = os.getenv("USE_DB", "false").lower() == "true"
+
+
+def _ensure_demo_mode_enabled() -> None:
+    """Guard demo-only, in-memory claims endpoints behind ENABLE_DEMO_MODE.
+
+    These claims endpoints currently use in-memory storage only. When
+    ENABLE_DEMO_MODE is false (e.g., production), they are disabled to avoid
+    accidentally relying on mock data.
+    """
+    if not ENABLE_DEMO_MODE:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "Claims endpoints are mock-only and are available "
+                "only when ENABLE_DEMO_MODE=true."
+            ),
+        )
+
 # In-memory storage
-CLAIMS_DB = {}
+CLAIMS_DB: Dict[str, Dict[str, Any]] = {}
 CLAIM_ID_COUNTER = 1
+
+
+def _get_attr(obj: Any, name: str, default: Any = None) -> Any:
+    """Helper to read attributes from either ORM objects or dicts."""
+
+    if isinstance(obj, dict):
+        return obj.get(name, default)
+    return getattr(obj, name, default)
+
+
+class ClaimStats(BaseModel):
+    """Aggregate statistics for claims, used by dashboard KPI cards."""
+
+    total_claims: int
+    pending_claims: int
+    approved_claims: int
+    rejected_claims: int
+    total_payout: float
+    by_status: Dict[str, Dict[str, float]]
+
+
+def _parse_amount_to_float(amount: Optional[str]) -> float:
+    """Parse amount string like "$5,000" into a float."""
+
+    if not amount:
+        return 0.0
+    try:
+        cleaned = amount.replace("$", "").replace(",", "").strip()
+        return float(cleaned)
+    except Exception:  # pragma: no cover - defensive
+        return 0.0
+
+
+def _compute_claim_stats(claims: Iterable[Any]) -> ClaimStats:
+    claims_list = list(claims)
+    total_claims = len(claims_list)
+
+    pending = 0
+    approved = 0
+    rejected = 0
+    total_payout = 0.0
+    by_status: Dict[str, Dict[str, float]] = {}
+
+    for c in claims_list:
+        status = str(_get_attr(c, "status", "")).lower()
+        amount_raw = _get_attr(c, "amount")
+        amount_val = _parse_amount_to_float(amount_raw)
+
+        if status == "pending":
+            pending += 1
+        elif status in {"approved", "paid"}:
+            approved += 1
+            total_payout += amount_val
+        elif status in {"rejected", "denied"}:
+            rejected += 1
+
+        entry = by_status.setdefault(status or "unknown", {"count": 0, "total_amount": 0.0})
+        entry["count"] += 1
+        entry["total_amount"] += amount_val
+
+    return ClaimStats(
+        total_claims=total_claims,
+        pending_claims=pending,
+        approved_claims=approved,
+        rejected_claims=rejected,
+        total_payout=round(total_payout, 2),
+        by_status={k: {"count": v["count"], "total_amount": round(v["total_amount"], 2)} for k, v in by_status.items()},
+    )
+
 
 # Import policies database for business rules
 from backend.api.policies_api import POLICIES_DB
@@ -178,14 +277,41 @@ class PaginatedClaimsResponse(BaseModel):
     page_size: int
     total_pages: int
 
+
+@router.get("/stats", response_model=ClaimStats)
+async def get_claim_stats(
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
+    """Get aggregate claim statistics for dashboards.
+
+    When USE_DB=true this endpoint aggregates statistics from the real
+    ``claims`` table. When USE_DB=false it falls back to the in-memory
+    ``CLAIMS_DB`` demo store. In that case the values are mock-only and should
+    not be relied on in production.
+    """
+
+    if USE_DB:
+        result = await session.execute(select(Claim))
+        claims = result.scalars().all()
+        return _compute_claim_stats(claims)
+
+    # Demo-only fallback using in-memory store
+    return _compute_claim_stats(CLAIMS_DB.values())
+
 @router.get("", response_model=PaginatedClaimsResponse)
 async def get_claims(
     status: Optional[str] = None,
     claim_type: Optional[str] = None,
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of items per page")
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
-    """Get all claims with pagination, optionally filtered by status or type"""
+    """Get all claims with pagination, optionally filtered by status or type.
+
+    Authentication: Requires VIEW_LEADS permission.
+    """
+    _ensure_demo_mode_enabled()
     claims = list(CLAIMS_DB.values())
 
     # Apply filters
@@ -212,8 +338,15 @@ async def get_claims(
     }
 
 @router.get("/{claim_id}", response_model=ClaimResponse)
-async def get_claim(claim_id: str):
-    """Get a specific claim by ID"""
+async def get_claim(
+    claim_id: str,
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
+    """Get a specific claim by ID.
+
+    Authentication: Requires VIEW_LEADS permission.
+    """
+    _ensure_demo_mode_enabled()
     if claim_id not in CLAIMS_DB:
         raise HTTPException(status_code=404, detail="Claim not found")
     return CLAIMS_DB[claim_id]
@@ -221,12 +354,12 @@ async def get_claim(claim_id: str):
 @router.post("", response_model=ClaimResponse)
 async def create_claim(
     claim: ClaimCreate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.CREATE_LEADS)),
 ):
     """
-    Create a new claim
+    Create a new claim.
 
-    Authentication: Required
+    Authentication: Requires CREATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -237,6 +370,7 @@ async def create_claim(
     - Claim date defaults to today if not provided
     - Due date is auto-set to 30 days from claim date
     """
+    _ensure_demo_mode_enabled()
     global CLAIM_ID_COUNTER
 
     # Business Rule: Verify policy exists
@@ -303,12 +437,12 @@ async def create_claim(
 async def update_claim(
     claim_id: str,
     claim: ClaimUpdate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
 ):
     """
-    Update an existing claim
+    Update an existing claim.
 
-    Authentication: Required
+    Authentication: Requires UPDATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -316,6 +450,7 @@ async def update_claim(
     - Status changes are logged and notifications sent
     - Approved/Paid claims trigger notifications
     """
+    _ensure_demo_mode_enabled()
     if claim_id not in CLAIMS_DB:
         raise HTTPException(status_code=404, detail="Claim not found")
 
@@ -356,17 +491,18 @@ async def update_claim(
 @router.delete("/{claim_id}")
 async def delete_claim(
     claim_id: str,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.DELETE_LEADS)),
 ):
     """
-    Delete a claim
+    Delete a claim.
 
-    Authentication: Required
+    Authentication: Requires DELETE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
     - Deletion is logged for audit purposes
     """
+    _ensure_demo_mode_enabled()
     if claim_id not in CLAIMS_DB:
         raise HTTPException(status_code=404, detail="Claim not found")
 
@@ -389,12 +525,12 @@ async def delete_claim(
 @router.get("/{claim_id}/escalation-check")
 async def check_claim_escalation(
     claim_id: str,
-    current_user: dict = Depends(get_optional_user)
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
     """
-    Check if a claim should be escalated
+    Check if a claim should be escalated.
 
-    Authentication: Optional (read-only)
+    Authentication: Requires VIEW_LEADS permission (read-only).
 
     Returns:
     - Escalation recommendation
@@ -430,6 +566,8 @@ async def check_claim_escalation(
             recommendations.append("Contact customer for status update")
             recommendations.append("Set reminder for follow-up")
 
+    _ensure_demo_mode_enabled()
+
     return {
         "claim_id": claim_id,
         "claim_number": claim['claim_number'],
@@ -440,7 +578,7 @@ async def check_claim_escalation(
         "recommendations": recommendations,
         "claim_status": claim.get('status'),
         "claim_amount": claim.get('amount'),
-        "claim_age_days": self._calculate_claim_age(claim),
+        "claim_age_days": _calculate_claim_age(claim),
         "policy_coverage": f"${policy.get('coverage_amount', 0):,.2f}" if policy else "N/A"
     }
 
@@ -462,12 +600,12 @@ async def escalate_claim(
     claim_id: str,
     escalation_reason: str = Query(..., description="Reason for manual escalation"),
     assigned_to: Optional[str] = Query(None, description="Assign to specific adjuster"),
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
 ):
     """
-    Manually escalate a claim
+    Manually escalate a claim.
 
-    Authentication: Required
+    Authentication: Requires UPDATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -506,6 +644,8 @@ async def escalate_claim(
         f"Assigned to: {assigned_to or 'claims team'}"
     )
 
+    _ensure_demo_mode_enabled()
+
     return {
         "message": "Claim escalated successfully",
         "claim_id": claim_id,
@@ -522,12 +662,12 @@ async def approve_claim(
     claim_id: str,
     approved_amount: Optional[str] = Query(None, description="Approved amount (if different from requested)"),
     notes: Optional[str] = Query(None, description="Approval notes"),
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
 ):
     """
-    Approve a claim
+    Approve a claim.
 
-    Authentication: Required
+    Authentication: Requires UPDATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -573,6 +713,8 @@ async def approve_claim(
         f"Customer: {claim['customer_name']}"
     )
 
+    _ensure_demo_mode_enabled()
+
     return {
         "message": "Claim approved successfully",
         "claim_id": claim_id,
@@ -589,12 +731,12 @@ async def approve_claim(
 async def reject_claim(
     claim_id: str,
     rejection_reason: str = Query(..., description="Reason for rejection"),
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
 ):
     """
-    Reject a claim
+    Reject a claim.
 
-    Authentication: Required
+    Authentication: Requires UPDATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -624,6 +766,8 @@ async def reject_claim(
         f"NOTIFICATION: Claim {claim['claim_number']} rejected. "
         f"Customer: {claim['customer_name']}, Reason: {rejection_reason}"
     )
+
+    _ensure_demo_mode_enabled()
 
     return {
         "message": "Claim rejected",

@@ -22,5 +22,10 @@ class Communication(Base, TimestampMixin):
     
     # Content
     content: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Additional metadata (stored in DB column "metadata" but avoid reserved
+    # attribute name on the SQLAlchemy declarative base)
+    comm_metadata: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSON, nullable=True
+    )
 

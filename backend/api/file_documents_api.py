@@ -1,7 +1,11 @@
+"""File Document Management API.
+
+This router handles upload, download, and management of various file types
+(PDF, Word, Excel, CSV). When ``USE_DB`` is false it returns minimal mock
+responses; these are intended for demo/sandbox use only and should not be
+relied on in production.
 """
-File Document Management API
-Handles upload, download, and management of various file types (PDF, Word, Excel, CSV)
-"""
+
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
@@ -17,6 +21,9 @@ import secrets
 import mimetypes
 from pathlib import Path
 import aiofiles
+
+from backend.api.auth_dependencies import require_permission
+from backend.security.authentication import Permission
 
 router = APIRouter(tags=["file-documents"])
 
@@ -192,9 +199,10 @@ async def upload_document(
     tags: Optional[str] = Form(None),  # JSON string
     lead_id: Optional[int] = Form(None),
     access_level: str = Form("private"),
-    user_id: Optional[int] = Form(None),
+    user_id: Optional[int] = Form(None),  # TODO: derive from current_user when users are fully DB-backed
     session: AsyncSession = Depends(session_dep),
-    request: Request = None
+    request: Request = None,
+    current_user: dict = Depends(require_permission(Permission.CREATE_LEADS)),
 ):
     """Upload a new document"""
 
@@ -225,7 +233,9 @@ async def upload_document(
             pass
 
     if not USE_DB:
-        # In-memory mode - return mock response
+        # In-memory mode - return mock response.
+        # NOTE: This behavior is mock-only; for production configure USE_DB=true
+        # and back this API with a real database.
         return {
             "id": 1,
             "filename": filename,
@@ -245,7 +255,7 @@ async def upload_document(
             "access_level": access_level,
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc),
-            "last_accessed_at": None
+            "last_accessed_at": None,
         }
 
     # Create database record
@@ -288,18 +298,20 @@ async def list_documents(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     sort_by: str = Query("created_at"),
-    sort_order: str = Query("desc")
+    sort_order: str = Query("desc"),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
     """List documents with filtering and pagination"""
 
     if not USE_DB:
-        # Return mock data for in-memory mode
+        # Return mock data for in-memory mode.
+        # NOTE: This behavior is mock-only and should not be relied on in production.
         return {
             "items": [],
             "total": 0,
             "page": page,
             "page_size": page_size,
-            "total_pages": 0
+            "total_pages": 0,
         }
 
     # Build query
@@ -353,12 +365,14 @@ async def get_document(
     document_id: int,
     session: AsyncSession = Depends(session_dep),
     user_id: Optional[int] = Query(None),
-    request: Request = None
+    request: Request = None,
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
     """Get document details"""
 
     if not USE_DB:
-        raise HTTPException(status_code=404, detail="Document not found")
+        # In-memory mode cannot look up real documents; this is mock-only behavior.
+        raise HTTPException(status_code=404, detail="Document not found (mock-only mode)")
 
     result = await session.execute(
         select(FileDocument).where(FileDocument.id == document_id)
@@ -383,12 +397,13 @@ async def download_document(
     document_id: int,
     session: AsyncSession = Depends(session_dep),
     user_id: Optional[int] = Query(None),
-    request: Request = None
+    request: Request = None,
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
     """Download a document"""
 
     if not USE_DB:
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(status_code=404, detail="Document not found (mock-only mode)")
 
     result = await session.execute(
         select(FileDocument).where(FileDocument.id == document_id)
@@ -422,12 +437,15 @@ async def delete_document(
     session: AsyncSession = Depends(session_dep),
     user_id: Optional[int] = Query(None),
     permanent: bool = Query(False),
-    request: Request = None
+    request: Request = None,
+    current_user: dict = Depends(require_permission(Permission.DELETE_LEADS)),
 ):
     """Delete a document (soft delete by default)"""
 
     if not USE_DB:
-        return {"status": "success", "message": "Document deleted"}
+        # In-memory mode: nothing to delete from DB; this is mock-only. Still
+        # report success so the UI can behave consistently in demos.
+        return {"status": "success", "message": "Document deleted (mock-only mode)"}
 
     result = await session.execute(
         select(FileDocument).where(FileDocument.id == document_id)
@@ -458,17 +476,19 @@ async def delete_document(
 
 @router.get("/stats")
 async def get_document_stats(
-    session: AsyncSession = Depends(session_dep)
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
     """Get document statistics"""
 
     if not USE_DB:
+        # Mock-only stats when no DB is configured.
         return {
             "total_documents": 0,
             "total_size": 0,
             "by_category": {},
             "by_type": {},
-            "recent_uploads": 0
+            "recent_uploads": 0,
         }
 
     # Total documents

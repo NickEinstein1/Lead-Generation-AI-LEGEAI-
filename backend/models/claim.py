@@ -25,5 +25,10 @@ class Claim(Base, TimestampMixin):
     
     # Additional details
     description: Mapped[Optional[str]] = mapped_column(String(1000), nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Additional metadata (stored in DB column "metadata" but avoid reserved
+    # attribute name on the SQLAlchemy declarative base)
+    claim_metadata: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSON, nullable=True
+    )
 

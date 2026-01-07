@@ -1,11 +1,16 @@
+"""Reports API - CRUD endpoints for reports management.
+
+These endpoints are currently backed by in-memory storage and are intended for
+demo/sandbox use only. They are guarded by the ENABLE_DEMO_MODE feature flag to
+avoid accidentally relying on mock data in production.
 """
-Reports API - CRUD endpoints for reports management
-"""
+
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field, validator
 from typing import List, Optional, Dict, Any
 import logging
 from datetime import datetime
+import os
 from backend.utils.validators import (
     validate_string_length,
     validate_choice,
@@ -13,10 +18,31 @@ from backend.utils.validators import (
     ValidationError
 )
 from backend.utils.business_rules import validate_date_range
-from backend.api.auth_dependencies import get_current_user_from_session, get_optional_user
+from backend.api.auth_dependencies import require_permission
+from backend.security.authentication import Permission
 
 router = APIRouter(prefix="/reports", tags=["Reports"])
 logger = logging.getLogger(__name__)
+
+ENABLE_DEMO_MODE = os.getenv("ENABLE_DEMO_MODE", "false").lower() == "true"
+
+
+def _ensure_demo_mode_enabled() -> None:
+    """Guard demo-only, in-memory report endpoints behind ENABLE_DEMO_MODE.
+
+    When ENABLE_DEMO_MODE is false (e.g., production), these endpoints return
+    501 to make it clear that they are mock-only.
+    """
+
+    if not ENABLE_DEMO_MODE:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "Reports endpoints are mock-only and are available "
+                "only when ENABLE_DEMO_MODE=true."
+            ),
+        )
+
 
 # In-memory storage
 REPORTS_DB = {}
@@ -185,9 +211,16 @@ async def get_reports(
     report_type: Optional[str] = None,
     status: Optional[str] = None,
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of items per page")
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
-    """Get all reports with pagination, optionally filtered by type or status"""
+    """Get all reports with pagination, optionally filtered by type or status.
+
+    Authentication: Requires VIEW_LEADS permission.
+    """
+
+    _ensure_demo_mode_enabled()
+
     reports = list(REPORTS_DB.values())
 
     # Apply filters
@@ -214,8 +247,17 @@ async def get_reports(
     }
 
 @router.get("/{report_id}", response_model=ReportResponse)
-async def get_report(report_id: str):
-    """Get a specific report by ID"""
+async def get_report(
+    report_id: str,
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
+    """Get a specific report by ID.
+
+    Authentication: Requires VIEW_LEADS permission.
+    """
+
+    _ensure_demo_mode_enabled()
+
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail="Report not found")
     return REPORTS_DB[report_id]
@@ -223,7 +265,7 @@ async def get_report(report_id: str):
 @router.post("", response_model=ReportResponse)
 async def create_report(
     report: ReportCreate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.CREATE_LEADS)),
 ):
     """
     Create a new report
@@ -238,6 +280,8 @@ async def create_report(
     - Report data is validated based on report type
     """
     global REPORT_ID_COUNTER
+
+    _ensure_demo_mode_enabled()
 
     report_dict = report.dict()
 
@@ -294,7 +338,7 @@ async def create_report(
 async def update_report(
     report_id: str,
     report: ReportUpdate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
 ):
     """
     Update an existing report
@@ -306,6 +350,8 @@ async def update_report(
     - Status changes are logged
     - Completed reports cannot be modified (data only)
     """
+    _ensure_demo_mode_enabled()
+
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail="Report not found")
 
@@ -328,7 +374,7 @@ async def update_report(
 @router.delete("/{report_id}")
 async def delete_report(
     report_id: str,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.DELETE_LEADS)),
 ):
     """
     Delete a report
@@ -336,6 +382,8 @@ async def delete_report(
     Authentication: Required
     Headers: X-Session-ID or X-API-Key
     """
+    _ensure_demo_mode_enabled()
+
     if report_id not in REPORTS_DB:
         raise HTTPException(status_code=404, detail="Report not found")
 

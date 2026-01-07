@@ -4,15 +4,18 @@ import { useRouter } from "next/navigation";
 import DashboardLayout from "@/components/DashboardLayout";
 import { fileDocumentsApi } from "@/lib/api";
 
-export default function DocumentsPage() {
-  const router = useRouter();
-  const [showNewDocModal, setShowNewDocModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingDocument, setEditingDocument] = useState<any>(null);
-  const [selectedDocument, setSelectedDocument] = useState<any>(null);
-  const [documents, setDocuments] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+	export default function DocumentsPage() {
+	  const router = useRouter();
+	  const [showNewDocModal, setShowNewDocModal] = useState(false);
+	  const [showEditModal, setShowEditModal] = useState(false);
+	  const [editingDocument, setEditingDocument] = useState<any>(null);
+	  const [selectedDocument, setSelectedDocument] = useState<any>(null);
+	  const [documents, setDocuments] = useState<any[]>([]);
+	  const [loading, setLoading] = useState(true);
+	  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+	  // Aggregated stats for dashboard cards
+	  const [stats, setStats] = useState<any | null>(null);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -21,23 +24,33 @@ export default function DocumentsPage() {
     status: "active"
   });
 
-  // Fetch documents on mount
-  useEffect(() => {
-    fetchDocuments();
-  }, []);
+	  // Fetch documents and stats on mount
+	  useEffect(() => {
+	    fetchDocuments();
+	    fetchDocumentStats();
+	  }, []);
 
-  const fetchDocuments = async () => {
-    try {
-      setLoading(true);
-      const response = await fileDocumentsApi.getAll({ status: 'active' });
-      setDocuments(response.documents || []);
-    } catch (error) {
-      console.error("Failed to fetch documents:", error);
-      alert("Failed to load documents. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+	  const fetchDocuments = async () => {
+	    try {
+	      setLoading(true);
+	      const response = await fileDocumentsApi.getAll({ status: 'active' });
+	      setDocuments(response.documents || []);
+	    } catch (error) {
+	      console.error("Failed to fetch documents:", error);
+	      alert("Failed to load documents. Please try again.");
+	    } finally {
+	      setLoading(false);
+	    }
+	  };
+
+	  const fetchDocumentStats = async () => {
+	    try {
+	      const data = await fileDocumentsApi.getStats();
+	      setStats(data);
+	    } catch (error) {
+	      console.error("Failed to fetch document stats:", error);
+	    }
+	  };
 
   const handleCreateDocument = async () => {
     if (!formData.title || !formData.category || !selectedFile) {
@@ -114,53 +127,73 @@ export default function DocumentsPage() {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Total Documents</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">1,245</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">All time</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Signed</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">1,180</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">94.8% signed</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Pending Signature</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">42</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Awaiting signature</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Avg Signing Time</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">2.3 days</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">From creation</p>
-          </div>
-        </div>
+	        {/* Stats */}
+	        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Total Documents</p>
+	            <p className="text-3xl font-bold text-blue-700 mt-2">
+	              {stats ? stats.total_documents.toLocaleString() : documents.length.toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Across all types</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Signed</p>
+	            <p className="text-3xl font-bold text-emerald-600 mt-2">
+	              {stats ? stats.signed_documents.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats && stats.total_documents
+	                ? `${Math.round((stats.signed_documents / Math.max(1, stats.total_documents)) * 100)}% of docs`
+	                : "Signed documents"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Pending Signature</p>
+	            <p className="text-3xl font-bold text-amber-600 mt-2">
+	              {stats ? stats.pending_signature_documents.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Awaiting completion</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Recent Uploads (7d)</p>
+	            <p className="text-3xl font-bold text-purple-600 mt-2">
+	              {stats ? stats.recent_uploads_last_7_days.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Last 7 days</p>
+	          </div>
+	        </div>
 
-        {/* Document Types */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">📋 Agreements</p>
-            <p className="text-2xl font-bold text-blue-700 mt-2">456</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">36.6% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">📄 Policies</p>
-            <p className="text-2xl font-bold text-amber-700 mt-2">389</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">31.2% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">📝 Forms</p>
-            <p className="text-2xl font-bold text-red-700 mt-2">267</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">21.4% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">🔗 Other</p>
-            <p className="text-2xl font-bold text-emerald-700 mt-2">133</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">10.7% of total</p>
-          </div>
-        </div>
+	        {/* Document Types */}
+	        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">📋 Agreements</p>
+	            <p className="text-2xl font-bold text-blue-700 mt-2">
+	              {stats ? (stats.by_category?.agreement || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By category</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">📄 Policies</p>
+	            <p className="text-2xl font-bold text-amber-700 mt-2">
+	              {stats ? (stats.by_category?.policy || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By category</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">📝 Forms</p>
+	            <p className="text-2xl font-bold text-red-700 mt-2">
+	              {stats ? (stats.by_category?.form || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By category</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">🔗 Other</p>
+	            <p className="text-2xl font-bold text-emerald-700 mt-2">
+	              {stats ? (stats.by_category?.other || 0).toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">By category</p>
+	          </div>
+	        </div>
 
         {/* Documents Table */}
         <div className="bg-white border-2 border-blue-200 rounded-lg shadow-md overflow-hidden">

@@ -23,5 +23,10 @@ class Report(Base, TimestampMixin):
     # Report data
     data: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
     file_path: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
-    metadata: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+
+    # Additional metadata (stored in DB column "metadata" but avoid reserved
+    # attribute name on the SQLAlchemy declarative base)
+    report_metadata: Mapped[Optional[dict]] = mapped_column(
+        "metadata", JSON, nullable=True
+    )
 

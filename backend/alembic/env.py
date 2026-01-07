@@ -1,5 +1,7 @@
 from logging.config import fileConfig
 import os
+import sys
+from pathlib import Path
 
 from sqlalchemy import engine_from_config
 from sqlalchemy import pool
@@ -15,13 +17,23 @@ config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
+# Ensure project root is on sys.path so "backend" package can be imported
+# even when running Alembic from the backend/ directory.
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+# Load .env from project root before reading DATABASE_URL
+from dotenv import load_dotenv
+load_dotenv(PROJECT_ROOT / ".env")
+
 # add your model's MetaData object here
 # for 'autogenerate' support
 from backend.models.base import Base
 
 # Import all models so Alembic can detect them
 from backend.models.user import User
-from backend.models.session import Session
+from backend.models.session import UserSession
 from backend.models.lead import Lead
 from backend.models.score import Score
 from backend.models.document import Document

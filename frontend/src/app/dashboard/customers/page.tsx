@@ -11,6 +11,9 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // Aggregated stats for dashboard cards
+  const [stats, setStats] = useState<any | null>(null);
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -32,6 +35,7 @@ export default function CustomersPage() {
   // Fetch customers on mount and when page changes
   useEffect(() => {
     fetchCustomers();
+    fetchCustomerStats();
   }, [currentPage, pageSize]);
 
   const fetchCustomers = async () => {
@@ -46,6 +50,15 @@ export default function CustomersPage() {
       alert("Failed to load customers. Please try again.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchCustomerStats = async () => {
+    try {
+      const data = await customersApi.getStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Failed to fetch customer stats:", error);
     }
   };
 
@@ -153,23 +166,45 @@ export default function CustomersPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Customers</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">48</p>
-            <p className="text-xs text-green-600 font-medium mt-2">↑ 5 this month</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">
+              {stats ? stats.total_customers.toLocaleString() : totalCustomers.toLocaleString()}
+            </p>
+            <p className="text-xs text-green-600 font-medium mt-2">
+              {stats ? `↑ ${stats.new_customers_last_30_days} in last 30 days` : "Customer count"}
+            </p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Active</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">42</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">87.5% of total</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">
+              {stats ? stats.active_customers.toLocaleString() : "-"}
+            </p>
+            <p className="text-xs text-slate-600 font-medium mt-2">
+              {stats
+                ? `${Math.round((stats.active_customers / Math.max(1, stats.total_customers)) * 100)}% of total`
+                : "Active customers"}
+            </p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Policies</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">156</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">3.25 avg per customer</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">
+              {stats ? stats.total_policies.toLocaleString() : "-"}
+            </p>
+            <p className="text-xs text-slate-600 font-medium mt-2">
+              {stats
+                ? `${(stats.total_policies / Math.max(1, stats.total_customers)).toFixed(2)} avg per customer`
+                : "Policies per customer"}
+            </p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Value</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">$2.4M</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Average: $50K</p>
+            <p className="text-3xl font-bold text-amber-600 mt-2">
+              {stats ? `$${stats.total_value.toLocaleString()}` : "-"}
+            </p>
+            <p className="text-xs text-slate-600 font-medium mt-2">
+              {stats
+                ? `Average: $${(stats.total_value / Math.max(1, stats.total_customers)).toFixed(0)}`
+                : "Total customer value"}
+            </p>
           </div>
         </div>
 

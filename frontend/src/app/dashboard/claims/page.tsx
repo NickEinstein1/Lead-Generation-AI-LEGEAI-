@@ -11,6 +11,9 @@ export default function ClaimsPage() {
   const [claims, setClaims] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
+	// Aggregated stats for dashboard cards
+	const [stats, setStats] = useState<any | null>(null);
+
   const [formData, setFormData] = useState({
     policy_number: "",
     customer_name: "",
@@ -22,10 +25,11 @@ export default function ClaimsPage() {
     description: ""
   });
 
-  // Fetch claims on mount
-  useEffect(() => {
-    fetchClaims();
-  }, []);
+	// Fetch claims and stats on mount
+	useEffect(() => {
+		fetchClaims();
+		fetchClaimStats();
+	}, []);
 
   const fetchClaims = async () => {
     try {
@@ -40,6 +44,15 @@ export default function ClaimsPage() {
       setLoading(false);
     }
   };
+
+	const fetchClaimStats = async () => {
+		try {
+			const data = await claimsApi.getStats();
+			setStats(data);
+		} catch (error) {
+			console.error("Failed to fetch claim stats:", error);
+		}
+	};
 
   const handleCreateClaim = async () => {
     if (!formData.policy_number || !formData.customer_name || !formData.claim_type || !formData.amount || !formData.claim_date || !formData.due_date) {
@@ -123,48 +136,80 @@ export default function ClaimsPage() {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Total Claims</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">248</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">All time</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Pending</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">8</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Awaiting review</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Approved</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">215</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">86.7% approval rate</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Total Payout</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">$1.2M</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Avg: $4,839</p>
-          </div>
-        </div>
+	        {/* Stats */}
+	        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Total Claims</p>
+	            <p className="text-3xl font-bold text-blue-700 mt-2">
+	              {stats ? stats.total_claims.toLocaleString() : claims.length.toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">All time</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Pending</p>
+	            <p className="text-3xl font-bold text-amber-600 mt-2">
+	              {stats ? stats.pending_claims.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Currently open</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Approved</p>
+	            <p className="text-3xl font-bold text-emerald-600 mt-2">
+	              {stats ? stats.approved_claims.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats ? `Total payout: $${stats.total_payout.toLocaleString()}` : "Approved claims"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Rejected</p>
+	            <p className="text-3xl font-bold text-red-600 mt-2">
+	              {stats ? stats.rejected_claims.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats && stats.total_claims
+	                ? `${Math.round((stats.rejected_claims / Math.max(1, stats.total_claims)) * 100)}% rejection rate`
+	                : "Rejection rate"}
+	            </p>
+	          </div>
+	        </div>
 
-        {/* Claims by Status */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">✓ Approved</p>
-            <p className="text-2xl font-bold text-emerald-600 mt-2">215</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">$1.04M total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">⏳ Pending</p>
-            <p className="text-2xl font-bold text-amber-600 mt-2">8</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">$31.75K total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">✗ Rejected</p>
-            <p className="text-2xl font-bold text-red-600 mt-2">25</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">$156.25K total</p>
-          </div>
-        </div>
+	        {/* Claims by Status */}
+	        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">✓ Approved</p>
+	            <p className="text-2xl font-bold text-emerald-600 mt-2">
+	              {stats ? stats.approved_claims.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats
+	                ? `$${(stats.by_status?.approved?.total_amount || 0).toLocaleString()} total`
+	                : "Approved total"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">⏳ Pending</p>
+	            <p className="text-2xl font-bold text-amber-600 mt-2">
+	              {stats ? stats.pending_claims.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats
+	                ? `$${(stats.by_status?.pending?.total_amount || 0).toLocaleString()} total`
+	                : "Pending total"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">✗ Rejected</p>
+	            <p className="text-2xl font-bold text-red-600 mt-2">
+	              {stats ? stats.rejected_claims.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats
+	                ? `$${(stats.by_status?.rejected?.total_amount || 0).toLocaleString()} total`
+	                : "Rejected total"}
+	            </p>
+	          </div>
+	        </div>
 
         {/* Claims Table */}
         <div className="bg-white border-2 border-blue-200 rounded-lg shadow-md overflow-hidden">

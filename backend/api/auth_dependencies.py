@@ -5,32 +5,36 @@ from fastapi import Depends, HTTPException, status, Header
 from typing import Optional
 from backend.security.authentication import auth_manager, UserRole, Permission
 import logging
+import os
 
 logger = logging.getLogger(__name__)
 
+# Feature flags / config
+ENABLE_DEMO_MODE = os.getenv("ENABLE_DEMO_MODE", "false").lower() == "true"
+ALLOW_DEV_API_KEY = os.getenv("ALLOW_DEV_API_KEY", "false").lower() == "true"
+DEV_API_KEY = os.getenv("DEV_API_KEY", "dev-api-key-12345")
+
 async def get_current_user_from_session(
     x_session_id: Optional[str] = Header(None),
-    x_api_key: Optional[str] = Header(None)
+    x_api_key: Optional[str] = Header(None),
 ):
+    """Resolve the current user from a session ID or (optionally) a dev API key.
+
+    - Primary: validates ``X-Session-ID`` using ``AuthenticationManager``.
+    - Secondary (dev/demo only): accepts ``X-API-Key`` but only when
+      ``ALLOW_DEV_API_KEY`` or ``ENABLE_DEMO_MODE`` is true.
     """
-    Get current user from session ID or API key
-    
-    This dependency can be used to protect endpoints:
-    - Checks for X-Session-ID header (from login)
-    - Falls back to X-API-Key for API access
-    - Raises 401 if neither is valid
-    """
-    
-    # Allow API key for development/testing
-    if x_api_key == "dev-api-key-12345":
-        logger.info("Request authenticated with dev API key")
+
+    # Allow API key for development/testing when explicitly enabled
+    if x_api_key and x_api_key == DEV_API_KEY and (ALLOW_DEV_API_KEY or ENABLE_DEMO_MODE):
+        logger.info("Request authenticated with dev API key (demo/demo-like mode)")
         return {
             "user_id": "api-user",
             "username": "api-user",
             "role": UserRole.API_CLIENT.value,
-            "permissions": [Permission.API_ACCESS.value]
+            "permissions": [Permission.API_ACCESS.value],
         }
-    
+
     # Check session ID
     if x_session_id:
         valid, user = auth_manager.validate_session(x_session_id)
@@ -40,9 +44,9 @@ async def get_current_user_from_session(
                 "user_id": user.user_id,
                 "username": user.username,
                 "role": user.role.value,
-                "permissions": [p.value for p in user.permissions]
+                "permissions": [p.value for p in user.permissions],
             }
-    
+
     # No valid authentication
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

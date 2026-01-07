@@ -3,9 +3,10 @@ Policies API - CRUD endpoints for policy management
 """
 from fastapi import APIRouter, HTTPException, Query, Depends
 from pydantic import BaseModel, Field, validator
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Iterable
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
+import os
 from backend.utils.validators import (
     validate_string_length,
     validate_choice,
@@ -25,16 +26,133 @@ from backend.utils.business_rules import (
     is_policy_eligible_for_renewal,
     calculate_renewal_premium,
     should_auto_renew_policy,
-    can_cancel_policy
+    can_cancel_policy,
 )
-from backend.api.auth_dependencies import get_current_user_from_session, get_optional_user
+from backend.api.auth_dependencies import (
+    get_current_user_from_session,
+    get_optional_user,
+    require_permission,
+)
+from backend.security.authentication import Permission
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+from backend.database.connection import session_dep
+from backend.models.policy import Policy
 
 router = APIRouter(prefix="/policies", tags=["Policies"])
 logger = logging.getLogger(__name__)
 
+ENABLE_DEMO_MODE = os.getenv("ENABLE_DEMO_MODE", "false").lower() == "true"
+USE_DB = os.getenv("USE_DB", "false").lower() == "true"
+
+
+def _ensure_demo_mode_enabled() -> None:
+    """Guard demo-only, in-memory policy endpoints behind ENABLE_DEMO_MODE.
+
+    These policy endpoints currently use in-memory storage only. When
+    ENABLE_DEMO_MODE is false (e.g., production), they are disabled to avoid
+    accidentally relying on mock data.
+    """
+    if not ENABLE_DEMO_MODE:
+        raise HTTPException(
+            status_code=501,
+            detail=(
+                "Policies endpoints are mock-only and are available "
+                "only when ENABLE_DEMO_MODE=true."
+            ),
+        )
+
 # In-memory storage
-POLICIES_DB = {}
+POLICIES_DB: Dict[str, Dict[str, Any]] = {}
 POLICY_ID_COUNTER = 1
+
+
+def _get_attr(obj: Any, name: str, default: Any = None) -> Any:
+  """Helper to read attributes from either ORM objects or dicts.
+
+  This lets us share aggregation logic between the in-memory demo store and
+  real database models.
+  """
+
+  if isinstance(obj, dict):
+      return obj.get(name, default)
+  return getattr(obj, name, default)
+
+
+class PolicyStats(BaseModel):
+    """Aggregate statistics for policies, used by dashboard KPI cards."""
+
+    total_policies: int
+    active_policies: int
+    expiring_soon: int
+    total_premium_value: float
+    by_type: Dict[str, int]
+
+
+def _parse_renewal_date(value: Optional[str]) -> Optional[datetime]:
+    if not value:
+        return None
+    try:
+        if "T" in value:
+            return datetime.fromisoformat(value)
+        return datetime.strptime(value, "%Y-%m-%d")
+    except Exception:  # pragma: no cover - defensive
+        return None
+
+
+def _parse_premium_to_float(premium: Optional[str]) -> float:
+    """Parse premium string like "$1,200/yr" or "1200" into a float."""
+
+    if not premium:
+        return 0.0
+    try:
+        cleaned = (
+            premium.replace("$", "")
+            .replace(",", "")
+            .replace("/yr", "")
+            .replace("/year", "")
+            .strip()
+        )
+        return float(cleaned)
+    except Exception:  # pragma: no cover - defensive
+        return 0.0
+
+
+def _compute_policy_stats(policies: Iterable[Any]) -> PolicyStats:
+    policies_list = list(policies)
+    total_policies = len(policies_list)
+
+    active = 0
+    expiring_soon = 0
+    total_premium_value = 0.0
+    by_type: Dict[str, int] = {}
+
+    thirty_days_from_now = datetime.now() + timedelta(days=30)
+
+    for p in policies_list:
+        status = str(_get_attr(p, "status", "")).lower()
+        if status == "active":
+            active += 1
+
+        policy_type = str(_get_attr(p, "policy_type", "unknown")).lower()
+        by_type[policy_type] = by_type.get(policy_type, 0) + 1
+
+        premium_raw = _get_attr(p, "premium")
+        total_premium_value += _parse_premium_to_float(premium_raw)
+
+        renewal_raw = _get_attr(p, "renewal_date")
+        renewal_dt = _parse_renewal_date(renewal_raw)
+        if renewal_dt and datetime.now() <= renewal_dt <= thirty_days_from_now:
+            expiring_soon += 1
+
+    return PolicyStats(
+        total_policies=total_policies,
+        active_policies=active,
+        expiring_soon=expiring_soon,
+        total_premium_value=round(total_premium_value, 2),
+        by_type=by_type,
+    )
+
 
 # Import customers database for business rules
 from backend.api.customers_api import CUSTOMERS_DB
@@ -166,14 +284,41 @@ class PaginatedPoliciesResponse(BaseModel):
     page_size: int
     total_pages: int
 
+
+@router.get("/stats", response_model=PolicyStats)
+async def get_policy_stats(
+    session: AsyncSession = Depends(session_dep),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
+    """Get aggregate policy statistics for dashboards.
+
+    When USE_DB=true this endpoint aggregates statistics from the real
+    ``policies`` table. When USE_DB=false it falls back to the in-memory
+    ``POLICIES_DB`` demo store. In that case the values are mock-only and
+    should not be relied on in production.
+    """
+
+    if USE_DB:
+        result = await session.execute(select(Policy))
+        policies = result.scalars().all()
+        return _compute_policy_stats(policies)
+
+    # Demo-only fallback using in-memory store
+    return _compute_policy_stats(POLICIES_DB.values())
+
 @router.get("", response_model=PaginatedPoliciesResponse)
 async def get_policies(
     policy_type: Optional[str] = None,
     status: Optional[str] = None,
     page: int = Query(1, ge=1, description="Page number (starts at 1)"),
-    page_size: int = Query(10, ge=1, le=100, description="Number of items per page")
+    page_size: int = Query(10, ge=1, le=100, description="Number of items per page"),
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
-    """Get all policies with pagination, optionally filtered by type or status"""
+    """Get all policies with pagination, optionally filtered by type or status.
+
+    Authentication: Requires VIEW_LEADS permission.
+    """
+    _ensure_demo_mode_enabled()
     policies = list(POLICIES_DB.values())
 
     # Apply filters
@@ -200,8 +345,15 @@ async def get_policies(
     }
 
 @router.get("/{policy_id}", response_model=PolicyResponse)
-async def get_policy(policy_id: str):
-    """Get a specific policy by ID"""
+async def get_policy(
+    policy_id: str,
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
+):
+    """Get a specific policy by ID.
+
+    Authentication: Requires VIEW_LEADS permission.
+    """
+    _ensure_demo_mode_enabled()
     if policy_id not in POLICIES_DB:
         raise HTTPException(status_code=404, detail="Policy not found")
     return POLICIES_DB[policy_id]
@@ -209,12 +361,12 @@ async def get_policy(policy_id: str):
 @router.post("", response_model=PolicyResponse)
 async def create_policy(
     policy: PolicyCreate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.CREATE_LEADS)),
 ):
     """
-    Create a new policy
+    Create a new policy.
 
-    Authentication: Required
+    Authentication: Requires CREATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -225,6 +377,7 @@ async def create_policy(
     - Start date must be before end date
     - Customer's policy count and total value are updated
     """
+    _ensure_demo_mode_enabled()
     global POLICY_ID_COUNTER
 
     # Business Rule: Verify customer exists
@@ -297,12 +450,12 @@ async def create_policy(
 async def update_policy(
     policy_id: str,
     policy: PolicyUpdate,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
 ):
     """
-    Update an existing policy
+    Update an existing policy.
 
-    Authentication: Required
+    Authentication: Requires UPDATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -310,6 +463,7 @@ async def update_policy(
     - Date range must be valid if changed
     - Customer's policy statistics are updated if coverage changes
     """
+    _ensure_demo_mode_enabled()
     if policy_id not in POLICIES_DB:
         raise HTTPException(status_code=404, detail="Policy not found")
 
@@ -350,17 +504,18 @@ async def update_policy(
 @router.delete("/{policy_id}")
 async def delete_policy(
     policy_id: str,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.DELETE_LEADS)),
 ):
     """
-    Delete a policy
+    Delete a policy.
 
-    Authentication: Required
+    Authentication: Requires DELETE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
     - Customer's policy statistics are updated after deletion
     """
+    _ensure_demo_mode_enabled()
     if policy_id not in POLICIES_DB:
         raise HTTPException(status_code=404, detail="Policy not found")
 
@@ -386,12 +541,12 @@ async def delete_policy(
 @router.post("/{policy_id}/renew", response_model=PolicyResponse)
 async def renew_policy(
     policy_id: str,
-    current_user: dict = Depends(get_current_user_from_session)
+    current_user: dict = Depends(require_permission(Permission.UPDATE_LEADS)),
 ):
     """
-    Renew an existing policy
+    Renew an existing policy.
 
-    Authentication: Required
+    Authentication: Requires UPDATE_LEADS permission.
     Headers: X-Session-ID or X-API-Key
 
     Business Rules:
@@ -482,18 +637,20 @@ async def renew_policy(
         f"Claims history: {len(policy_claims)} claims"
     )
 
+    _ensure_demo_mode_enabled()
+
     return new_policy_data
 
 
 @router.get("/{policy_id}/renewal-quote")
 async def get_renewal_quote(
     policy_id: str,
-    current_user: dict = Depends(get_optional_user)
+    current_user: dict = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
     """
-    Get a renewal quote for a policy without actually renewing it
+    Get a renewal quote for a policy without actually renewing it.
 
-    Authentication: Optional (read-only)
+    Authentication: Requires VIEW_LEADS permission (read-only).
 
     Returns:
     - Eligibility status
@@ -542,6 +699,8 @@ async def get_renewal_quote(
     difference = new_premium - current_premium
     percentage_change = (difference / current_premium) * 100
 
+    _ensure_demo_mode_enabled()
+
     return {
         "eligible": True,
         "policy_number": policy['policy_number'],
@@ -552,7 +711,7 @@ async def get_renewal_quote(
         "percentage_change": f"{percentage_change:+.1f}%",
         "is_increase": difference > 0,
         "claims_count": len(policy_claims),
-        "customer_tenure_years": self._get_customer_tenure(customer) if customer else 0,
+        "customer_tenure_years": _get_customer_tenure(customer) if customer else 0,
         "message": f"Renewal premium {'increased' if difference > 0 else 'decreased'} by ${abs(difference):.2f} ({abs(percentage_change):.1f}%)"
     }
 

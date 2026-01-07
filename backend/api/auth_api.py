@@ -2,17 +2,19 @@ from fastapi import APIRouter, HTTPException, Request, Depends
 from pydantic import BaseModel
 from typing import Optional
 import os
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from datetime import datetime, timedelta, timezone
 import secrets
 
-from backend.security.authentication import auth_manager, UserRole
+from backend.security.authentication import auth_manager, UserRole, User, Session
 from backend.database.connection import SessionLocal, session_dep
 from backend.models.user import User as UserModel
 from backend.models.session import UserSession as SessionModel
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
 
 class RegisterRequest(BaseModel):
     username: Optional[str] = None
@@ -25,6 +27,62 @@ class LoginRequest(BaseModel):
     email: Optional[str] = None
     password: str
 
+
+def _hydrate_in_memory_from_db_user(
+    db_user: UserModel,
+    session_id: str,
+    expires_at: datetime,
+    ip: str,
+    ua: str,
+) -> None:
+    """Mirror a DB-backed user + session into the in-memory AuthenticationManager.
+
+    This keeps auth_dependencies.get_current_user_from_session (which relies on
+    auth_manager.validate_session) working consistently when USE_DB=true.
+    """
+    try:
+        user_id = str(db_user.id)
+        try:
+            role_enum = UserRole(db_user.role)
+        except ValueError:
+            # Fallback to AGENT if role string is unexpected
+            role_enum = UserRole.AGENT
+        permissions = auth_manager.role_permissions.get(role_enum, [])
+
+        # Upsert in-memory user
+        auth_manager.users[user_id] = User(
+            user_id=user_id,
+            username=db_user.username,
+            email=db_user.email,
+            password_hash=db_user.password_hash,
+            role=role_enum,
+            permissions=permissions,
+            is_active=getattr(db_user, "is_active", True),
+            created_at=getattr(db_user, "created_at", datetime.now(timezone.utc)),
+            last_login=getattr(db_user, "last_login", None),
+        )
+
+        # Clean up any existing sessions for this user to avoid unbounded growth
+        try:
+            auth_manager._cleanup_user_sessions(user_id)  # type: ignore[attr-defined]
+        except Exception:
+            # Best-effort only; don't break login/registration on cleanup issues
+            logger.debug("Failed to cleanup user sessions during hydration", exc_info=True)
+
+        # Store in-memory session mirror
+        auth_manager.sessions[session_id] = Session(
+            session_id=session_id,
+            user_id=user_id,
+            created_at=datetime.now(timezone.utc),
+            expires_at=expires_at,
+            ip_address=ip,
+            user_agent=ua,
+        )
+    except Exception:
+        # Hydration should never cause auth failure
+        logger.exception("Failed to hydrate in-memory auth state from DB user")
+
+
 @router.post("/register")
 async def register(payload: RegisterRequest, req: Request):
     try:
@@ -33,7 +91,7 @@ async def register(payload: RegisterRequest, req: Request):
         if not username or not email or not payload.password:
             raise HTTPException(status_code=400, detail="username/email and password are required")
 
-        role_str = (payload.role or UserRole.AGENT.value)
+        role_str = payload.role or UserRole.AGENT.value
         try:
             role = UserRole(role_str.lower())
         except ValueError:
@@ -44,11 +102,16 @@ async def register(payload: RegisterRequest, req: Request):
         ua = req.headers.get("user-agent", "")
 
         if use_db:
+            # Full DB-backed registration path
             async with SessionLocal() as session:
                 # uniqueness check
-                exists = (await session.execute(
-                    select(UserModel).where((UserModel.username == username) | (UserModel.email == email))
-                )).scalar_one_or_none()
+                exists = (
+                    await session.execute(
+                        select(UserModel).where(
+                            (UserModel.username == username) | (UserModel.email == email)
+                        )
+                    )
+                ).scalar_one_or_none()
                 if exists:
                     raise HTTPException(status_code=400, detail="User already exists")
 
@@ -58,7 +121,9 @@ async def register(payload: RegisterRequest, req: Request):
                     email=email,
                     password_hash=pwd_hash,
                     role=role.value,
-                    permissions=[p.value for p in auth_manager.role_permissions.get(role, [])],
+                    permissions=[
+                        p.value for p in auth_manager.role_permissions.get(role, [])
+                    ],
                 )
                 session.add(db_user)
                 await session.flush()
@@ -76,33 +141,78 @@ async def register(payload: RegisterRequest, req: Request):
                 session.add(db_sess)
                 await session.commit()
 
-                token = auth_manager.generate_jwt_token(str(db_user.id), auth_manager.role_permissions.get(role, []))
-                return {"status": "success", "user_id": str(db_user.id), "session_id": session_id, "token": token, "role": role.value}
+                # Hydrate in-memory auth state so session-based dependencies keep working
+                _hydrate_in_memory_from_db_user(
+                    db_user=db_user,
+                    session_id=session_id,
+                    expires_at=expires_at,
+                    ip=ip,
+                    ua=ua,
+                )
 
+                token = auth_manager.generate_jwt_token(
+                    str(db_user.id), auth_manager.role_permissions.get(role, [])
+                )
+                return {
+                    "status": "success",
+                    "user_id": str(db_user.id),
+                    "session_id": session_id,
+                    "token": token,
+                    "role": role.value,
+                }
+
+        # Fallback: in-memory-only registration (demo/dev mode)
         ok, result = auth_manager.create_user(username, email, payload.password, role)
         if not ok:
             raise HTTPException(status_code=400, detail=result)
-        success, session_id, _ = auth_manager.authenticate_user(username, payload.password, ip, ua)
-        token = auth_manager.generate_jwt_token(result, auth_manager.role_permissions.get(role, [])) if success else None
-        return {"status": "success", "user_id": result, "session_id": session_id, "token": token, "role": role.value}
+        success, session_id, _ = auth_manager.authenticate_user(
+            username, payload.password, ip, ua
+        )
+        token = (
+            auth_manager.generate_jwt_token(
+                result, auth_manager.role_permissions.get(role, [])
+            )
+            if success
+            else None
+        )
+        return {
+            "status": "success",
+            "user_id": result,
+            "session_id": session_id,
+            "token": token,
+            "role": role.value,
+        }
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Registration failed: {e}")
 
+
 @router.post("/login")
-async def login(payload: LoginRequest, req: Request, session: AsyncSession = Depends(session_dep)):
+async def login(
+    payload: LoginRequest,
+    req: Request,
+    session: AsyncSession = Depends(session_dep),
+):
     ip = req.client.host if req and req.client else ""
     ua = req.headers.get("user-agent", "")
     identifier = (payload.username or payload.email or "").strip()
     if not identifier or not payload.password:
-        raise HTTPException(status_code=400, detail="username/email and password are required")
+        raise HTTPException(
+            status_code=400,
+            detail="username/email and password are required",
+        )
 
     use_db = os.getenv("USE_DB", "false").lower() == "true"
     if use_db:
-        row = (await session.execute(
-            select(UserModel).where((UserModel.username == identifier) | (UserModel.email == identifier))
-        )).scalar_one_or_none()
+        row = (
+            await session.execute(
+                select(UserModel).where(
+                    (UserModel.username == identifier)
+                    | (UserModel.email == identifier)
+                )
+            )
+        ).scalar_one_or_none()
         if not row:
             raise HTTPException(status_code=401, detail="Invalid credentials")
         if not auth_manager.verify_password(payload.password, row.password_hash):
@@ -120,11 +230,31 @@ async def login(payload: LoginRequest, req: Request, session: AsyncSession = Dep
         )
         session.add(db_sess)
         await session.commit()
-        role_enum = UserRole(row.role)
-        token = auth_manager.generate_jwt_token(str(row.id), auth_manager.role_permissions.get(role_enum, []))
-        return {"status": "success", "session_id": session_id, "token": token, "user_id": str(row.id), "role": row.role}
 
-    success, session_id, message = auth_manager.authenticate_user(identifier, payload.password, ip, ua)
+        role_enum = UserRole(row.role)
+        # Hydrate in-memory auth state so downstream dependencies work in DB mode
+        _hydrate_in_memory_from_db_user(
+            db_user=row,
+            session_id=session_id,
+            expires_at=expires_at,
+            ip=ip,
+            ua=ua,
+        )
+        token = auth_manager.generate_jwt_token(
+            str(row.id), auth_manager.role_permissions.get(role_enum, [])
+        )
+        return {
+            "status": "success",
+            "session_id": session_id,
+            "token": token,
+            "user_id": str(row.id),
+            "role": row.role,
+        }
+
+    # In-memory authentication path (USE_DB=false)
+    success, session_id, message = auth_manager.authenticate_user(
+        identifier, payload.password, ip, ua
+    )
     if not success:
         raise HTTPException(status_code=401, detail=message)
     user_id = None
@@ -135,8 +265,20 @@ async def login(payload: LoginRequest, req: Request, session: AsyncSession = Dep
             user_id = u.user_id
             role = u.role.value
             break
-    token = auth_manager.generate_jwt_token(user_id, auth_manager.role_permissions.get(u.role, [])) if user_id else None
-    return {"status": "success", "session_id": session_id, "token": token, "user_id": user_id, "role": role}
+    token = (
+        auth_manager.generate_jwt_token(
+            user_id, auth_manager.role_permissions.get(u.role, [])
+        )
+        if user_id
+        else None
+    )
+    return {
+        "status": "success",
+        "session_id": session_id,
+        "token": token,
+        "user_id": user_id,
+        "role": role,
+    }
 
 @router.post("/refresh")
 async def refresh(req: Request, session: AsyncSession = Depends(session_dep)):
@@ -180,6 +322,10 @@ async def logout(req: Request, session: AsyncSession = Depends(session_dep)):
         if db_sess:
             db_sess.is_active = False
             await session.commit()
+            # Also deactivate any mirrored in-memory session if present
+            mem_sess = auth_manager.sessions.get(session_id)
+            if mem_sess:
+                mem_sess.is_active = False
         return {"status": "success"}
 
     ok = auth_manager.logout_user(session_id)

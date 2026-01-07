@@ -4,12 +4,15 @@ import DashboardLayout from "@/components/DashboardLayout";
 import { policiesApi } from "@/lib/api";
 
 export default function PoliciesPage() {
-  const [showNewPolicyModal, setShowNewPolicyModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingPolicy, setEditingPolicy] = useState<any>(null);
-  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
-  const [policies, setPolicies] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+	const [showNewPolicyModal, setShowNewPolicyModal] = useState(false);
+	const [showEditModal, setShowEditModal] = useState(false);
+	const [editingPolicy, setEditingPolicy] = useState<any>(null);
+	const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+	const [policies, setPolicies] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
+
+	// Aggregated stats for dashboard cards
+	const [stats, setStats] = useState<any | null>(null);
 
   const [formData, setFormData] = useState({
     customer_name: "",
@@ -22,10 +25,11 @@ export default function PoliciesPage() {
     renewal_date: ""
   });
 
-  // Fetch policies on mount
-  useEffect(() => {
-    fetchPolicies();
-  }, []);
+	// Fetch policies and stats on mount
+	useEffect(() => {
+		fetchPolicies();
+		fetchPolicyStats();
+	}, []);
 
   const fetchPolicies = async () => {
     try {
@@ -40,6 +44,15 @@ export default function PoliciesPage() {
       setLoading(false);
     }
   };
+
+	const fetchPolicyStats = async () => {
+		try {
+			const data = await policiesApi.getStats();
+			setStats(data);
+		} catch (error) {
+			console.error("Failed to fetch policy stats:", error);
+		}
+	};
 
   const handleCreatePolicy = async () => {
     if (!formData.customer_name || !formData.policy_type || !formData.premium || !formData.start_date || !formData.end_date) {
@@ -106,12 +119,19 @@ export default function PoliciesPage() {
     }
   };
 
-  const typeColors: { [key: string]: string } = {
-    "Auto": "bg-blue-100 text-blue-700",
-    "Home": "bg-amber-100 text-amber-700",
-    "Life": "bg-red-100 text-red-700",
-    "Health": "bg-emerald-100 text-emerald-700",
-  };
+	const typeColors: { [key: string]: string } = {
+		"Auto": "bg-blue-100 text-blue-700",
+		"Home": "bg-amber-100 text-amber-700",
+		"Life": "bg-red-100 text-red-700",
+		"Health": "bg-emerald-100 text-emerald-700",
+	};
+
+	const getTypeCount = (type: string) => {
+		const key = type.toLowerCase();
+		return stats?.by_type?.[key] ?? 0;
+	};
+
+	const totalPoliciesForPercent = stats?.total_policies || 0;
 
   return (
     <DashboardLayout>
@@ -130,53 +150,93 @@ export default function PoliciesPage() {
           </button>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Total Policies</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">156</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">All types</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Active</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">148</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">94.9% active</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Expiring Soon</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">12</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Next 30 days</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">Annual Revenue</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">$187K</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Avg: $1,200</p>
-          </div>
-        </div>
+	        {/* Stats */}
+	        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Total Policies</p>
+	            <p className="text-3xl font-bold text-blue-700 mt-2">
+	              {stats ? stats.total_policies.toLocaleString() : policies.length.toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">All types</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Active</p>
+	            <p className="text-3xl font-bold text-emerald-600 mt-2">
+	              {stats ? stats.active_policies.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats
+	                ? `${Math.round((stats.active_policies / Math.max(1, stats.total_policies)) * 100)}% active`
+	                : "Active policies"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Expiring Soon</p>
+	            <p className="text-3xl font-bold text-amber-600 mt-2">
+	              {stats ? stats.expiring_soon.toLocaleString() : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">Next 30 days</p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">Annual Revenue</p>
+	            <p className="text-3xl font-bold text-purple-600 mt-2">
+	              {stats ? `$${stats.total_premium_value.toLocaleString()}` : "-"}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats
+	                ? `Avg: $${(stats.total_premium_value / Math.max(1, stats.total_policies)).toFixed(0)}`
+	                : "Total premium"}
+	            </p>
+	          </div>
+	        </div>
 
-        {/* Policy Types */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">🚗 Auto Insurance</p>
-            <p className="text-2xl font-bold text-blue-700 mt-2">42</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">26.9% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">🏠 Home Insurance</p>
-            <p className="text-2xl font-bold text-amber-700 mt-2">38</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">24.4% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">❤️ Life Insurance</p>
-            <p className="text-2xl font-bold text-red-700 mt-2">35</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">22.4% of total</p>
-          </div>
-          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
-            <p className="text-slate-600 text-sm font-medium">⚕️ Health Insurance</p>
-            <p className="text-2xl font-bold text-emerald-700 mt-2">41</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">26.3% of total</p>
-          </div>
-        </div>
+	        {/* Policy Types */}
+	        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">🚗 Auto Insurance</p>
+	            <p className="text-2xl font-bold text-blue-700 mt-2">
+	              {getTypeCount("auto").toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats && totalPoliciesForPercent
+	                ? `${Math.round((getTypeCount("auto") / totalPoliciesForPercent) * 100)}% of total`
+	                : "By type"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">🏠 Home Insurance</p>
+	            <p className="text-2xl font-bold text-amber-700 mt-2">
+	              {getTypeCount("home").toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats && totalPoliciesForPercent
+	                ? `${Math.round((getTypeCount("home") / totalPoliciesForPercent) * 100)}% of total`
+	                : "By type"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">❤️ Life Insurance</p>
+	            <p className="text-2xl font-bold text-red-700 mt-2">
+	              {getTypeCount("life").toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats && totalPoliciesForPercent
+	                ? `${Math.round((getTypeCount("life") / totalPoliciesForPercent) * 100)}% of total`
+	                : "By type"}
+	            </p>
+	          </div>
+	          <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
+	            <p className="text-slate-600 text-sm font-medium">⚕️ Health Insurance</p>
+	            <p className="text-2xl font-bold text-emerald-700 mt-2">
+	              {getTypeCount("health").toLocaleString()}
+	            </p>
+	            <p className="text-xs text-slate-600 font-medium mt-2">
+	              {stats && totalPoliciesForPercent
+	                ? `${Math.round((getTypeCount("health") / totalPoliciesForPercent) * 100)}% of total`
+	                : "By type"}
+	            </p>
+	          </div>
+	        </div>
 
         {/* Policies Table */}
         <div className="bg-white border-2 border-blue-200 rounded-lg shadow-md overflow-hidden">

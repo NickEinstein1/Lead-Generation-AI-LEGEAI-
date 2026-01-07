@@ -117,20 +117,37 @@ class AuthenticationManager:
         self.redis_config = redis_config or {
             'host': 'localhost',
             'port': 6379,
-            'db': 4
+            'db': 4,
+            'socket_timeout': 2,
+            'socket_connect_timeout': 2
         }
 
         self.redis_client = None
         self.redis_available = False
-        try:
-            url = os.getenv('REDIS_URL')
-            self.redis_client = redis.from_url(url) if url else redis.Redis(**self.redis_config)
-            # ping to confirm availability
-            self.redis_client.ping()
-            self.redis_available = True
-        except Exception as e:
-            logger.warning(f"Redis unavailable, using in-memory only: {e}")
-            self.redis_client = None
+
+        # Check if Redis should be used (set REDIS_ENABLED=false to skip)
+        redis_enabled = os.getenv('REDIS_ENABLED', 'true').lower() == 'true'
+        url = os.getenv('REDIS_URL', '')
+
+        if not redis_enabled or not url or url == 'skip':
+            logger.info("Redis disabled or not configured, using in-memory only")
+        else:
+            try:
+                self.redis_client = redis.from_url(
+                    url,
+                    socket_timeout=1,
+                    socket_connect_timeout=1,
+                    retry_on_timeout=False
+                )
+                # ping to confirm availability
+                self.redis_client.ping()
+                self.redis_available = True
+                logger.info("Redis connection established")
+            except BaseException as e:
+                # Catch all exceptions including KeyboardInterrupt that may occur
+                # during Redis connection attempts on Windows
+                logger.warning(f"Redis unavailable, using in-memory only: {type(e).__name__}: {e}")
+                self.redis_client = None
 
         self.fernet = Fernet(SecurityConfig.ENCRYPTION_KEY)
 
@@ -372,6 +389,19 @@ class AuthenticationManager:
         except Exception as e:
             logger.error(f"Session validation error: {e}")
             return False, None
+
+    @property
+    def active_sessions(self) -> Dict[str, Session]:
+        """Return currently active (non-expired) sessions.
+
+        This is primarily used by monitoring/health endpoints.
+        """
+        now = datetime.now(timezone.utc)
+        return {
+            sid: s
+            for sid, s in self.sessions.items()
+            if s.is_active and s.expires_at >= now
+        }
     
     def logout_user(self, session_id: str) -> bool:
         """Logout user and invalidate session"""
