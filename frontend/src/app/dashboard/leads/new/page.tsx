@@ -1,16 +1,58 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { listLeads } from "@/lib/api";
 
 export default function NewLeadsPage() {
   const [showAddLeadModal, setShowAddLeadModal] = useState(false);
-  const [leads] = useState([
-    { id: "LD-001", name: "Alice Johnson", email: "alice@example.com", phone: "+1 (555) 123-4567", source: "Website", date: "2024-10-22", value: "$5,000" },
-    { id: "LD-002", name: "Bob Smith", email: "bob@example.com", phone: "+1 (555) 234-5678", source: "Referral", date: "2024-10-21", value: "$7,500" },
-    { id: "LD-003", name: "Carol Davis", email: "carol@example.com", phone: "+1 (555) 345-6789", source: "Ad Campaign", date: "2024-10-20", value: "$6,000" },
-    { id: "LD-004", name: "David Wilson", email: "david@example.com", phone: "+1 (555) 456-7890", source: "Website", date: "2024-10-19", value: "$8,500" },
-    { id: "LD-005", name: "Emma Brown", email: "emma@example.com", phone: "+1 (555) 567-8901", source: "Phone", date: "2024-10-18", value: "$4,500" },
-  ]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await listLeads(50, 0);
+        setLeads(res.items || []);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load leads");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const parseValue = (value: unknown) => {
+    if (typeof value === "number") return value;
+    if (typeof value !== "string") return null;
+    const normalized = value.replace(/[^0-9.]/g, "");
+    const parsed = Number(normalized);
+    return Number.isFinite(parsed) ? parsed : null;
+  };
+
+  const stats = useMemo(() => {
+    const now = Date.now();
+    const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
+    const recentCount = leads.filter((lead) => {
+      const createdAt = lead.created_at ? Date.parse(lead.created_at) : NaN;
+      return Number.isFinite(createdAt) && createdAt >= weekAgo;
+    }).length;
+
+    const sourceCounts = leads.reduce<Record<string, number>>((acc, lead) => {
+      const source = lead.source || "Unknown";
+      acc[source] = (acc[source] || 0) + 1;
+      return acc;
+    }, {});
+    const topSource = Object.entries(sourceCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
+
+    const values = leads
+      .map((lead) => parseValue(lead.attributes?.estimated_value))
+      .filter((value): value is number => value !== null);
+    const avgValue = values.length > 0 ? Math.round(values.reduce((sum, v) => sum + v, 0) / values.length) : null;
+
+    return { recentCount, topSource, avgValue };
+  }, [leads]);
 
   return (
     <DashboardLayout>
@@ -33,23 +75,25 @@ export default function NewLeadsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">New This Week</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">24</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">↑ 12% vs last week</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">{loading ? "-" : stats.recentCount}</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">Based on created leads</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Avg Lead Value</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">$6,300</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Total: $151.2K</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">
+              {stats.avgValue ? `$${stats.avgValue.toLocaleString()}` : "-"}
+            </p>
+            <p className="text-xs text-slate-600 font-medium mt-2">From available lead data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Top Source</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">Website</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">45% of new leads</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">{loading ? "-" : stats.topSource}</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">Based on recent intake</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Conversion Rate</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">32%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">To qualified</p>
+            <p className="text-3xl font-bold text-amber-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No conversion data</p>
           </div>
         </div>
 
@@ -73,25 +117,43 @@ export default function NewLeadsPage() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
-                  <tr key={lead.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-bold text-blue-700">{lead.id}</td>
-                    <td className="p-4 font-medium text-slate-900">{lead.name}</td>
-                    <td className="p-4 text-slate-700">{lead.email}</td>
-                    <td className="p-4 text-slate-700">{lead.phone}</td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
-                        {lead.source}
-                      </span>
-                    </td>
-                    <td className="p-4 font-bold text-slate-900">{lead.value}</td>
-                    <td className="p-4 text-slate-700">{lead.date}</td>
-                    <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">Contact</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Qualify</button>
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-center text-slate-600 font-medium">Loading leads...</td>
                   </tr>
-                ))}
+                ) : error ? (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-center text-red-600 font-medium">{error}</td>
+                  </tr>
+                ) : leads.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="p-4 text-center text-slate-600 font-medium">No leads available.</td>
+                  </tr>
+                ) : (
+                  leads.map((lead) => {
+                    const contact = lead.contact || lead.contact_info || {};
+                    const name = [contact.first_name, contact.last_name].filter(Boolean).join(" ") || "-";
+                    return (
+                      <tr key={lead.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                        <td className="p-4 font-bold text-blue-700">{lead.id}</td>
+                        <td className="p-4 font-medium text-slate-900">{name}</td>
+                        <td className="p-4 text-slate-700">{contact.email || "-"}</td>
+                        <td className="p-4 text-slate-700">{contact.phone || "-"}</td>
+                        <td className="p-4">
+                          <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700">
+                            {lead.source || "Unknown"}
+                          </span>
+                        </td>
+                        <td className="p-4 font-bold text-slate-900">{lead.attributes?.estimated_value ?? "-"}</td>
+                        <td className="p-4 text-slate-700">{lead.created_at ? String(lead.created_at).slice(0, 10) : "-"}</td>
+                        <td className="p-4 space-x-2">
+                          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">Contact</button>
+                          <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Qualify</button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

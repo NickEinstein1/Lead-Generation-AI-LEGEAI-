@@ -4,13 +4,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 
 export default function RejectedClaimsPage() {
   const [showAppealModal, setShowAppealModal] = useState(false);
-  const [claims] = useState([
-    { id: "CLM-REJ-001", policy: "POL-006", customer: "Lisa Anderson", type: "Auto", amount: "$4,500", rejected: "2024-10-10", reason: "Policy Lapsed" },
-    { id: "CLM-REJ-002", policy: "POL-007", customer: "James Wilson", type: "Home", amount: "$8,000", rejected: "2024-10-08", reason: "Exclusion Applied" },
-    { id: "CLM-REJ-003", policy: "POL-008", customer: "Patricia Moore", type: "Health", amount: "$1,200", rejected: "2024-10-05", reason: "Pre-existing Condition" },
-    { id: "CLM-REJ-004", policy: "POL-009", customer: "Robert Taylor", type: "Auto", amount: "$6,250", rejected: "2024-10-02", reason: "Fraud Suspected" },
-    { id: "CLM-REJ-005", policy: "POL-010", customer: "Jennifer White", type: "Life", amount: "$15,000", rejected: "2024-09-28", reason: "Insufficient Documentation" },
-  ]);
+  const [claims] = useState<any[]>([]);
 
   return (
     <DashboardLayout>
@@ -33,23 +27,23 @@ export default function RejectedClaimsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Rejected Claims</p>
-            <p className="text-3xl font-bold text-red-600 mt-2">25</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">10.1% rejection rate</p>
+            <p className="text-3xl font-bold text-red-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No rejection data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Amount</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">$156.25K</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Avg: $6,250</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No amount data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Appeals Filed</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">3</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">12% appeal rate</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No appeal data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Top Reason</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">Policy Lapsed</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">40% of rejections</p>
+            <p className="text-3xl font-bold text-amber-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No reason data</p>
           </div>
         </div>
 
@@ -72,24 +66,30 @@ export default function RejectedClaimsPage() {
                 </tr>
               </thead>
               <tbody>
-                {claims.map((claim) => (
-                  <tr key={claim.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-bold text-blue-700">{claim.id}</td>
-                    <td className="p-4 font-medium text-slate-900">{claim.policy}</td>
-                    <td className="p-4 text-slate-700">{claim.customer}</td>
-                    <td className="p-4 text-slate-700">{claim.type}</td>
-                    <td className="p-4 font-bold text-slate-900">{claim.amount}</td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
-                        {claim.reason}
-                      </span>
-                    </td>
-                    <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">Appeal</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Details</button>
-                    </td>
+                {claims.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-slate-600 font-medium">No rejected claims available.</td>
                   </tr>
-                ))}
+                ) : (
+                  claims.map((claim) => (
+                    <tr key={claim.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-bold text-blue-700">{claim.id}</td>
+                      <td className="p-4 font-medium text-slate-900">{claim.policy}</td>
+                      <td className="p-4 text-slate-700">{claim.customer}</td>
+                      <td className="p-4 text-slate-700">{claim.type}</td>
+                      <td className="p-4 font-bold text-slate-900">{claim.amount}</td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700">
+                          {claim.reason}
+                        </span>
+                      </td>
+                      <td className="p-4 space-x-2">
+                        <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">Appeal</button>
+                        <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Details</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

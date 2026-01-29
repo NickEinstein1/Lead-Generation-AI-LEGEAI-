@@ -12,6 +12,7 @@ const MiniAccent3D = dynamic(() => import("@/components/Hero3D").then(m => m.def
 export default function AnalyticsPage() {
   const [data, setData] = useState<{ date: string; leads: number; score: number }[]>([]);
   const [overview, setOverview] = useState<any>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     (async () => {
@@ -34,16 +35,8 @@ export default function AnalyticsPage() {
           dates.map((d) => ({ date: d, leads: leadsMap.get(d) || 0, score: scoreMap.get(d) || 0 }))
         );
       } catch (e) {
-        // fallback demo if API not ready
-        setData([
-          { date: "Mon", leads: 12, score: 62 },
-          { date: "Tue", leads: 18, score: 68 },
-          { date: "Wed", leads: 15, score: 64 },
-          { date: "Thu", leads: 22, score: 72 },
-          { date: "Fri", leads: 30, score: 78 },
-          { date: "Sat", leads: 20, score: 69 },
-          { date: "Sun", leads: 14, score: 66 },
-        ]);
+        setError("Failed to load analytics data.");
+        setData([]);
       }
     })();
   }, []);
@@ -81,17 +74,23 @@ export default function AnalyticsPage() {
           <div className="mt-8 rounded border-2 border-blue-200 bg-white p-4 shadow-md">
             <div className="text-slate-900 font-bold mb-2">Leads & Score Trend</div>
             <div className="h-72">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
-                  <XAxis dataKey="date" stroke="#64748b" />
-                  <YAxis yAxisId="left" stroke="#64748b" />
-                  <YAxis yAxisId="right" orientation="right" stroke="#64748b" />
-                  <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "2px solid #1e40af", borderRadius: "8px", color: "#0f172a" }} />
-                  <Line yAxisId="left" type="monotone" dataKey="leads" stroke="#1e40af" strokeWidth={3} />
-                  <Line yAxisId="right" type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} />
-                </LineChart>
-              </ResponsiveContainer>
+              {error ? (
+                <div className="h-full flex items-center justify-center text-sm text-red-600 font-medium">{error}</div>
+              ) : data.length === 0 ? (
+                <div className="h-full flex items-center justify-center text-sm text-slate-600 font-medium">No trend data available.</div>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={data} margin={{ top: 10, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#cbd5e1" />
+                    <XAxis dataKey="date" stroke="#64748b" />
+                    <YAxis yAxisId="left" stroke="#64748b" />
+                    <YAxis yAxisId="right" orientation="right" stroke="#64748b" />
+                    <Tooltip contentStyle={{ backgroundColor: "#ffffff", border: "2px solid #1e40af", borderRadius: "8px", color: "#0f172a" }} />
+                    <Line yAxisId="left" type="monotone" dataKey="leads" stroke="#1e40af" strokeWidth={3} />
+                    <Line yAxisId="right" type="monotone" dataKey="score" stroke="#3b82f6" strokeWidth={3} />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </div>
           </div>
 

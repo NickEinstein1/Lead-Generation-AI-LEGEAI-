@@ -15,52 +15,7 @@ interface LeadManagementProps {
 
 export default function LeadManagement({ activities }: LeadManagementProps) {
   const [showModal, setShowModal] = useState(false);
-  const defaultActivities: LeadActivity[] = [
-    {
-      id: "1",
-      type: "call",
-      description: "Follow-up call with high-value prospect",
-      timestamp: "15 minutes ago",
-      user: "Sarah Johnson",
-    },
-    {
-      id: "2",
-      type: "email",
-      description: "Sent comprehensive life insurance proposal",
-      timestamp: "1 hour ago",
-      user: "Michael Chen",
-    },
-    {
-      id: "3",
-      type: "meeting",
-      description: "Virtual consultation scheduled for tomorrow",
-      timestamp: "3 hours ago",
-      user: "Emma Rodriguez",
-    },
-    {
-      id: "4",
-      type: "status_change",
-      description: "Lead qualified and moved to Proposal stage",
-      timestamp: "5 hours ago",
-      user: "System",
-    },
-    {
-      id: "5",
-      type: "note",
-      description: "Customer requesting multi-policy bundle discount",
-      timestamp: "8 hours ago",
-      user: "David Thompson",
-    },
-    {
-      id: "6",
-      type: "call",
-      description: "Initial discovery call completed successfully",
-      timestamp: "1 day ago",
-      user: "Lisa Martinez",
-    },
-  ];
-
-  const leadActivities = activities || defaultActivities;
+  const leadActivities = activities ?? [];
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -100,25 +55,29 @@ export default function LeadManagement({ activities }: LeadManagementProps) {
     <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-md">
       <h2 className="text-xl font-bold text-slate-900 mb-6">Activity Timeline</h2>
 
-      <div className="space-y-3">
-        {leadActivities.map((activity) => (
-          <div
-            key={activity.id}
-            className={`${getActivityColor(activity.type)} bg-slate-50 rounded p-4 hover:bg-slate-100 transition-colors`}
-          >
-            <div className="flex items-start gap-3">
-              <span className="text-xl mt-1">{getActivityIcon(activity.type)}</span>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="font-semibold text-slate-900 text-sm">{activity.description}</p>
-                  <span className="text-xs text-slate-500 font-medium whitespace-nowrap">{activity.timestamp}</span>
+      {leadActivities.length === 0 ? (
+        <div className="text-sm text-slate-600 font-medium">No recent activities.</div>
+      ) : (
+        <div className="space-y-3">
+          {leadActivities.map((activity) => (
+            <div
+              key={activity.id}
+              className={`${getActivityColor(activity.type)} bg-slate-50 rounded p-4 hover:bg-slate-100 transition-colors`}
+            >
+              <div className="flex items-start gap-3">
+                <span className="text-xl mt-1">{getActivityIcon(activity.type)}</span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="font-semibold text-slate-900 text-sm">{activity.description}</p>
+                    <span className="text-xs text-slate-500 font-medium whitespace-nowrap">{activity.timestamp}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 mt-1">by {activity.user}</p>
                 </div>
-                <p className="text-xs text-slate-600 mt-1">by {activity.user}</p>
               </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 pt-6 border-t-2 border-blue-100">
         <button

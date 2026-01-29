@@ -74,8 +74,11 @@ export async function getScoreTimeseries(days: number = 14) {
 }
 
 // Lead APIs
-export async function listLeads() {
-  return apiFetch("/leads");
+export async function listLeads(limit: number = 50, offset: number = 0) {
+  const params = new URLSearchParams();
+  params.append("limit", String(limit));
+  params.append("offset", String(offset));
+  return apiFetch(`/leads?${params.toString()}`);
 }
 
 export async function getLead(id: string) {

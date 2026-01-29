@@ -3,13 +3,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function PerformanceReportsPage() {
-  const [performanceData] = useState([
-    { id: 1, metric: "Lead Response Time", value: "2.3 hrs", target: "4 hrs", status: "Exceeding" },
-    { id: 2, metric: "Customer Satisfaction", value: "4.6/5", target: "4.0/5", status: "Exceeding" },
-    { id: 3, metric: "Policy Renewal Rate", value: "94%", target: "90%", status: "Exceeding" },
-    { id: 4, metric: "Claims Processing Time", value: "3.2 days", target: "5 days", status: "Exceeding" },
-    { id: 5, metric: "Agent Productivity", value: "24 policies/mo", target: "20 policies/mo", status: "Exceeding" },
-  ]);
+  const [performanceData] = useState<any[]>([]);
 
   return (
     <DashboardLayout>
@@ -29,23 +23,23 @@ export default function PerformanceReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Overall Performance</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">98.5%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Target achievement</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No performance data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">KPIs Exceeding Target</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">5/5</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">100% on track</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No KPI data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Team Efficiency</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">92.3%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Utilization rate</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No efficiency data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Quality Score</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">9.2/10</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Average</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No quality data</p>
           </div>
         </div>
 
@@ -66,22 +60,28 @@ export default function PerformanceReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {performanceData.map((data) => (
-                  <tr key={data.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-medium text-slate-900">{data.metric}</td>
-                    <td className="p-4 font-bold text-blue-700">{data.value}</td>
-                    <td className="p-4 text-slate-700">{data.target}</td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                        {data.status}
-                      </span>
-                    </td>
-                    <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Trend</button>
-                    </td>
+                {performanceData.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="p-4 text-center text-slate-600 font-medium">No performance data available.</td>
                   </tr>
-                ))}
+                ) : (
+                  performanceData.map((data) => (
+                    <tr key={data.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-medium text-slate-900">{data.metric}</td>
+                      <td className="p-4 font-bold text-blue-700">{data.value}</td>
+                      <td className="p-4 text-slate-700">{data.target}</td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                          {data.status}
+                        </span>
+                      </td>
+                      <td className="p-4 space-x-2">
+                        <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
+                        <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Trend</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

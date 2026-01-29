@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React from "react";
 
 interface Metric {
   label: string;
@@ -14,50 +14,15 @@ interface KeyMetricsProps {
 }
 
 export default function KeyMetrics({ metrics }: KeyMetricsProps) {
-  const [dynamicMetrics, setDynamicMetrics] = useState<Metric[]>([]);
+  const keyMetrics = metrics ?? [];
 
-  // Generate dynamic values on component mount
-  useEffect(() => {
-    const generateDynamicMetrics = (): Metric[] => {
-      const randomInRange = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-      const randomDecimal = (min: number, max: number) => (Math.random() * (max - min) + min).toFixed(1);
-
-      return [
-        {
-          label: "Total Leads",
-          value: randomInRange(1150, 1350),
-          change: parseFloat(randomDecimal(12, 25)),
-          icon: "👥",
-          color: "from-blue-500 to-blue-600",
-        },
-        {
-          label: "This Month",
-          value: randomInRange(280, 380),
-          change: parseFloat(randomDecimal(10, 22)),
-          icon: "📈",
-          color: "from-green-500 to-green-600",
-        },
-        {
-          label: "Conversion Rate",
-          value: `${randomDecimal(20, 30)}%`,
-          change: parseFloat(randomDecimal(3, 8)),
-          icon: "🎯",
-          color: "from-purple-500 to-purple-600",
-        },
-        {
-          label: "Avg Deal Value",
-          value: `$${randomInRange(3200, 4500).toLocaleString()}`,
-          change: parseFloat(randomDecimal(5, 15)),
-          icon: "💰",
-          color: "from-amber-500 to-amber-600",
-        },
-      ];
-    };
-
-    setDynamicMetrics(generateDynamicMetrics());
-  }, []); // Runs once on mount
-
-  const keyMetrics = metrics || dynamicMetrics;
+  if (keyMetrics.length === 0) {
+    return (
+      <div className="rounded-2xl border border-blue-500/30 bg-slate-900/60 backdrop-blur-xl p-6 text-cyan-200 shadow-2xl">
+        No metrics available.
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

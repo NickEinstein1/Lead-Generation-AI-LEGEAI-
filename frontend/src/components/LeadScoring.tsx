@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface ScoreMetric {
@@ -17,36 +17,22 @@ interface LeadScoringProps {
 export default function LeadScoring({ metrics, overallScore }: LeadScoringProps) {
   const router = useRouter();
   const [showAnalysis, setShowAnalysis] = useState(false);
-  const [dynamicMetrics, setDynamicMetrics] = useState<ScoreMetric[]>([]);
+  const scoreMetrics = metrics ?? [];
+  const avgScore = typeof overallScore === "number"
+    ? overallScore
+    : scoreMetrics.length > 0
+      ? Math.round(scoreMetrics.reduce((sum, m) => sum + m.value, 0) / scoreMetrics.length)
+      : null;
 
-  // Generate dynamic values on component mount
-  useEffect(() => {
-    const generateDynamicMetrics = (): ScoreMetric[] => {
-      // Generate random but realistic scores (between 65-95)
-      const randomScore = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
-
-      return [
-        { label: "Engagement", value: randomScore(75, 95), max: 100, color: "bg-blue-500" },
-        { label: "Budget Fit", value: randomScore(70, 92), max: 100, color: "bg-green-500" },
-        { label: "Timeline", value: randomScore(65, 88), max: 100, color: "bg-amber-500" },
-        { label: "Authority", value: randomScore(72, 94), max: 100, color: "bg-purple-500" },
-        { label: "Need", value: randomScore(78, 96), max: 100, color: "bg-red-500" },
-      ];
-    };
-
-    setDynamicMetrics(generateDynamicMetrics());
-  }, []); // Empty dependency array means this runs once on mount
-
-  const scoreMetrics = metrics || dynamicMetrics;
-  const avgScore = overallScore || (scoreMetrics.length > 0 ? Math.round(scoreMetrics.reduce((sum, m) => sum + m.value, 0) / scoreMetrics.length) : 0);
-
-  const getScoreColor = (score: number) => {
+  const getScoreColor = (score: number | null) => {
+    if (score === null) return "text-slate-500";
     if (score >= 80) return "text-green-600";
     if (score >= 60) return "text-amber-600";
     return "text-red-600";
   };
 
-  const getScoreBgColor = (score: number) => {
+  const getScoreBgColor = (score: number | null) => {
+    if (score === null) return "bg-slate-50";
     if (score >= 80) return "bg-green-50";
     if (score >= 60) return "bg-amber-50";
     return "bg-red-50";
@@ -58,28 +44,38 @@ export default function LeadScoring({ metrics, overallScore }: LeadScoringProps)
 
       <div className={`${getScoreBgColor(avgScore)} rounded-lg p-6 mb-6 text-center`}>
         <div className="text-sm text-slate-600 font-medium mb-2">Overall Score</div>
-        <div className={`text-5xl font-bold ${getScoreColor(avgScore)}`}>{avgScore}</div>
+        <div className={`text-5xl font-bold ${getScoreColor(avgScore)}`}>{avgScore ?? "-"}</div>
         <div className="text-xs text-slate-600 font-medium mt-2">
-          {avgScore >= 80 ? "🔥 Hot Lead" : avgScore >= 60 ? "⚡ Warm Lead" : "❄️ Cold Lead"}
+          {avgScore === null
+            ? "No scoring data available"
+            : avgScore >= 80
+              ? "🔥 Hot Lead"
+              : avgScore >= 60
+                ? "⚡ Warm Lead"
+                : "❄️ Cold Lead"}
         </div>
       </div>
 
-      <div className="space-y-4">
-        {scoreMetrics.map((metric, idx) => (
-          <div key={idx}>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-semibold text-slate-700">{metric.label}</span>
-              <span className="text-sm font-bold text-slate-900">{metric.value}/{metric.max}</span>
+      {scoreMetrics.length === 0 ? (
+        <div className="text-sm text-slate-600 font-medium">No score breakdown available.</div>
+      ) : (
+        <div className="space-y-4">
+          {scoreMetrics.map((metric, idx) => (
+            <div key={idx}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-semibold text-slate-700">{metric.label}</span>
+                <span className="text-sm font-bold text-slate-900">{metric.value}/{metric.max}</span>
+              </div>
+              <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                <div
+                  className={`h-full ${metric.color} transition-all duration-300`}
+                  style={{ width: `${(metric.value / metric.max) * 100}%` }}
+                />
+              </div>
             </div>
-            <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
-              <div
-                className={`h-full ${metric.color} transition-all duration-300`}
-                style={{ width: `${(metric.value / metric.max) * 100}%` }}
-              />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       <div className="mt-6 pt-6 border-t-2 border-blue-100">
         <button
@@ -100,38 +96,48 @@ export default function LeadScoring({ metrics, overallScore }: LeadScoringProps)
               {/* Overall Score */}
               <div className={`${getScoreBgColor(avgScore)} rounded-lg p-6 text-center`}>
                 <div className="text-sm text-slate-600 font-medium mb-2">Overall Lead Score</div>
-                <div className={`text-6xl font-bold ${getScoreColor(avgScore)}`}>{avgScore}</div>
+                <div className={`text-6xl font-bold ${getScoreColor(avgScore)}`}>{avgScore ?? "-"}</div>
                 <div className="text-sm text-slate-600 font-medium mt-2">
-                  {avgScore >= 80 ? "🔥 Hot Lead - High Priority" : avgScore >= 60 ? "⚡ Warm Lead - Good Potential" : "❄️ Cold Lead - Needs Nurturing"}
+                  {avgScore === null
+                    ? "No scoring data available"
+                    : avgScore >= 80
+                      ? "🔥 Hot Lead - High Priority"
+                      : avgScore >= 60
+                        ? "⚡ Warm Lead - Good Potential"
+                        : "❄️ Cold Lead - Needs Nurturing"}
                 </div>
               </div>
 
               {/* Detailed Metrics */}
               <div>
                 <h4 className="font-bold text-slate-900 mb-4">Score Breakdown</h4>
-                <div className="space-y-4">
-                  {scoreMetrics.map((metric, idx) => (
-                    <div key={idx} className="bg-slate-50 rounded-lg p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-slate-900">{metric.label}</span>
-                        <span className="text-lg font-bold text-slate-900">{metric.value}/{metric.max}</span>
+                {scoreMetrics.length === 0 ? (
+                  <div className="text-sm text-slate-600 font-medium">No detailed scoring metrics available.</div>
+                ) : (
+                  <div className="space-y-4">
+                    {scoreMetrics.map((metric, idx) => (
+                      <div key={idx} className="bg-slate-50 rounded-lg p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold text-slate-900">{metric.label}</span>
+                          <span className="text-lg font-bold text-slate-900">{metric.value}/{metric.max}</span>
+                        </div>
+                        <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden mb-2">
+                          <div
+                            className={`h-full ${metric.color} transition-all duration-300`}
+                            style={{ width: `${(metric.value / metric.max) * 100}%` }}
+                          />
+                        </div>
+                        <p className="text-xs text-slate-600">
+                          {metric.label === "Engagement" && "Based on email opens, clicks, and website visits"}
+                          {metric.label === "Budget Fit" && "Alignment between lead budget and product pricing"}
+                          {metric.label === "Timeline" && "Urgency and readiness to purchase"}
+                          {metric.label === "Authority" && "Decision-making power and influence"}
+                          {metric.label === "Need" && "Product-market fit and pain point severity"}
+                        </p>
                       </div>
-                      <div className="w-full bg-slate-200 rounded-full h-3 overflow-hidden mb-2">
-                        <div
-                          className={`h-full ${metric.color} transition-all duration-300`}
-                          style={{ width: `${(metric.value / metric.max) * 100}%` }}
-                        />
-                      </div>
-                      <p className="text-xs text-slate-600">
-                        {metric.label === "Engagement" && "Based on email opens, clicks, and website visits"}
-                        {metric.label === "Budget Fit" && "Alignment between lead budget and product pricing"}
-                        {metric.label === "Timeline" && "Urgency and readiness to purchase"}
-                        {metric.label === "Authority" && "Decision-making power and influence"}
-                        {metric.label === "Need" && "Product-market fit and pain point severity"}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Recommendations */}

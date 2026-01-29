@@ -3,13 +3,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function SalesReportsPage() {
-  const [salesData] = useState([
-    { id: 1, agent: "John Smith", policies: 24, revenue: "$156,800", target: "$150,000", achievement: "104.5%" },
-    { id: 2, agent: "Sarah Johnson", policies: 18, revenue: "$124,200", target: "$150,000", achievement: "82.8%" },
-    { id: 3, agent: "Michael Brown", policies: 31, revenue: "$198,400", target: "$150,000", achievement: "132.3%" },
-    { id: 4, agent: "Emily Davis", policies: 15, revenue: "$98,500", target: "$150,000", achievement: "65.7%" },
-    { id: 5, agent: "David Wilson", policies: 22, revenue: "$142,300", target: "$150,000", achievement: "94.9%" },
-  ]);
+  const [salesData] = useState<any[]>([]);
 
   return (
     <DashboardLayout>
@@ -29,23 +23,23 @@ export default function SalesReportsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Revenue</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">$720.2K</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">This month</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No revenue data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Policies Sold</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">110</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">This month</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No sales data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Avg Policy Value</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">$6,547</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Per policy</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No value data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Target Achievement</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">96.0%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Team average</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No target data</p>
           </div>
         </div>
 
@@ -67,27 +61,33 @@ export default function SalesReportsPage() {
                 </tr>
               </thead>
               <tbody>
-                {salesData.map((data) => (
-                  <tr key={data.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-medium text-slate-900">{data.agent}</td>
-                    <td className="p-4 font-bold text-blue-700">{data.policies}</td>
-                    <td className="p-4 font-bold text-slate-900">{data.revenue}</td>
-                    <td className="p-4 text-slate-700">{data.target}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        parseFloat(data.achievement) >= 100
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-amber-100 text-amber-700"
-                      }`}>
-                        {data.achievement}
-                      </span>
-                    </td>
-                    <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Details</button>
-                    </td>
+                {salesData.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="p-4 text-center text-slate-600 font-medium">No sales data available.</td>
                   </tr>
-                ))}
+                ) : (
+                  salesData.map((data) => (
+                    <tr key={data.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-medium text-slate-900">{data.agent}</td>
+                      <td className="p-4 font-bold text-blue-700">{data.policies}</td>
+                      <td className="p-4 font-bold text-slate-900">{data.revenue}</td>
+                      <td className="p-4 text-slate-700">{data.target}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          parseFloat(data.achievement) >= 100
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}>
+                          {data.achievement}
+                        </span>
+                      </td>
+                      <td className="p-4 space-x-2">
+                        <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
+                        <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Details</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

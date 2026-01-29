@@ -5,13 +5,7 @@ import DashboardLayout from "@/components/DashboardLayout";
 export default function HomeInsurancePage() {
   const [showNewPolicyModal, setShowNewPolicyModal] = useState(false);
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
-  const [policies] = useState([
-    { id: "POL-HOME-001", customer: "John Smith", property: "123 Main St, NY", premium: "$1,800/yr", status: "Active", expiry: "2025-01-15" },
-    { id: "POL-HOME-002", customer: "Sarah Johnson", property: "456 Oak Ave, CA", premium: "$2,100/yr", status: "Active", expiry: "2025-03-22" },
-    { id: "POL-HOME-003", customer: "Michael Brown", property: "789 Pine Rd, TX", premium: "$1,650/yr", status: "Active", expiry: "2025-02-10" },
-    { id: "POL-HOME-004", customer: "Emily Davis", property: "321 Elm St, FL", premium: "$1,950/yr", status: "Active", expiry: "2025-04-18" },
-    { id: "POL-HOME-005", customer: "David Wilson", property: "654 Maple Dr, WA", premium: "$2,250/yr", status: "Expiring Soon", expiry: "2024-11-14" },
-  ]);
+  const [policies] = useState<any[]>([]);
 
   return (
     <DashboardLayout>
@@ -34,23 +28,23 @@ export default function HomeInsurancePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Home Policies</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">38</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">24.4% of total</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No policy data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Annual Premium</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">$72.9K</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Avg: $1,918</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No premium data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Active Policies</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">37</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">97.4% active</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No status data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Expiring Soon</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">1</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Next 30 days</p>
+            <p className="text-3xl font-bold text-amber-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No expiry data</p>
           </div>
         </div>
 
@@ -73,33 +67,39 @@ export default function HomeInsurancePage() {
                 </tr>
               </thead>
               <tbody>
-                {policies.map((policy) => (
-                  <tr key={policy.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-bold text-blue-700">{policy.id}</td>
-                    <td className="p-4 font-medium text-slate-900">{policy.customer}</td>
-                    <td className="p-4 text-slate-700">{policy.property}</td>
-                    <td className="p-4 font-bold text-slate-900">{policy.premium}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        policy.status === "Active"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-amber-100 text-amber-700"
-                      }`}>
-                        {policy.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-slate-700">{policy.expiry}</td>
-                    <td className="p-4 space-x-2">
-                      <button
-                        onClick={() => setSelectedPolicy(policy)}
-                        className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
-                      >
-                        View
-                      </button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm hover:underline">Renew</button>
-                    </td>
+                {policies.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-slate-600 font-medium">No home policies available.</td>
                   </tr>
-                ))}
+                ) : (
+                  policies.map((policy) => (
+                    <tr key={policy.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-bold text-blue-700">{policy.id}</td>
+                      <td className="p-4 font-medium text-slate-900">{policy.customer}</td>
+                      <td className="p-4 text-slate-700">{policy.property}</td>
+                      <td className="p-4 font-bold text-slate-900">{policy.premium}</td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                          policy.status === "Active"
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}>
+                          {policy.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-slate-700">{policy.expiry}</td>
+                      <td className="p-4 space-x-2">
+                        <button
+                          onClick={() => setSelectedPolicy(policy)}
+                          className="text-blue-600 hover:text-blue-800 font-medium text-sm hover:underline"
+                        >
+                          View
+                        </button>
+                        <button className="text-slate-600 hover:text-slate-800 font-medium text-sm hover:underline">Renew</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>

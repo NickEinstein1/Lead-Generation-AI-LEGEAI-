@@ -64,23 +64,23 @@ export default function HealthInsurancePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Product Types</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">16</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Coverage options</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No catalog data</p>
           </div>
           <div className="bg-white border-2 border-emerald-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Categories</p>
-            <p className="text-3xl font-bold text-emerald-700 mt-2">5</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Major, Government, Supplemental, Specialty</p>
+            <p className="text-3xl font-bold text-emerald-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No category data</p>
           </div>
           <div className="bg-white border-2 border-purple-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Active Policies</p>
-            <p className="text-3xl font-bold text-purple-700 mt-2">1,847</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Currently active</p>
+            <p className="text-3xl font-bold text-purple-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No policy data</p>
           </div>
           <div className="bg-white border-2 border-amber-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Coverage</p>
-            <p className="text-3xl font-bold text-amber-700 mt-2">$94.2M</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Annual premiums</p>
+            <p className="text-3xl font-bold text-amber-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No premium data</p>
           </div>
         </div>
 
@@ -109,8 +109,8 @@ export default function HealthInsurancePage() {
           </div>
           <div className="bg-white border-2 border-amber-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Leads</p>
-            <p className="text-3xl font-bold text-amber-700 mt-2">1,284</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Leads processed</p>
+            <p className="text-3xl font-bold text-amber-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No lead data</p>
           </div>
         </div>
 

@@ -40,32 +40,18 @@ export default function AnalyticsCharts({
 
   const chartColors = colors[colorScheme as keyof typeof colors] || colors.blue;
 
-  // Default data if not provided
-  const defaultScoreDistribution = [
-    { name: 'High (0.75-1.0)', value: 28.3, count: 342 },
-    { name: 'Medium (0.50-0.75)', value: 45.6, count: 551 },
-    { name: 'Low (0.0-0.50)', value: 26.1, count: 315 },
-  ];
+  const scoreData = scoreDistribution ?? [];
+  const typeData = typeDistribution ?? [];
+  const trendChartData = trendData ?? [];
+  const hasData = scoreData.length > 0 || typeData.length > 0 || trendChartData.length > 0;
 
-  const defaultTypeDistribution = [
-    { name: 'Type A', value: 38.2 },
-    { name: 'Type B', value: 29.4 },
-    { name: 'Type C', value: 18.7 },
-    { name: 'Type D', value: 13.7 },
-  ];
-
-  const defaultTrendData = [
-    { month: 'Jan', leads: 95, avgScore: 0.65 },
-    { month: 'Feb', leads: 108, avgScore: 0.68 },
-    { month: 'Mar', leads: 122, avgScore: 0.71 },
-    { month: 'Apr', leads: 135, avgScore: 0.69 },
-    { month: 'May', leads: 148, avgScore: 0.73 },
-    { month: 'Jun', leads: 162, avgScore: 0.75 },
-  ];
-
-  const scoreData = scoreDistribution || defaultScoreDistribution;
-  const typeData = typeDistribution || defaultTypeDistribution;
-  const trendChartData = trendData || defaultTrendData;
+  if (!hasData) {
+    return (
+      <div className="rounded-lg border-2 border-slate-200 bg-white p-6 text-sm text-slate-600 font-medium shadow-lg">
+        No analytics data available.
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

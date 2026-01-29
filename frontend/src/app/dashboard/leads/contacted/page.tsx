@@ -1,15 +1,31 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
+import { listLeads } from "@/lib/api";
 
 export default function ContactedLeadsPage() {
-  const [leads] = useState([
-    { id: "LD-078", name: "Kevin White", email: "kevin@example.com", phone: "+1 (555) 123-4567", lastContact: "2024-10-22", nextFollowUp: "2024-10-25", status: "Interested" },
-    { id: "LD-079", name: "Laura Green", email: "laura@example.com", phone: "+1 (555) 234-5678", lastContact: "2024-10-21", nextFollowUp: "2024-10-24", status: "Considering" },
-    { id: "LD-080", name: "Michael Black", email: "michael@example.com", phone: "+1 (555) 345-6789", lastContact: "2024-10-20", nextFollowUp: "2024-10-23", status: "Interested" },
-    { id: "LD-081", name: "Nancy Red", email: "nancy@example.com", phone: "+1 (555) 456-7890", lastContact: "2024-10-19", nextFollowUp: "2024-10-22", status: "Not Interested" },
-    { id: "LD-082", name: "Oscar Blue", email: "oscar@example.com", phone: "+1 (555) 567-8901", lastContact: "2024-10-18", nextFollowUp: "2024-10-21", status: "Considering" },
-  ]);
+  const [leads, setLeads] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    (async () => {
+      try {
+        setLoading(true);
+        const res = await listLeads(50, 0);
+        setLeads(res.items || []);
+      } catch (e: any) {
+        setError(e?.message || "Failed to load leads");
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const stats = useMemo(() => {
+    const total = leads.length;
+    return { total };
+  }, [leads]);
 
   return (
     <DashboardLayout>
@@ -29,23 +45,23 @@ export default function ContactedLeadsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Contacted</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">234</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">↑ 15% vs last month</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">{loading ? "-" : stats.total}</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">Based on available leads</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Interested</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">89</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">38% conversion rate</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No status data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Avg Response Time</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">2.3 hrs</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">From contact</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No response data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Follow-ups Due</p>
-            <p className="text-3xl font-bold text-amber-600 mt-2">12</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">This week</p>
+            <p className="text-3xl font-bold text-amber-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No follow-up data</p>
           </div>
         </div>
 
@@ -68,30 +84,48 @@ export default function ContactedLeadsPage() {
                 </tr>
               </thead>
               <tbody>
-                {leads.map((lead) => (
-                  <tr key={lead.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-bold text-blue-700">{lead.id}</td>
-                    <td className="p-4 font-medium text-slate-900">{lead.name}</td>
-                    <td className="p-4 text-slate-700">{lead.email}</td>
-                    <td className="p-4 text-slate-700">{lead.lastContact}</td>
-                    <td className="p-4 text-slate-700">{lead.nextFollowUp}</td>
-                    <td className="p-4">
-                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${
-                        lead.status === "Interested"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : lead.status === "Considering"
-                          ? "bg-amber-100 text-amber-700"
-                          : "bg-red-100 text-red-700"
-                      }`}>
-                        {lead.status}
-                      </span>
-                    </td>
-                    <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">Follow-up</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">History</button>
-                    </td>
+                {loading ? (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-slate-600 font-medium">Loading leads...</td>
                   </tr>
-                ))}
+                ) : error ? (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-red-600 font-medium">{error}</td>
+                  </tr>
+                ) : leads.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-slate-600 font-medium">No leads available.</td>
+                  </tr>
+                ) : (
+                  leads.map((lead) => {
+                    const contact = lead.contact || lead.contact_info || {};
+                    const name = [contact.first_name, contact.last_name].filter(Boolean).join(" ") || "-";
+                    const status = lead.status || "Unknown";
+                    const statusClass = status === "Interested"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : status === "Considering"
+                        ? "bg-amber-100 text-amber-700"
+                        : "bg-red-100 text-red-700";
+                    return (
+                      <tr key={lead.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                        <td className="p-4 font-bold text-blue-700">{lead.id}</td>
+                        <td className="p-4 font-medium text-slate-900">{name}</td>
+                        <td className="p-4 text-slate-700">{contact.email || "-"}</td>
+                        <td className="p-4 text-slate-700">{lead.last_contacted_at ? String(lead.last_contacted_at).slice(0, 10) : "-"}</td>
+                        <td className="p-4 text-slate-700">{lead.next_follow_up_at ? String(lead.next_follow_up_at).slice(0, 10) : "-"}</td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusClass}`}>
+                            {status}
+                          </span>
+                        </td>
+                        <td className="p-4 space-x-2">
+                          <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">Follow-up</button>
+                          <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">History</button>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

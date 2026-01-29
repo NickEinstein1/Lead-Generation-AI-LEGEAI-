@@ -64,23 +64,23 @@ export default function HomeInsurancePage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Product Types</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">12</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Coverage options</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No catalog data</p>
           </div>
           <div className="bg-white border-2 border-emerald-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Categories</p>
-            <p className="text-3xl font-bold text-emerald-700 mt-2">4</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Standard, Specialized, Natural, Premium</p>
+            <p className="text-3xl font-bold text-emerald-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No category data</p>
           </div>
           <div className="bg-white border-2 border-purple-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Active Policies</p>
-            <p className="text-3xl font-bold text-purple-700 mt-2">382</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Currently active</p>
+            <p className="text-3xl font-bold text-purple-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No policy data</p>
           </div>
           <div className="bg-white border-2 border-amber-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Coverage</p>
-            <p className="text-3xl font-bold text-amber-700 mt-2">$186.7M</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Combined value</p>
+            <p className="text-3xl font-bold text-amber-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No coverage data</p>
           </div>
         </div>
 
@@ -109,8 +109,8 @@ export default function HomeInsurancePage() {
           </div>
           <div className="bg-white border-2 border-amber-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Leads</p>
-            <p className="text-3xl font-bold text-amber-700 mt-2">1,278</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Leads processed</p>
+            <p className="text-3xl font-bold text-amber-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No lead data</p>
           </div>
         </div>
 

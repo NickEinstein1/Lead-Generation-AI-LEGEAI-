@@ -15,6 +15,32 @@ export default function HealthInsuranceAnalyticsPage() {
   const [emailAddress, setEmailAddress] = useState('');
   const [emailSending, setEmailSending] = useState(false);
 
+  const formatLabel = (value: string) =>
+    value.replace(/_/g, ' ').replace(/\b\w/g, (match) => match.toUpperCase());
+
+  const buildDistribution = (dist?: Record<string, number>, labelOverrides?: Record<string, string>) =>
+    Object.entries(dist || {}).map(([key, value]) => ({
+      name: labelOverrides?.[key] || formatLabel(key),
+      value,
+    }));
+
+  const scoreDistribution = buildDistribution(analytics?.score_distribution, {
+    high: 'High (0.75 - 1.0)',
+    medium: 'Medium (0.50 - 0.75)',
+    low: 'Low (0.0 - 0.50)',
+  });
+  const planDistribution = buildDistribution(analytics?.plan_type_distribution, {
+    hmo: 'HMO',
+    ppo: 'PPO',
+    epo: 'EPO',
+    pos: 'POS',
+  });
+  const trendData = (analytics?.trend_data || []).map((entry: any) => ({
+    month: entry.date || entry.month,
+    leads: entry.leads ?? 0,
+    avgScore: entry.avg_score ?? entry.avgScore ?? 0,
+  }));
+
   useEffect(() => {
     fetchAnalytics();
   }, [dateRange, scoreFilter]);
@@ -44,10 +70,10 @@ export default function HealthInsuranceAnalyticsPage() {
 
     const csvData = [
       ['Metric', 'Value'],
-      ['Total Leads Scored', analytics.total_leads || '1,284'],
-      ['Average Conversion Score', analytics.avg_score?.toFixed(2) || '0.72'],
-      ['High Quality Leads', analytics.high_quality_leads || '412'],
-      ['Model Accuracy', analytics.model_accuracy || '72.9%'],
+      ['Total Leads Scored', analytics.total_leads ?? ''],
+      ['Average Conversion Score', analytics.avg_score?.toFixed(2) ?? ''],
+      ['High Quality Leads', analytics.high_quality_leads ?? ''],
+      ['Model Accuracy', analytics.model_accuracy ?? ''],
     ];
 
     const csvContent = csvData.map(row => row.join(',')).join('\n');
@@ -80,6 +106,16 @@ export default function HealthInsuranceAnalyticsPage() {
   const exportToPDF = () => {
     if (!analytics) return;
 
+    const buildTableRows = (dist?: Record<string, number>, labelOverrides?: Record<string, string>) => {
+      const entries = Object.entries(dist || {});
+      if (entries.length === 0) {
+        return '<tr><td colspan="2">No data</td></tr>';
+      }
+      return entries
+        .map(([key, value]) => `<tr><td>${labelOverrides?.[key] || formatLabel(key)}</td><td>${value}%</td></tr>`)
+        .join('');
+    };
+
     const htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -107,36 +143,40 @@ export default function HealthInsuranceAnalyticsPage() {
         <h2>Key Metrics</h2>
         <div class="metric">
           <div class="metric-label">Total Leads Scored</div>
-          <div class="metric-value">${analytics.total_leads || '1,456'}</div>
+          <div class="metric-value">${analytics.total_leads ?? 'N/A'}</div>
         </div>
         <div class="metric">
           <div class="metric-label">Avg Conversion Score</div>
-          <div class="metric-value">${analytics.avg_score?.toFixed(2) || '0.73'}</div>
+          <div class="metric-value">${analytics.avg_score?.toFixed(2) ?? 'N/A'}</div>
         </div>
         <div class="metric">
           <div class="metric-label">High Quality Leads</div>
-          <div class="metric-value">${analytics.high_quality_leads || '421'}</div>
+          <div class="metric-value">${analytics.high_quality_leads ?? 'N/A'}</div>
         </div>
         <div class="metric">
           <div class="metric-label">Model Accuracy</div>
-          <div class="metric-value">${analytics.model_accuracy || '78.4%'}</div>
+          <div class="metric-value">${analytics.model_accuracy ?? 'N/A'}</div>
         </div>
 
         <h2>Score Distribution</h2>
         <table>
           <tr><th>Category</th><th>Percentage</th></tr>
-          <tr><td>High (0.75 - 1.0)</td><td>28.9%</td></tr>
-          <tr><td>Medium (0.50 - 0.75)</td><td>46.3%</td></tr>
-          <tr><td>Low (0.0 - 0.50)</td><td>24.8%</td></tr>
+          ${buildTableRows(analytics.score_distribution, {
+            high: 'High (0.75 - 1.0)',
+            medium: 'Medium (0.50 - 0.75)',
+            low: 'Low (0.0 - 0.50)',
+          })}
         </table>
 
         <h2>Plan Type Distribution</h2>
         <table>
           <tr><th>Plan Type</th><th>Percentage</th></tr>
-          <tr><td>HMO</td><td>32.1%</td></tr>
-          <tr><td>PPO</td><td>28.5%</td></tr>
-          <tr><td>EPO</td><td>21.3%</td></tr>
-          <tr><td>HDHP</td><td>18.1%</td></tr>
+          ${buildTableRows(analytics.plan_type_distribution, {
+            hmo: 'HMO',
+            ppo: 'PPO',
+            epo: 'EPO',
+            pos: 'POS',
+          })}
         </table>
 
         <div class="footer">
@@ -364,28 +404,28 @@ export default function HealthInsuranceAnalyticsPage() {
           <div className="bg-white border-2 border-purple-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Leads Scored</p>
             <p className="text-3xl font-bold text-purple-700 mt-2">
-              {analytics?.total_leads || '1,284'}
+              {analytics?.total_leads ?? '-'}
             </p>
             <p className="text-xs text-slate-600 font-medium mt-2">All time</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Avg Conversion Score</p>
             <p className="text-3xl font-bold text-blue-700 mt-2">
-              {analytics?.avg_score?.toFixed(2) || '0.72'}
+              {analytics?.avg_score?.toFixed(2) ?? '-'}
             </p>
             <p className="text-xs text-slate-600 font-medium mt-2">Mean prediction</p>
           </div>
           <div className="bg-white border-2 border-emerald-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">High Quality Leads</p>
             <p className="text-3xl font-bold text-emerald-700 mt-2">
-              {analytics?.high_quality_leads || '412'}
+              {analytics?.high_quality_leads ?? '-'}
             </p>
             <p className="text-xs text-slate-600 font-medium mt-2">Score &gt; 0.75</p>
           </div>
           <div className="bg-white border-2 border-amber-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">System Accuracy</p>
             <p className="text-3xl font-bold text-amber-700 mt-2">
-              {analytics?.model_accuracy || '72.9%'}
+              {analytics?.model_accuracy ?? '-'}
             </p>
             <p className="text-xs text-slate-600 font-medium mt-2">Prediction accuracy</p>
           </div>
@@ -396,172 +436,62 @@ export default function HealthInsuranceAnalyticsPage() {
           {/* Score Distribution */}
           <div className="bg-white border-2 border-purple-200 rounded-lg p-6 shadow-lg">
             <h2 className="text-xl font-bold text-slate-900 mb-4">📈 Score Distribution</h2>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-700">High (0.75 - 1.0)</span>
-                  <span className="text-sm font-bold text-emerald-700">32.1%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-emerald-500 h-3 rounded-full" style={{ width: '32.1%' }}></div>
-                </div>
+            {scoreDistribution.length === 0 ? (
+              <div className="text-sm text-slate-600 font-medium">No score distribution data.</div>
+            ) : (
+              <div className="space-y-3">
+                {scoreDistribution.map((entry) => (
+                  <div key={entry.name}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm font-medium text-slate-700">{entry.name}</span>
+                      <span className="text-sm font-bold text-emerald-700">{entry.value}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-3">
+                      <div className="bg-emerald-500 h-3 rounded-full" style={{ width: `${entry.value}%` }}></div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-700">Medium (0.50 - 0.75)</span>
-                  <span className="text-sm font-bold text-blue-700">44.2%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-blue-500 h-3 rounded-full" style={{ width: '44.2%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-700">Low (0.0 - 0.50)</span>
-                  <span className="text-sm font-bold text-amber-700">23.7%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-amber-500 h-3 rounded-full" style={{ width: '23.7%' }}></div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Plan Type Distribution */}
           <div className="bg-white border-2 border-blue-200 rounded-lg p-6 shadow-lg">
             <h2 className="text-xl font-bold text-slate-900 mb-4">⚕️ Plan Type Distribution</h2>
-            <div className="space-y-3">
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-700">PPO</span>
-                  <span className="text-sm font-bold text-blue-700">34.6%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-blue-500 h-3 rounded-full" style={{ width: '34.6%' }}></div>
-                </div>
+            {planDistribution.length === 0 ? (
+              <div className="text-sm text-slate-600 font-medium">No plan distribution data.</div>
+            ) : (
+              <div className="space-y-3">
+                {planDistribution.map((entry) => (
+                  <div key={entry.name}>
+                    <div className="flex justify-between mb-1">
+                      <span className="text-sm font-medium text-slate-700">{entry.name}</span>
+                      <span className="text-sm font-bold text-blue-700">{entry.value}%</span>
+                    </div>
+                    <div className="w-full bg-slate-200 rounded-full h-3">
+                      <div className="bg-blue-500 h-3 rounded-full" style={{ width: `${entry.value}%` }}></div>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-700">HMO</span>
-                  <span className="text-sm font-bold text-emerald-700">28.3%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-emerald-500 h-3 rounded-full" style={{ width: '28.3%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-700">HDHP</span>
-                  <span className="text-sm font-bold text-purple-700">19.4%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-purple-500 h-3 rounded-full" style={{ width: '19.4%' }}></div>
-                </div>
-              </div>
-              <div>
-                <div className="flex justify-between mb-1">
-                  <span className="text-sm font-medium text-slate-700">EPO/POS</span>
-                  <span className="text-sm font-bold text-amber-700">17.7%</span>
-                </div>
-                <div className="w-full bg-slate-200 rounded-full h-3">
-                  <div className="bg-amber-500 h-3 rounded-full" style={{ width: '17.7%' }}></div>
-                </div>
-              </div>
-            </div>
+            )}
           </div>
         </div>
 
-        {/* Feature Importance */}
-        <div className="bg-white border-2 border-emerald-200 rounded-lg p-6 shadow-lg mb-6">
-          <h2 className="text-xl font-bold text-slate-900 mb-4">🎯 Top Feature Importance</h2>
-          <p className="text-sm text-slate-600 mb-4">Most influential factors in lead scoring predictions</p>
-          <div className="space-y-3">
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">Age</span>
-                <span className="text-sm font-bold text-purple-700">21.3%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-4">
-                <div className="bg-purple-500 h-4 rounded-full" style={{ width: '21.3%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">Pre-existing Conditions</span>
-                <span className="text-sm font-bold text-blue-700">19.7%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-4">
-                <div className="bg-blue-500 h-4 rounded-full" style={{ width: '19.7%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">BMI</span>
-                <span className="text-sm font-bold text-emerald-700">17.8%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-4">
-                <div className="bg-emerald-500 h-4 rounded-full" style={{ width: '17.8%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">Smoker Status</span>
-                <span className="text-sm font-bold text-amber-700">16.4%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-4">
-                <div className="bg-amber-500 h-4 rounded-full" style={{ width: '16.4%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">Family History</span>
-                <span className="text-sm font-bold text-red-700">14.2%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-4">
-                <div className="bg-red-500 h-4 rounded-full" style={{ width: '14.2%' }}></div>
-              </div>
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium text-slate-700">Other Factors</span>
-                <span className="text-sm font-bold text-slate-700">10.6%</span>
-              </div>
-              <div className="w-full bg-slate-200 rounded-full h-4">
-                <div className="bg-slate-500 h-4 rounded-full" style={{ width: '10.6%' }}></div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Insights Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-lg p-6">
-            <div className="text-3xl mb-3">💡</div>
-            <h3 className="font-bold text-purple-900 mb-2">Key Insight</h3>
-            <p className="text-sm text-slate-700">
-              Non-smokers with healthy BMI (18.5-25) show 48% higher conversion rates compared to the average.
-            </p>
-          </div>
-          <div className="bg-gradient-to-br from-blue-50 to-blue-100 border-2 border-blue-200 rounded-lg p-6">
-            <div className="text-3xl mb-3">📈</div>
-            <h3 className="font-bold text-blue-900 mb-2">Trend Alert</h3>
-            <p className="text-sm text-slate-700">
-              HDHP plan inquiries increased by 26% this quarter, driven by HSA tax benefits awareness.
-            </p>
-          </div>
-          <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 border-2 border-emerald-200 rounded-lg p-6">
-            <div className="text-3xl mb-3">🎯</div>
-            <h3 className="font-bold text-emerald-900 mb-2">Recommendation</h3>
-            <p className="text-sm text-slate-700">
-              Target leads aged 25-45 with no pre-existing conditions for optimal conversion and retention rates.
-            </p>
-          </div>
+        <div className="bg-white border-2 border-slate-200 rounded-lg p-6 shadow-lg mb-6">
+          <h2 className="text-xl font-bold text-slate-900 mb-2">Additional Insights</h2>
+          <p className="text-sm text-slate-600">No insights data available.</p>
         </div>
 
         {/* Data Visualization Charts */}
         <div className="mt-6">
           <h2 className="text-2xl font-bold text-slate-900 mb-4">📈 Visual Analytics</h2>
-          <AnalyticsCharts colorScheme="purple" />
+          <AnalyticsCharts
+            colorScheme="purple"
+            scoreDistribution={scoreDistribution}
+            typeDistribution={planDistribution}
+            trendData={trendData}
+          />
         </div>
       </div>
     </div>

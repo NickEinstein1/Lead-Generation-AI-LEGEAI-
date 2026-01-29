@@ -3,13 +3,7 @@ import { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 
 export default function EmailsPage() {
-  const [emails] = useState([
-    { id: 1, to: "john@example.com", subject: "Your Auto Insurance Policy Renewal", sent: "2024-10-22", status: "Delivered", opens: 1 },
-    { id: 2, to: "sarah@example.com", subject: "Welcome to Our Insurance Platform", sent: "2024-10-21", status: "Delivered", opens: 2 },
-    { id: 3, to: "michael@example.com", subject: "Claim Status Update", sent: "2024-10-20", status: "Delivered", opens: 1 },
-    { id: 4, to: "emily@example.com", subject: "Special Offer: Home Insurance Discount", sent: "2024-10-19", status: "Delivered", opens: 0 },
-    { id: 5, to: "david@example.com", subject: "Policy Amendment Confirmation", sent: "2024-10-18", status: "Delivered", opens: 1 },
-  ]);
+  const [emails] = useState<any[]>([]);
 
   return (
     <DashboardLayout>
@@ -29,23 +23,23 @@ export default function EmailsPage() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Total Emails Sent</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">2,456</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">This month</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No email data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Delivery Rate</p>
-            <p className="text-3xl font-bold text-emerald-600 mt-2">98.7%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Successfully delivered</p>
+            <p className="text-3xl font-bold text-emerald-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No delivery data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Open Rate</p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">42.3%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Average</p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No open data</p>
           </div>
           <div className="bg-white border-2 border-blue-200 rounded-lg p-4 shadow-md">
             <p className="text-slate-600 text-sm font-medium">Click Rate</p>
-            <p className="text-3xl font-bold text-blue-700 mt-2">18.5%</p>
-            <p className="text-xs text-slate-600 font-medium mt-2">Average</p>
+            <p className="text-3xl font-bold text-blue-700 mt-2">-</p>
+            <p className="text-xs text-slate-600 font-medium mt-2">No click data</p>
           </div>
         </div>
 
@@ -68,24 +62,30 @@ export default function EmailsPage() {
                 </tr>
               </thead>
               <tbody>
-                {emails.map((email) => (
-                  <tr key={email.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
-                    <td className="p-4 font-bold text-blue-700">EMAIL-{email.id}</td>
-                    <td className="p-4 text-slate-700">{email.to}</td>
-                    <td className="p-4 font-medium text-slate-900">{email.subject}</td>
-                    <td className="p-4 text-slate-700">{email.sent}</td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
-                        {email.status}
-                      </span>
-                    </td>
-                    <td className="p-4 font-bold text-slate-900">{email.opens}</td>
-                    <td className="p-4 space-x-2">
-                      <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
-                      <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Resend</button>
-                    </td>
+                {emails.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="p-4 text-center text-slate-600 font-medium">No emails available.</td>
                   </tr>
-                ))}
+                ) : (
+                  emails.map((email) => (
+                    <tr key={email.id} className="border-t border-blue-100 hover:bg-blue-50 transition">
+                      <td className="p-4 font-bold text-blue-700">EMAIL-{email.id}</td>
+                      <td className="p-4 text-slate-700">{email.to}</td>
+                      <td className="p-4 font-medium text-slate-900">{email.subject}</td>
+                      <td className="p-4 text-slate-700">{email.sent}</td>
+                      <td className="p-4">
+                        <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-700">
+                          {email.status}
+                        </span>
+                      </td>
+                      <td className="p-4 font-bold text-slate-900">{email.opens}</td>
+                      <td className="p-4 space-x-2">
+                        <button className="text-blue-600 hover:text-blue-800 font-medium text-sm">View</button>
+                        <button className="text-slate-600 hover:text-slate-800 font-medium text-sm">Resend</button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
