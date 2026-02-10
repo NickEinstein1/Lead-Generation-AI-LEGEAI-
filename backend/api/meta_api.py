@@ -11,9 +11,12 @@ Provides endpoints for:
 """
 
 import os
+import json
+import base64
 import logging
 from typing import Dict, Any, Optional, List
 from fastapi import APIRouter, HTTPException, Query, Depends, Request, Response
+from fastapi.responses import RedirectResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -117,35 +120,43 @@ async def get_oauth_url(
 ):
     """
     Get Meta OAuth authorization URL
-    
+
     Returns URL to redirect user to for Meta account connection.
     After user grants permissions, Meta will redirect to callback URL.
+    The user_id is encoded in the state parameter so the GET callback
+    can associate the token with the correct user without requiring auth headers.
     """
     import secrets
-    
-    # Generate state if not provided
-    if not state:
-        state = secrets.token_urlsafe(32)
-    
-    auth_url = oauth_handler.get_authorization_url(state=state)
-    
+
+    # Build state with user_id and CSRF token
+    csrf_token = secrets.token_urlsafe(32)
+    state_payload = {
+        "user_id": current_user["user_id"],
+        "csrf": csrf_token,
+    }
+    state_encoded = base64.urlsafe_b64encode(
+        json.dumps(state_payload).encode()
+    ).decode()
+
+    auth_url = oauth_handler.get_authorization_url(state=state_encoded)
+
     logger.info(f"Generated OAuth URL for user: {current_user['username']}")
-    
+
     return {
         "authorization_url": auth_url,
-        "state": state,
+        "state": state_encoded,
     }
 
 
 @router.post("/callback", response_model=TokenResponse)
-async def oauth_callback(
+async def oauth_callback_post(
     payload: OAuthCallbackRequest,
     session: AsyncSession = Depends(session_dep),
     current_user: Dict[str, Any] = Depends(require_permission(Permission.VIEW_LEADS)),
 ):
     """
-    OAuth callback endpoint
-    
+    OAuth callback endpoint (POST - programmatic use)
+
     Exchanges authorization code for access token.
     Stores token in database for future use.
     """
@@ -153,26 +164,85 @@ async def oauth_callback(
         # Exchange code for short-lived token
         token_data = await oauth_handler.exchange_code_for_token(payload.code)
         short_lived_token = token_data["access_token"]
-        
+
         # Exchange for long-lived token (60 days)
         long_lived_data = await oauth_handler.get_long_lived_token(short_lived_token)
         access_token = long_lived_data["access_token"]
-        
+
         # Store token (TODO: save to database)
         user_id = current_user["user_id"]
         META_TOKENS[user_id] = access_token
-        
+
         logger.info(f"OAuth successful for user: {current_user['username']}")
-        
+
         return {
             "access_token": access_token,
             "token_type": "bearer",
             "expires_in": long_lived_data.get("expires_in"),
         }
-        
+
     except Exception as e:
         logger.error(f"OAuth callback failed: {e}")
         raise HTTPException(status_code=400, detail=f"OAuth failed: {str(e)}")
+
+
+# Frontend redirect URI for after OAuth completes
+FRONTEND_META_SETTINGS_URL = os.getenv(
+    "FRONTEND_META_SETTINGS_URL",
+    "http://localhost:3000/dashboard/settings/integrations/meta"
+)
+
+
+@router.get("/callback")
+async def oauth_callback_get(
+    code: str = Query(..., description="Authorization code from Meta"),
+    state: str = Query("", description="State parameter with encoded user_id"),
+):
+    """
+    OAuth callback endpoint (GET - browser redirect from Meta)
+
+    Meta redirects the user's browser here after they grant permissions.
+    The user_id is encoded in the state parameter, so no auth headers are needed.
+    After token exchange, redirects the browser back to the frontend.
+    """
+    try:
+        # Decode state to get user_id
+        user_id = "dev-api-user"  # fallback
+        if state:
+            try:
+                state_payload = json.loads(
+                    base64.urlsafe_b64decode(state + "==").decode()
+                )
+                user_id = state_payload.get("user_id", user_id)
+            except Exception as e:
+                logger.warning(f"Failed to decode state parameter: {e}")
+
+        # Exchange code for short-lived token
+        token_data = await oauth_handler.exchange_code_for_token(code)
+        short_lived_token = token_data["access_token"]
+
+        # Exchange for long-lived token (60 days)
+        long_lived_data = await oauth_handler.get_long_lived_token(short_lived_token)
+        access_token = long_lived_data["access_token"]
+
+        # Store token
+        META_TOKENS[user_id] = access_token
+
+        logger.info(f"OAuth GET callback successful for user_id: {user_id}")
+
+        # Redirect back to frontend with success
+        return RedirectResponse(
+            url=f"{FRONTEND_META_SETTINGS_URL}?meta_connected=true",
+            status_code=302,
+        )
+
+    except Exception as e:
+        logger.error(f"OAuth GET callback failed: {e}")
+        # Redirect back to frontend with error
+        return RedirectResponse(
+            url=f"{FRONTEND_META_SETTINGS_URL}?meta_error={str(e)}",
+            status_code=302,
+        )
 
 
 @router.post("/disconnect")

@@ -1,4 +1,4 @@
-# Script to run the LEAGAI backend from the new backend folder structure
+﻿# Script to run the LEAGAI backend from the new backend folder structure
 
 Write-Host "🚀 Starting LEAGAI Backend..." -ForegroundColor Green
 Write-Host "Backend location: backend/api/main.py" -ForegroundColor Cyan
@@ -14,7 +14,19 @@ if (-not $env:USE_DB) {
     $env:USE_DB = "true"
 }
 
+# Activate virtual environment if it exists
+$venvPython = $null
+if (Test-Path "venv\Scripts\python.exe") {
+    $venvPython = "venv\Scripts\python.exe"
+} elseif (Test-Path ".venv\Scripts\python.exe") {
+    $venvPython = ".venv\Scripts\python.exe"
+} else {
+    $venvPython = "python"
+}
+
+Write-Host "Using Python: $venvPython" -ForegroundColor Cyan
+
 # Run the backend from ROOT directory (not from backend folder)
 # This ensures Python can find the 'backend' module
-python -m uvicorn backend.api.main:app --reload --host 127.0.0.1 --port 8000
+& $venvPython -m uvicorn backend.api.main:app --reload --host 127.0.0.1 --port 8000
 

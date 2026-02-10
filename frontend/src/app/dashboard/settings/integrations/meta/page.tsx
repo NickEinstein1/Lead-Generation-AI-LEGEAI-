@@ -1,12 +1,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, CheckCircle2, XCircle, ExternalLink, RefreshCw } from 'lucide-react';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/v1';
+
+/** Build auth headers matching the logic in lib/api.ts */
+function getAuthHeaders(): Record<string, string> {
+  const headers: Record<string, string> = {};
+  if (typeof window !== 'undefined') {
+    const session = localStorage.getItem('session');
+    if (session) {
+      try {
+        const sessionData = JSON.parse(session);
+        if (sessionData.session_id) {
+          headers['X-Session-ID'] = sessionData.session_id;
+        } else {
+          headers['X-API-Key'] = 'dev-api-key-12345';
+        }
+      } catch {
+        headers['X-API-Key'] = 'dev-api-key-12345';
+      }
+    } else {
+      headers['X-API-Key'] = 'dev-api-key-12345';
+    }
+  }
+  return headers;
+}
 
 interface AdAccount {
   id: string;
@@ -31,6 +55,7 @@ interface LeadForm {
 }
 
 export default function MetaIntegrationPage() {
+  const searchParams = useSearchParams();
   const [isConnected, setIsConnected] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([]);
@@ -38,16 +63,30 @@ export default function MetaIntegrationPage() {
   const [selectedPage, setSelectedPage] = useState<string>('');
   const [leadForms, setLeadForms] = useState<LeadForm[]>([]);
   const [error, setError] = useState<string>('');
+  const [successMessage, setSuccessMessage] = useState<string>('');
 
   useEffect(() => {
+    // Handle redirect back from Meta OAuth
+    const metaConnected = searchParams.get('meta_connected');
+    const metaError = searchParams.get('meta_error');
+    if (metaConnected === 'true') {
+      setSuccessMessage('Meta account connected successfully!');
+      // Clean up URL params
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+    if (metaError) {
+      setError(`Meta connection failed: ${metaError}`);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
+
     checkConnectionStatus();
-  }, []);
+  }, [searchParams]);
 
   const checkConnectionStatus = async () => {
     try {
       const response = await fetch(`${API_BASE}/integrations/meta/status`, {
         headers: {
-          'X-Session-ID': 'demo-session',
+          ...getAuthHeaders(),
         },
       });
       const data = await response.json();
@@ -69,7 +108,7 @@ export default function MetaIntegrationPage() {
       setIsLoading(true);
       const response = await fetch(`${API_BASE}/integrations/meta/auth/url`, {
         headers: {
-          'X-Session-ID': 'demo-session',
+          ...getAuthHeaders(),
         },
       });
       const data = await response.json();
@@ -88,7 +127,7 @@ export default function MetaIntegrationPage() {
       await fetch(`${API_BASE}/integrations/meta/disconnect`, {
         method: 'POST',
         headers: {
-          'X-Session-ID': 'demo-session',
+          ...getAuthHeaders(),
         },
       });
       setIsConnected(false);
@@ -106,7 +145,7 @@ export default function MetaIntegrationPage() {
     try {
       const response = await fetch(`${API_BASE}/integrations/meta/ad-accounts`, {
         headers: {
-          'X-Session-ID': 'demo-session',
+          ...getAuthHeaders(),
         },
       });
       const data = await response.json();
@@ -120,7 +159,7 @@ export default function MetaIntegrationPage() {
     try {
       const response = await fetch(`${API_BASE}/integrations/meta/pages`, {
         headers: {
-          'X-Session-ID': 'demo-session',
+          ...getAuthHeaders(),
         },
       });
       const data = await response.json();
@@ -134,7 +173,7 @@ export default function MetaIntegrationPage() {
     try {
       const response = await fetch(`${API_BASE}/integrations/meta/lead-forms?page_id=${pageId}`, {
         headers: {
-          'X-Session-ID': 'demo-session',
+          ...getAuthHeaders(),
         },
       });
       const data = await response.json();
@@ -161,6 +200,12 @@ export default function MetaIntegrationPage() {
           Connect your Meta Business account to sync leads from Facebook and Instagram Lead Ads
         </p>
       </div>
+
+      {successMessage && (
+        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded">
+          {successMessage}
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded">
@@ -305,7 +350,7 @@ export default function MetaIntegrationPage() {
                             method: 'POST',
                             headers: {
                               'Content-Type': 'application/json',
-                              'X-Session-ID': 'demo-session',
+                              ...getAuthHeaders(),
                             },
                             body: JSON.stringify({
                               form_id: form.id,

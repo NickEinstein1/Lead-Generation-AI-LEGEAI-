@@ -1,4 +1,4 @@
-# Train All ML Models - Windows PowerShell Script
+﻿# Train All ML Models - Windows PowerShell Script
 # This script trains all insurance lead scoring models
 
 Write-Host "🤖 LEGEAI - Train All ML Models" -ForegroundColor Cyan

@@ -1,4 +1,4 @@
-# LEGEAI - Automated Setup Script for Windows
+﻿# LEGEAI - Automated Setup Script for Windows
 # This script automates the installation and setup process
 
 Write-Host "🚀 LEGEAI - Automated Setup Script" -ForegroundColor Cyan
@@ -84,7 +84,7 @@ Print-Success "Python dependencies installed"
 Write-Host ""
 Print-Info "Step 5: Creating .env file..."
 if (-not (Test-Path ".env")) {
-    @"
+@"
 # Database Configuration
 USE_DB=false
 DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost:5432/legeai
@@ -123,7 +123,7 @@ if (-not (Test-Path "node_modules")) {
 Write-Host ""
 Print-Info "Step 7: Creating frontend .env.local file..."
 if (-not (Test-Path ".env.local")) {
-    @"
+@"
 # Backend API URL
 NEXT_PUBLIC_API_URL=http://localhost:8000
 

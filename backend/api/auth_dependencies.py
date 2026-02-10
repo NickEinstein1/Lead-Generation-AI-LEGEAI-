@@ -29,10 +29,10 @@ async def get_current_user_from_session(
     if x_api_key and x_api_key == DEV_API_KEY and (ALLOW_DEV_API_KEY or ENABLE_DEMO_MODE):
         logger.info("Request authenticated with dev API key (demo/demo-like mode)")
         return {
-            "user_id": "api-user",
-            "username": "api-user",
-            "role": UserRole.API_CLIENT.value,
-            "permissions": [Permission.API_ACCESS.value],
+            "user_id": "dev-api-user",
+            "username": "dev-api-user",
+            "role": UserRole.ADMIN.value,
+            "permissions": [p.value for p in Permission],
         }
 
     # Check session ID
